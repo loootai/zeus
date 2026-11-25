@@ -1,0 +1,152 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "14 signals on 10 accounts, 3 hot, 4 warm",
+  "rows": [
+    {
+      "account": "Northwind Logistics",
+      "date": "2026-10-27",
+      "type": "hiring",
+      "title": "Posted 3 Account Executive roles",
+      "source": "https://example.com/jobs/1",
+      "intent": "hot",
+      "score": 86,
+      "provider": "AnyAPI"
+    },
+    {
+      "account": "Silverline SaaS",
+      "date": "2026-10-22",
+      "type": "funding",
+      "title": "Raised a seed extension (placeholder)",
+      "source": "https://example.com/news/2",
+      "intent": "hot",
+      "score": 82,
+      "provider": "Aviato"
+    },
+    {
+      "account": "Fernway Software",
+      "date": "2026-10-19",
+      "type": "hiring",
+      "title": "Hiring a first Revenue Operations Manager",
+      "source": "https://example.com/jobs/3",
+      "intent": "hot",
+      "score": 80,
+      "provider": "AnyAPI"
+    },
+    {
+      "account": "Brightpath Agency",
+      "date": "2026-10-15",
+      "type": "news",
+      "title": "Opened a second office",
+      "source": "https://example.com/news/4",
+      "intent": "warm",
+      "score": 42,
+      "provider": "Serper"
+    },
+    {
+      "account": "Cobalt Realty",
+      "date": "2026-10-12",
+      "type": "hiring",
+      "title": "Posted 2 Sales Manager roles",
+      "source": "https://example.com/jobs/5",
+      "intent": "warm",
+      "score": 38,
+      "provider": "AnyAPI"
+    },
+    {
+      "account": "Willow Digital",
+      "date": "2026-10-08",
+      "type": "news",
+      "title": "Announced a new partner program",
+      "source": "https://example.com/news/6",
+      "intent": "warm",
+      "score": 33,
+      "provider": "Serper"
+    },
+    {
+      "account": "Tidewater Homes",
+      "date": "2026-10-02",
+      "type": "hiring",
+      "title": "Posted 1 Business Development role",
+      "source": "https://example.com/jobs/7",
+      "intent": "warm",
+      "score": 29,
+      "provider": "AnyAPI"
+    },
+    {
+      "account": "Harbor Consulting",
+      "date": "2026-09-20",
+      "type": "news",
+      "title": "Named a new managing partner",
+      "source": "https://example.com/news/8",
+      "intent": "cold",
+      "score": 14,
+      "provider": "Serper"
+    }
+  ],
+  "accounts": [
+    {
+      "account": "Northwind Logistics",
+      "grade": "A",
+      "score": 86,
+      "intent": "hot",
+      "reasons": "1 open role post in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Silverline SaaS",
+      "grade": "A",
+      "score": 82,
+      "intent": "hot",
+      "reasons": "1 funding round in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Fernway Software",
+      "grade": "A",
+      "score": 80,
+      "intent": "hot",
+      "reasons": "1 open role post in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Brightpath Agency",
+      "grade": "B",
+      "score": 42,
+      "intent": "warm",
+      "reasons": "1 news item in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Cobalt Realty",
+      "grade": "B",
+      "score": 38,
+      "intent": "warm",
+      "reasons": "1 open role post in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Willow Digital",
+      "grade": "B",
+      "score": 33,
+      "intent": "warm",
+      "reasons": "1 news item in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Tidewater Homes",
+      "grade": "B",
+      "score": 29,
+      "intent": "warm",
+      "reasons": "1 open role post in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    },
+    {
+      "account": "Harbor Consulting",
+      "grade": "B",
+      "score": 14,
+      "intent": "cold",
+      "reasons": "1 news item in the last 60 days (placeholder)",
+      "lookups": "jobs hit via AnyAPI, funding miss via Aviato, news hit via Serper"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "12 recent posts from you and 3 of 3 rivals on LinkedIn and X",
+  "brands": [
+    {
+      "name": "YourBrand",
+      "domain": "yourdomain.com",
+      "you": true,
+      "linkedinUrl": "https://www.linkedin.com/company/yourdomain",
+      "handle": "yourdomain",
+      "lookups": "LinkedIn hit via ScrapeCreators, X hit via AnyAPI",
+      "posts": [
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-27",
+          "text": "How a 6 person agency set up its pipeline in one afternoon. A short guide with the template we use.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-y1",
+          "likes": 42,
+          "comments": 6,
+          "shares": 3,
+          "topics": [
+            "Customer story",
+            "Opinion and how to"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "X",
+          "date": "2026-10-21",
+          "text": "We shipped email sync for Outlook today. Small teams asked, we built it.",
+          "url": "https://x.com/yourdomain/status/1001",
+          "likes": 18,
+          "comments": 2,
+          "shares": 4,
+          "topics": [
+            "Product news"
+          ],
+          "provider": "AnyAPI"
+        }
+      ]
+    },
+    {
+      "name": "Rival A",
+      "domain": "rival-a.com",
+      "you": false,
+      "linkedinUrl": "https://www.linkedin.com/company/rival-a",
+      "handle": "rival-a",
+      "lookups": "LinkedIn hit via ScrapeCreators, X hit via AnyAPI",
+      "posts": [
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-29",
+          "text": "Introducing Rival A Copilot. Your AI agent drafts follow ups and updates every deal for you.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-a1",
+          "likes": 612,
+          "comments": 88,
+          "shares": 41,
+          "topics": [
+            "Product news",
+            "AI"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-24",
+          "text": "Join our live webinar on Thursday. How revenue teams use AI to forecast. Register now.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-a2",
+          "likes": 203,
+          "comments": 19,
+          "shares": 22,
+          "topics": [
+            "Event or webinar",
+            "AI"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "X",
+          "date": "2026-10-23",
+          "text": "Customer story. How a logistics sales team cut admin time in half after the switch.",
+          "url": "https://x.com/rival-a/status/2001",
+          "likes": 95,
+          "comments": 7,
+          "shares": 12,
+          "topics": [
+            "Customer story"
+          ],
+          "provider": "AnyAPI"
+        },
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-17",
+          "text": "We're hiring 12 account executives in London and Amsterdam. Join the team.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-a3",
+          "likes": 340,
+          "comments": 25,
+          "shares": 30,
+          "topics": [
+            "Hiring and team"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "X",
+          "date": "2026-10-15",
+          "text": "20% off annual plans until Friday. Free migration from any CRM.",
+          "url": "https://x.com/rival-a/status/2002",
+          "likes": 61,
+          "comments": 9,
+          "shares": 14,
+          "topics": [
+            "Offer or pricing"
+          ],
+          "provider": "AnyAPI"
+        }
+      ]
+    },
+    {
+      "name": "Rival B",
+      "domain": "rival-b.com",
+      "you": false,
+      "linkedinUrl": "https://www.linkedin.com/company/rival-b",
+      "handle": "rival-b",
+      "lookups": "LinkedIn hit via ScrapeCreators, X miss via AnyAPI",
+      "posts": [
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-26",
+          "text": "Five forecasting mistakes we see in every board pack. How to fix each one. A guide for CROs.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-b1",
+          "likes": 188,
+          "comments": 31,
+          "shares": 17,
+          "topics": [
+            "Opinion and how to"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-19",
+          "text": "Rival B is now SOC 2 Type II certified. Security questions answered in one page.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-b2",
+          "likes": 144,
+          "comments": 12,
+          "shares": 9,
+          "topics": [
+            "Product news"
+          ],
+          "provider": "ScrapeCreators"
+        },
+        {
+          "network": "LinkedIn",
+          "date": "2026-10-08",
+          "text": "Meet us at the RevOps summit in Berlin next week. Book a slot with our team.",
+          "url": "https://www.linkedin.com/feed/update/placeholder-b3",
+          "likes": 77,
+          "comments": 4,
+          "shares": 6,
+          "topics": [
+            "Event or webinar"
+          ],
+          "provider": "ScrapeCreators"
+        }
+      ]
+    },
+    {
+      "name": "Rival C",
+      "domain": "rival-c.com",
+      "you": false,
+      "linkedinUrl": "https://www.linkedin.com/company/rival-c",
+      "handle": "rival-c",
+      "lookups": "LinkedIn hit via ScrapeCreators, X hit via AnyAPI",
+      "posts": [
+        {
+          "network": "X",
+          "date": "2026-10-28",
+          "text": "Why pay per seat for a CRM? Our free plan now covers 3 users.",
+          "url": "https://x.com/rival-c/status/3001",
+          "likes": 230,
+          "comments": 48,
+          "shares": 35,
+          "topics": [
+            "Offer or pricing",
+            "Opinion and how to"
+          ],
+          "provider": "AnyAPI"
+        },
+        {
+          "network": "X",
+          "date": "2026-10-20",
+          "text": "New. Pipeline templates for agencies and real estate teams.",
+          "url": "https://x.com/rival-c/status/3002",
+          "likes": 52,
+          "comments": 3,
+          "shares": 8,
+          "topics": [
+            "Product news"
+          ],
+          "provider": "AnyAPI"
+        }
+      ]
+    }
+  ],
+  "provider": "ScrapeCreators, AnyAPI",
+  "date": "2026-10-30"
+}

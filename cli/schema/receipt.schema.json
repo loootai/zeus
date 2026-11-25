@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loootai/zeus/schema/receipt.schema.json",
+  "title": "looot-zeus receipt",
+  "description": "Every paid call of one /gtm run, what it was quoted and what looot charged. Shared contract for the dossier, the launch page and the video.",
+  "type": "object",
+  "required": [
+    "run",
+    "modules",
+    "calls"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Present only on invented sample receipts. A real receipt never has it."
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "domain",
+        "startedAt",
+        "finishedAt",
+        "cap",
+        "expected",
+        "charged",
+        "calls",
+        "durationMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "live",
+            "demo"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cap": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "USD"
+        },
+        "expected": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Quoted expected total in USD"
+        },
+        "worst": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Quoted worst case in USD"
+        },
+        "worstCapped": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Quoted worst case with every section cap and the run cap applied"
+        },
+        "totalRuns": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The run's limit on paid calls, when one was set"
+        },
+        "charged": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Sum of calls[].charged in USD, new spend only (a replayed call is 0)"
+        },
+        "calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capStopped": {
+          "type": "boolean"
+        },
+        "priceSource": {
+          "type": "string"
+        },
+        "replayedCalls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Calls looot answered from an earlier run with the same key, at no new charge"
+        },
+        "replayedValue": {
+          "type": "number",
+          "minimum": 0,
+          "description": "What the replayed calls cost when they first ran, in USD. Not part of charged."
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "calls",
+          "quoted",
+          "worst",
+          "charged",
+          "summary",
+          "startedAtMs",
+          "endedAtMs"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "skipped",
+              "capped"
+            ]
+          },
+          "capScope": {
+            "type": "string",
+            "enum": [
+              "section"
+            ],
+            "description": "Set when the section stopped at its own hard cap (runs or USD) and the run went on"
+          },
+          "calls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quoted": {
+            "type": "number",
+            "minimum": 0
+          },
+          "worst": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted worst case of the module in USD, every call at its own ceiling"
+          },
+          "worstCapped": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted worst case with the section's own cap applied"
+          },
+          "expectedCapped": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted expected cost under the section's cap, never above worstCapped"
+          },
+          "cap": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "usd": { "type": "number", "minimum": 0 },
+              "runs": { "type": "integer", "minimum": 0 }
+            },
+            "description": "The section's hard cap, when it has one"
+          },
+          "charged": {
+            "type": "number",
+            "minimum": 0
+          },
+          "summary": {
+            "type": "string"
+          },
+          "startedAtMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "endedAtMs": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "module",
+          "job",
+          "provider",
+          "outcome",
+          "quoted",
+          "charged",
+          "ms",
+          "ts"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "module": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "singleProvider": {
+            "type": "boolean",
+            "description": "True when the job has one provider only, so a miss or failure had no fallback. Written on every row."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "hit",
+              "miss",
+              "fail",
+              "fallback"
+            ]
+          },
+          "fallbackFrom": {
+            "type": "string"
+          },
+          "quoted": {
+            "type": "number",
+            "minimum": 0
+          },
+          "worst": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted worst case of the module in USD, every call at its own ceiling"
+          },
+          "worstCapped": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted worst case with the section's own cap applied"
+          },
+          "expectedCapped": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Quoted expected cost under the section's cap, never above worstCapped"
+          },
+          "cap": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "usd": { "type": "number", "minimum": 0 },
+              "runs": { "type": "integer", "minimum": 0 }
+            },
+            "description": "The section's hard cap, when it has one"
+          },
+          "charged": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "firstCharged": {
+            "type": "number",
+            "minimum": 0,
+            "description": "On a replayed call, what the first run of this call cost. charged is 0 on a replay."
+          }
+        }
+      }
+    }
+  }
+}

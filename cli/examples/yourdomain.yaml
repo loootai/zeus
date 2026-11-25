@@ -1,0 +1,78 @@
+# Example config for looot-zeus. A hand-written draft to show the shape. Every value is made up.
+# Run "looot-zeus init yourdomain.com" with your own domain to get a draft built from your site.
+# Seeds are placeholders. Replace them with five of your best customers before a real run.
+domain: yourdomain.com
+brand: YourBrand
+offer: Sales pipeline software for small and mid-size sales teams
+icp:
+  industries: [software, agencies, real estate, consulting, wholesale]
+  sizeBand: 11-200
+  geos: [United States, United Kingdom, Germany, Netherlands]
+  titles: [Head of Sales, Sales Manager, VP Sales, Founder, Revenue Operations Manager]
+seeds:
+  - seed-customer-1.example
+  - seed-customer-2.example
+  - seed-customer-3.example
+  - seed-customer-4.example
+  - seed-customer-5.example
+# Generic names. Put your real competitors here.
+competitors: [rival-a.com, rival-b.com, rival-c.com]
+keywords:
+  - sales crm
+  - crm for small business
+  - pipeline management software
+  - sales pipeline tool
+  - deal tracking software
+  - simple crm
+  - crm for startups
+  - sales forecasting tool
+  - lead management software
+  - crm with email integration
+questions:
+  - what is the best crm for a small sales team
+  - which crm is easiest to set up
+  - best pipeline management tool for agencies
+  - rival a alternatives for small business
+  - cheapest crm with email sync
+  - which crm do real estate teams use
+  - best crm for b2b startups
+  - what crm has the best mobile app
+  - which sales crm has built in forecasting
+  - best crm for a sales team of 10
+depth: sample
+# People data (names, work emails, buying committees) is for paid runs only. Off: the run is company-level.
+people: false
+# Phones are opt-in and need people: true.
+phones: false
+# Reviews run when you list an App Store app or a Google Maps place. Yours go at the top level,
+# a competitor's go under its domain. Leave the lists empty to skip.
+reviews:
+  mode: auto
+  appStoreIds: []
+  mapsPlaces: []
+  competitors:
+    rival-a.com: { appStoreIds: [], mapsPlaces: [] }
+    rival-b.com: { appStoreIds: [], mapsPlaces: [] }
+    rival-c.com: { appStoreIds: [], mapsPlaces: [] }
+# Local runs only for a business people visit. Write each search as "what @ where".
+local:
+  mode: off
+  queries: []
+# Commerce covers Amazon listings only. List ASINs, yours at the top level, a competitor's under its domain.
+commerce:
+  mode: off
+  asins: []
+  competitors:
+    rival-a.com: []
+    rival-b.com: []
+    rival-c.com: []
+
+# Optional hard limits. A section stops at its own cap with a note in the dossier, the others go on.
+# caps:
+#   total_usd: 1.95
+#   total_runs: 150
+#   sections:
+#     seo: { usd: 0.12, runs: 12 }
+
+# Skip every LinkedIn step (LinkedIn ads, company posts, LinkedIn page search). On by default.
+# linkedin: false

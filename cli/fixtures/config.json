@@ -1,0 +1,101 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "config": {
+    "domain": "yourdomain.com",
+    "brand": "YourBrand",
+    "offer": "Sales pipeline software for small sales teams (placeholder offer)",
+    "icp": {
+      "industries": [
+        "software",
+        "agencies",
+        "real estate",
+        "consulting",
+        "wholesale"
+      ],
+      "sizeBand": "11-200",
+      "geos": [
+        "United States",
+        "United Kingdom",
+        "Germany",
+        "Netherlands"
+      ],
+      "titles": [
+        "Head of Sales",
+        "VP Sales",
+        "Sales Manager",
+        "Founder",
+        "Revenue Operations Manager"
+      ]
+    },
+    "seeds": [
+      "seed-one.example",
+      "seed-two.example",
+      "seed-three.example",
+      "seed-four.example",
+      "seed-five.example"
+    ],
+    "competitors": [
+      "rival-a.com",
+      "rival-b.com",
+      "rival-c.com"
+    ],
+    "keywords": [
+      "sales crm",
+      "crm for small business",
+      "pipeline management software",
+      "sales pipeline tool",
+      "deal tracking software",
+      "simple crm",
+      "crm for startups",
+      "sales forecasting tool",
+      "lead management software",
+      "crm with email integration"
+    ],
+    "questions": [
+      "what is the best crm for a small sales team",
+      "which crm is easiest to set up",
+      "best pipeline tool for agencies",
+      "rival a alternatives for small business",
+      "cheapest crm with email sync",
+      "which crm do real estate teams use",
+      "best crm for b2b startups",
+      "which crm has the best mobile app",
+      "which sales crm has built in forecasting",
+      "best crm for a sales team of 10"
+    ],
+    "depth": "sample",
+    "people": true,
+    "committeePhones": true,
+    "phones": false,
+    "reviews": {
+      "mode": "auto",
+      "appStoreIds": [
+        "000000000"
+      ],
+      "mapsPlaces": [],
+      "competitors": {
+        "rival-a.com": {
+          "appStoreIds": [],
+          "mapsPlaces": []
+        },
+        "rival-b.com": {
+          "appStoreIds": [],
+          "mapsPlaces": []
+        },
+        "rival-c.com": {
+          "appStoreIds": [],
+          "mapsPlaces": []
+        }
+      }
+    },
+    "local": {
+      "mode": "off",
+      "queries": []
+    },
+    "commerce": {
+      "mode": "off",
+      "asins": [],
+      "competitors": {}
+    }
+  }
+}

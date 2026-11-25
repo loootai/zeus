@@ -1,0 +1,79 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "5 mentions in 7 days, 3 buying-intent posts",
+  "rows": [
+    {
+      "date": "2026-10-29",
+      "platform": "Reddit",
+      "title": "Looking for a CRM for a 6-person sales team, budget $20/user",
+      "intent": true,
+      "url": "https://example.com/r/1",
+      "about": "you",
+      "kind": "asks for a tool",
+      "where": "-",
+      "provider": "ScrapeCreators"
+    },
+    {
+      "date": "2026-10-28",
+      "platform": "X",
+      "title": "Moving off Rival A after the price change, what do people use?",
+      "intent": true,
+      "url": "https://example.com/x/2",
+      "about": "Rival A",
+      "kind": "compares, complains",
+      "where": "-",
+      "provider": "AnyAPI"
+    },
+    {
+      "date": "2026-10-26",
+      "platform": "News",
+      "title": "YourBrand listed in a small business tools roundup",
+      "intent": false,
+      "url": "https://example.com/n/3",
+      "about": "you",
+      "kind": "-",
+      "where": "-",
+      "provider": "Serper"
+    },
+    {
+      "date": "2026-10-25",
+      "platform": "Reddit",
+      "title": "Any CRM that syncs with Outlook without a plugin?",
+      "intent": true,
+      "url": "https://example.com/r/4",
+      "about": "you",
+      "kind": "asks for a tool",
+      "where": "-",
+      "provider": "ScrapeCreators"
+    },
+    {
+      "date": "2026-10-24",
+      "platform": "X",
+      "title": "YourBrand mobile app finally got offline mode",
+      "intent": false,
+      "url": "https://example.com/x/5",
+      "about": "you",
+      "kind": "-",
+      "where": "-",
+      "provider": "AnyAPI"
+    }
+  ],
+  "provider": "ScrapeCreators, AnyAPI, Serper",
+  "date": "2026-10-30",
+  "digest": [
+    {
+      "about": "you",
+      "reddit": 2,
+      "x": 1,
+      "news": 1,
+      "intent": 2
+    },
+    {
+      "about": "Rival A",
+      "reddit": 0,
+      "x": 1,
+      "news": 0,
+      "intent": 1
+    }
+  ]
+}

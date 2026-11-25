@@ -1,0 +1,150 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "25 accounts scored, 6 A, 9 B, 7 C, 3 D (12 shown)",
+  "rows": [
+    {
+      "domain": "northwind-logistics.example",
+      "name": "Northwind Logistics",
+      "industry": "logistics",
+      "employees": 140,
+      "country": "Netherlands",
+      "grade": "A",
+      "score": 91,
+      "reasons": "logistics fits, 140 staff in band, hiring sales",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "brightpath-agency.example",
+      "name": "Brightpath Agency",
+      "industry": "agencies",
+      "employees": 38,
+      "country": "United Kingdom",
+      "grade": "A",
+      "score": 88,
+      "reasons": "agencies fits, 38 staff in band, hiring sales",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "cobalt-realty.example",
+      "name": "Cobalt Realty",
+      "industry": "real estate",
+      "employees": 62,
+      "country": "United States",
+      "grade": "B",
+      "score": 74,
+      "reasons": "real estate fits, size in band",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "fernway-software.example",
+      "name": "Fernway Software",
+      "industry": "software",
+      "employees": 95,
+      "country": "Germany",
+      "grade": "A",
+      "score": 86,
+      "reasons": "software fits, 95 staff in band, hiring sales",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "harbor-consulting.example",
+      "name": "Harbor Consulting",
+      "industry": "consulting",
+      "employees": 27,
+      "country": "United Kingdom",
+      "grade": "B",
+      "score": 71,
+      "reasons": "consulting fits, size in band",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "lumen-wholesale.example",
+      "name": "Lumen Wholesale",
+      "industry": "wholesale",
+      "employees": 180,
+      "country": "Netherlands",
+      "grade": "C",
+      "score": 58,
+      "reasons": "wholesale fits, size in band",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "quillstone-media.example",
+      "name": "Quillstone Media",
+      "industry": "agencies",
+      "employees": 44,
+      "country": "United States",
+      "grade": "B",
+      "score": 69,
+      "reasons": "agencies fits, size in band",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "redwood-advisory.example",
+      "name": "Redwood Advisory",
+      "industry": "consulting",
+      "employees": 19,
+      "country": "Germany",
+      "grade": "C",
+      "score": 55,
+      "reasons": "consulting fits, size in band",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "silverline-saas.example",
+      "name": "Silverline SaaS",
+      "industry": "software",
+      "employees": 72,
+      "country": "United States",
+      "grade": "A",
+      "score": 90,
+      "reasons": "software fits, 72 staff in band, hiring sales",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "tidewater-homes.example",
+      "name": "Tidewater Homes",
+      "industry": "real estate",
+      "employees": 33,
+      "country": "United Kingdom",
+      "grade": "B",
+      "score": 72,
+      "reasons": "real estate fits, size in band",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "vantage-supply.example",
+      "name": "Vantage Supply",
+      "industry": "wholesale",
+      "employees": 120,
+      "country": "Germany",
+      "grade": "D",
+      "score": 38,
+      "reasons": "outside the size band, no sales team found",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "willow-digital.example",
+      "name": "Willow Digital",
+      "industry": "agencies",
+      "employees": 56,
+      "country": "Netherlands",
+      "grade": "B",
+      "score": 70,
+      "reasons": "agencies fits, size in band",
+      "provider": "Anysite",
+      "date": "2026-10-30"
+    }
+  ]
+}

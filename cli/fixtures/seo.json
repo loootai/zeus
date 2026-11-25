@@ -1,0 +1,195 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "5 keyword gaps, ranked on 3 of 4 keywords, named in 2 of 4 AI answers",
+  "gaps": [
+    {
+      "keyword": "crm for real estate agents",
+      "volume": 2900,
+      "you": "-",
+      "rival": "Rival A #4",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "keyword": "sales pipeline template",
+      "volume": 2400,
+      "you": "-",
+      "rival": "Rival C #2",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "keyword": "crm for consultants",
+      "volume": 1300,
+      "you": "-",
+      "rival": "Rival A #6",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "keyword": "best crm for agencies",
+      "volume": 1000,
+      "you": "-",
+      "rival": "Rival B #9",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "keyword": "deal pipeline software",
+      "volume": 720,
+      "you": "-",
+      "rival": "Rival A #3",
+      "fallback": "one provider, no fallback"
+    }
+  ],
+  "ranks": [
+    {
+      "keyword": "sales crm",
+      "you": 7,
+      "best": "Rival A #1",
+      "top": "rival-a.com",
+      "status": "answered",
+      "provider": "Serper",
+      "fallback": "yes"
+    },
+    {
+      "keyword": "simple crm",
+      "you": 3,
+      "best": "Rival C #1",
+      "top": "rival-a.com",
+      "status": "answered",
+      "provider": "Serper",
+      "fallback": "yes"
+    },
+    {
+      "keyword": "crm for startups",
+      "you": 12,
+      "best": "Rival A #2",
+      "top": "rival-a.com",
+      "status": "answered",
+      "provider": "Serper after AnyAPI",
+      "fallback": "yes"
+    },
+    {
+      "keyword": "sales forecasting tool",
+      "you": null,
+      "best": "Rival B #1",
+      "top": "rival-a.com",
+      "status": "answered",
+      "provider": "Serper",
+      "fallback": "yes"
+    }
+  ],
+  "ai": [
+    {
+      "question": "what is the best crm for a small sales team",
+      "engine": "ChatGPT",
+      "named": [
+        "Rival A",
+        "YourBrand",
+        "Rival C"
+      ],
+      "you": true,
+      "cited": [
+        "Rival A"
+      ],
+      "status": "answered",
+      "provider": "Bright Data",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "question": "what is the best crm for a small sales team",
+      "engine": "Google AI Mode",
+      "named": [
+        "Rival A",
+        "Rival B"
+      ],
+      "you": false,
+      "cited": [
+        "Rival A"
+      ],
+      "status": "answered",
+      "provider": "DataForSEO",
+      "fallback": "yes"
+    },
+    {
+      "question": "best pipeline tool for agencies",
+      "engine": "ChatGPT",
+      "named": [
+        "Rival A"
+      ],
+      "you": false,
+      "cited": [
+        "Rival A"
+      ],
+      "status": "answered",
+      "provider": "Bright Data",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "question": "cheapest crm with email sync",
+      "engine": "ChatGPT",
+      "named": [
+        "Rival C",
+        "YourBrand"
+      ],
+      "you": true,
+      "cited": [
+        "Rival C"
+      ],
+      "status": "answered",
+      "provider": "Bright Data",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "question": "cheapest crm with email sync",
+      "engine": "Google AI Mode",
+      "named": [],
+      "you": false,
+      "cited": [],
+      "status": "no answer (miss)",
+      "provider": "DataForSEO",
+      "fallback": "yes"
+    }
+  ],
+  "share": {
+    "you": 0.5,
+    "Rival A": 0.75,
+    "Rival B": 0.25,
+    "Rival C": 0.5
+  },
+  "singleProvider": [
+    "keywords.domain.overview",
+    "dataforseolabs.google.domain-intersection.live-ai",
+    "chatgpt.search.answer"
+  ],
+  "provider": "DataForSEO, Serper, Bright Data",
+  "date": "2026-10-30",
+  "location": "United States",
+  "footprint": [
+    {
+      "domain": "yourdomain.com",
+      "keywords": 41200,
+      "traffic": 388000,
+      "status": "answered",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "domain": "rival-a.com",
+      "keywords": 96500,
+      "traffic": 1210000,
+      "status": "answered",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "domain": "rival-b.com",
+      "keywords": 30100,
+      "traffic": 205000,
+      "status": "answered",
+      "fallback": "one provider, no fallback"
+    },
+    {
+      "domain": "rival-c.com",
+      "keywords": 12800,
+      "traffic": 97000,
+      "status": "no answer (miss)",
+      "fallback": "one provider, no fallback"
+    }
+  ]
+}

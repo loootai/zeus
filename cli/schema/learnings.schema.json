@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/loootai/zeus/schema/learnings.schema.json",
+  "title": "looot-zeus learnings",
+  "description": "gtm/learnings.json. One line per run, the weights learn moved from replies and email quality, the angles and groups it saw, the providers it noted and the bounced addresses left out of exports. Written by run (runs) and learn (everything else). Never sent anywhere.",
+  "type": "object",
+  "required": ["schemaVersion", "updatedAt", "runs", "weights", "angles", "segments", "providerPrefs", "suppress", "learnedFrom"],
+  "additionalProperties": false,
+  "$defs": {
+    "weightMap": {
+      "type": "object",
+      "description": "Lower case key to multiplier. Missing means 1.",
+      "additionalProperties": { "type": "number", "minimum": 0.5, "maximum": 1.5 }
+    },
+    "emailTally": {
+      "type": "object",
+      "required": ["attempts", "found", "valid"],
+      "additionalProperties": false,
+      "properties": { "attempts": { "type": "integer", "minimum": 0 }, "found": { "type": "integer", "minimum": 0 }, "valid": { "type": "integer", "minimum": 0 } }
+    },
+    "tally": {
+      "type": "object",
+      "required": ["hit", "miss", "fail", "fallback"],
+      "additionalProperties": false,
+      "properties": { "hit": { "type": "integer" }, "miss": { "type": "integer" }, "fail": { "type": "integer" }, "fallback": { "type": "integer" } }
+    }
+  },
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1" },
+    "placeholder": { "type": "string", "description": "Present only on invented sample files." },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "at", "charged", "calls", "accounts", "emails", "providers"],
+        "additionalProperties": false,
+        "properties": {
+          "date": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" },
+          "charged": { "type": "number", "minimum": 0 },
+          "calls": { "type": "integer", "minimum": 0 },
+          "worst": { "type": "number", "minimum": 0 },
+          "accounts": { "type": "object", "description": "Accounts per grade.", "additionalProperties": { "type": "integer", "minimum": 0 } },
+          "emails": {
+            "type": "object",
+            "required": ["industry", "sizeBand"],
+            "additionalProperties": false,
+            "properties": {
+              "industry": { "type": "object", "additionalProperties": { "$ref": "#/$defs/emailTally" } },
+              "sizeBand": { "type": "object", "additionalProperties": { "$ref": "#/$defs/emailTally" } }
+            }
+          },
+          "providers": {
+            "type": "object",
+            "description": "job to provider to outcomes. A fallback counts as a miss for the provider that missed first.",
+            "additionalProperties": { "type": "object", "additionalProperties": { "$ref": "#/$defs/tally" } }
+          }
+        }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "required": ["industry", "sizeBand", "country", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "industry": { "$ref": "#/$defs/weightMap" },
+        "sizeBand": { "$ref": "#/$defs/weightMap" },
+        "country": { "$ref": "#/$defs/weightMap" },
+        "title": { "$ref": "#/$defs/weightMap" }
+      }
+    },
+    "angles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "sends", "replies", "meetings"],
+        "additionalProperties": false,
+        "properties": { "name": { "type": "string" }, "sends": { "type": "integer" }, "replies": { "type": "integer" }, "meetings": { "type": "integer" } }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["grade", "industry", "title", "sends", "replies", "bounces", "meetings"],
+        "additionalProperties": false,
+        "properties": {
+          "grade": { "type": "string" },
+          "industry": { "type": "string" },
+          "title": { "type": "string" },
+          "sends": { "type": "integer" },
+          "replies": { "type": "integer" },
+          "bounces": { "type": "integer" },
+          "meetings": { "type": "integer" }
+        }
+      }
+    },
+    "providerPrefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["job", "provider", "hitRate", "calls", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "job": { "type": "string" },
+          "provider": { "type": "string" },
+          "hitRate": { "type": "number", "minimum": 0, "maximum": 100 },
+          "calls": { "type": "integer" },
+          "status": { "type": "string", "const": "noted", "description": "Reported only. looot still picks the provider on every call." }
+        }
+      }
+    },
+    "suppress": { "type": "array", "description": "Bounced addresses, left out of the next exports.", "items": { "type": "string" } },
+    "lastLearn": {
+      "type": "object",
+      "required": ["date", "changes"],
+      "additionalProperties": false,
+      "properties": {
+        "date": { "type": "string" },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["date", "dimension", "key", "signal", "sends", "replies", "old", "new", "why"],
+            "additionalProperties": false,
+            "properties": {
+              "date": { "type": "string" },
+              "dimension": { "enum": ["industry", "sizeBand", "country", "title"] },
+              "key": { "type": "string" },
+              "signal": { "type": "string" },
+              "sends": { "type": "integer" },
+              "replies": { "type": "integer" },
+              "old": { "type": "number" },
+              "new": { "type": "number" },
+              "why": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "learnedFrom": { "type": "array", "description": "Fingerprints of outcome files and runs already learned from.", "items": { "type": "string" } }
+  }
+}

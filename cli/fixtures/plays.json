@@ -1,0 +1,97 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": [
+    "YourBrand wins with 11-200 person sales teams in software, agencies and real estate.",
+    "25 accounts scored, 6 grade A. Northwind Logistics, Silverline SaaS and Fernway Software are hot this week.",
+    "19 of 24 contacts have a verified work email. 3 came back empty and stay as rows.",
+    "Rival A runs 24 ads on an all-in-one angle. Nobody advertises on setup speed except you.",
+    "You miss 18 keywords the rivals rank for. Real estate and consulting terms are the biggest gaps.",
+    "ChatGPT names you in 2 of 4 sampled answers. Google AI Mode names you in none.",
+    "App Store reviewers praise setup and complain about mobile sync.",
+    "4 posts in the last 7 days ask for a CRM like yours. Two mention leaving Rival A over price.",
+    "Rival A's Pro tier costs 3x Starter. That jump is its most named weak spot.",
+    "Every number above is placeholder data. A real run replaces all of it."
+  ],
+  "plays": [
+    {
+      "title": "Price-jump switchers",
+      "evidence": "Rival A Pro costs 3x Starter, 22 reviews name it",
+      "list": "accounts.csv grade A and B using Rival A",
+      "command": "looot-zeus run --only enrich --depth full --cap 3",
+      "cost": "about $0.60 for 100 accounts",
+      "basis": "fact"
+    },
+    {
+      "title": "Hiring sales now",
+      "evidence": "3 accounts posted AE or RevOps roles this month",
+      "list": "signals.json intent hot",
+      "command": "looot-zeus watch --cap 5",
+      "cost": "about $0.10 a week",
+      "basis": "fact"
+    },
+    {
+      "title": "Real estate keyword gap",
+      "evidence": "crm for real estate agents, 2,900 searches, you do not rank",
+      "list": "seo.json gaps",
+      "command": "looot-zeus run --only seo --depth full --cap 2",
+      "cost": "about $0.40",
+      "basis": "fact"
+    },
+    {
+      "title": "AI answer gap on Google",
+      "evidence": "named in 0 of 2 Google AI Mode answers",
+      "list": "seo.json ai rows",
+      "command": "looot-zeus run --only seo --cap 1",
+      "cost": "about $0.15 for 10 questions",
+      "basis": "fact"
+    },
+    {
+      "title": "Reddit buyers asking now",
+      "evidence": "4 buying-intent posts in 7 days",
+      "list": "mentions.json intent rows",
+      "command": "looot-zeus watch --cap 5",
+      "cost": "about $0.05 a week",
+      "basis": "fact"
+    },
+    {
+      "title": "Setup speed ad angle",
+      "evidence": "no rival ad uses setup speed",
+      "list": "ads.json",
+      "command": "looot-zeus run --only ads --cap 1",
+      "cost": "about $0.05",
+      "basis": "fact"
+    },
+    {
+      "title": "Agencies lookalikes",
+      "evidence": "3 of 6 A accounts are agencies",
+      "list": "icp.json lookalikes industry agencies",
+      "command": "looot-zeus run --only accounts --depth full --cap 3",
+      "cost": "about $0.50 for 100 accounts",
+      "basis": "fact"
+    },
+    {
+      "title": "Mobile sync objection",
+      "evidence": "18 reviews name mobile sync",
+      "list": "reviews.json themes",
+      "command": "write a one-page fix note for sales",
+      "cost": "$0, your agent writes it",
+      "basis": "fact"
+    },
+    {
+      "title": "Funding follow-up",
+      "evidence": "Silverline SaaS raised this month",
+      "list": "signals.json funding rows",
+      "command": "looot-zeus run --only signals --cap 1",
+      "cost": "about $0.20",
+      "basis": "fact"
+    },
+    {
+      "title": "Rival C free-tier upgraders",
+      "evidence": "Rival C has a free plan and 4 open roles",
+      "list": "competitors.json Rival C",
+      "command": "looot-zeus run --only competitors --cap 1",
+      "cost": "about $0.05",
+      "basis": "fact"
+    }
+  ]
+}

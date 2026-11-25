@@ -1,0 +1,9 @@
+{
+  "_note": "Answer shapes seen from the live phone providers on 5 Nov 2026. Numbers are fictional (Ofcom drama range and 555-01xx).",
+  "quickenrich": { "code": 200, "message": "Employee phone fetched", "success": true, "data": { "first_name": "Ann", "last_name": "One", "company_url": "a.example", "country_code": "GB", "employee_phone": "7700900123", "employee_phone_type": "mobile" } },
+  "dropleads": { "linkedin_url": "https://www.linkedin.com/in/ann-one", "mobile_number": "447700900456", "credits_charged": 3 },
+  "lusha": { "billing": { "creditsCharged": 6, "resultsReturned": 1 }, "results": [ { "fullName": "Bob Two", "phones": [ { "type": "mobile", "number": "+1 646 555 0142", "doNotCall": false, "countryIso2": "US" } ] } ] },
+  "direct": { "direct_dial": "+44 20 7946 0321", "line_type": "landline" },
+  "limadata_short": { "phone_numbers": [ { "number": "5539267" } ] },
+  "site": { "markdown": "# A Co\n\nCall us on [+44 20 7946 0000](tel:+442079460000) or write to hello@a.example." }
+}

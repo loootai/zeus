@@ -1,0 +1,310 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "3 rival cards, 22 claims, each with its source and date",
+  "cards": [
+    {
+      "domain": "rival-a.com",
+      "name": "Rival A",
+      "positioning": "All-in-one platform for growing teams",
+      "pricing": [
+        {
+          "plan": "Starter",
+          "price": "$15/user/mo"
+        },
+        {
+          "plan": "Pro",
+          "price": "$49/user/mo"
+        },
+        {
+          "plan": "Enterprise",
+          "price": "on request"
+        }
+      ],
+      "stack": [
+        "HubSpot",
+        "Segment",
+        "Intercom"
+      ],
+      "news": [
+        {
+          "date": "2026-10-21",
+          "title": "Rival A launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r0"
+        }
+      ],
+      "posts": [
+        {
+          "date": "2026-10-24",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder"
+        }
+      ],
+      "weakSpots": [
+        "pricing jumps 3x from Starter to Pro"
+      ],
+      "provider": "Jina Reader, Tomba, Serper, ScrapeCreators",
+      "date": "2026-10-30",
+      "claims": [
+        {
+          "topic": "positioning",
+          "text": "Headline \"All-in-one platform for growing teams\"",
+          "source": "https://rival-a.com",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Starter $15/user/mo",
+          "source": "https://rival-a.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Pro $49/user/mo",
+          "source": "https://rival-a.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Enterprise on request",
+          "source": "https://rival-a.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "stack",
+          "text": "Runs HubSpot, Segment, Intercom",
+          "source": "https://rival-a.com",
+          "provider": "Tomba",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "news",
+          "text": "Rival A launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r0",
+          "provider": "Serper",
+          "date": "2026-10-21",
+          "dateKind": "published"
+        },
+        {
+          "topic": "posts",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder",
+          "provider": "ScrapeCreators",
+          "date": "2026-10-24",
+          "dateKind": "published"
+        },
+        {
+          "topic": "weak spot",
+          "text": "pricing jumps 3x from Starter to Pro",
+          "source": "https://rival-a.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        }
+      ],
+      "lookups": "home hit, pricing hit, stack hit, news hit, posts hit (placeholder)"
+    },
+    {
+      "domain": "rival-b.com",
+      "name": "Rival B",
+      "positioning": "CRM built for enterprise sales",
+      "pricing": [
+        {
+          "plan": "Team",
+          "price": "$65/user/mo"
+        },
+        {
+          "plan": "Enterprise",
+          "price": "$150/user/mo"
+        }
+      ],
+      "stack": [
+        "Salesforce",
+        "Marketo"
+      ],
+      "news": [
+        {
+          "date": "2026-10-21",
+          "title": "Rival B launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r1"
+        }
+      ],
+      "posts": [
+        {
+          "date": "2026-10-24",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder"
+        }
+      ],
+      "weakSpots": [
+        "slow support named in reviews"
+      ],
+      "provider": "Jina Reader, Tomba, Serper, ScrapeCreators",
+      "date": "2026-10-30",
+      "claims": [
+        {
+          "topic": "positioning",
+          "text": "Headline \"CRM built for enterprise sales\"",
+          "source": "https://rival-b.com",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Team $65/user/mo",
+          "source": "https://rival-b.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Enterprise $150/user/mo",
+          "source": "https://rival-b.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "stack",
+          "text": "Runs Salesforce, Marketo",
+          "source": "https://rival-b.com",
+          "provider": "Tomba",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "news",
+          "text": "Rival B launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r1",
+          "provider": "Serper",
+          "date": "2026-10-21",
+          "dateKind": "published"
+        },
+        {
+          "topic": "posts",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder",
+          "provider": "ScrapeCreators",
+          "date": "2026-10-24",
+          "dateKind": "published"
+        },
+        {
+          "topic": "weak spot",
+          "text": "slow support named in reviews",
+          "source": "https://rival-b.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        }
+      ],
+      "lookups": "home hit, pricing hit, stack hit, news hit, posts hit (placeholder)"
+    },
+    {
+      "domain": "rival-c.com",
+      "name": "Rival C",
+      "positioning": "The simplest CRM for freelancers",
+      "pricing": [
+        {
+          "plan": "Free",
+          "price": "$0"
+        },
+        {
+          "plan": "Plus",
+          "price": "$12/user/mo"
+        }
+      ],
+      "stack": [
+        "Stripe",
+        "Crisp"
+      ],
+      "news": [
+        {
+          "date": "2026-10-21",
+          "title": "Rival C launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r2"
+        }
+      ],
+      "posts": [
+        {
+          "date": "2026-10-24",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder"
+        }
+      ],
+      "weakSpots": [
+        "no free tier"
+      ],
+      "provider": "Jina Reader, Tomba, Serper, ScrapeCreators",
+      "date": "2026-10-30",
+      "claims": [
+        {
+          "topic": "positioning",
+          "text": "Headline \"The simplest CRM for freelancers\"",
+          "source": "https://rival-c.com",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Free $0",
+          "source": "https://rival-c.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "pricing",
+          "text": "Plus $12/user/mo",
+          "source": "https://rival-c.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "stack",
+          "text": "Runs Stripe, Crisp",
+          "source": "https://rival-c.com",
+          "provider": "Tomba",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        },
+        {
+          "topic": "news",
+          "text": "Rival C launched an AI assistant (placeholder)",
+          "source": "https://example.com/news/r2",
+          "provider": "Serper",
+          "date": "2026-10-21",
+          "dateKind": "published"
+        },
+        {
+          "topic": "posts",
+          "text": "Placeholder post about a new feature",
+          "source": "https://www.linkedin.com/company/placeholder",
+          "provider": "ScrapeCreators",
+          "date": "2026-10-24",
+          "dateKind": "published"
+        },
+        {
+          "topic": "weak spot",
+          "text": "no free tier",
+          "source": "https://rival-c.com/pricing",
+          "provider": "Jina Reader",
+          "date": "2026-10-30",
+          "dateKind": "read"
+        }
+      ],
+      "lookups": "home hit, pricing hit, stack hit, news hit, posts hit (placeholder)"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "4 companies, traffic, funding and hiring side by side",
+  "rows": [
+    {
+      "name": "YourBrand",
+      "traffic": "410K/mo",
+      "funding": "Series B",
+      "openRoles": 12,
+      "news30d": 3,
+      "you": true,
+      "sources": "traffic Datagma, funding Aviato, jobs AnyAPI, news Serper, 2026-10-30"
+    },
+    {
+      "name": "Rival A",
+      "traffic": "2.1M/mo",
+      "funding": "public",
+      "openRoles": 140,
+      "news30d": 18,
+      "you": false,
+      "sources": "traffic Datagma, funding Aviato, jobs AnyAPI, news Serper, 2026-10-30"
+    },
+    {
+      "name": "Rival B",
+      "traffic": "640K/mo",
+      "funding": "Series D",
+      "openRoles": 38,
+      "news30d": 6,
+      "you": false,
+      "sources": "traffic Datagma, funding Aviato, jobs AnyAPI, news Serper, 2026-10-30"
+    },
+    {
+      "name": "Rival C",
+      "traffic": "220K/mo",
+      "funding": "bootstrapped",
+      "openRoles": 4,
+      "news30d": 1,
+      "you": false,
+      "sources": "traffic Datagma, funding Aviato, jobs AnyAPI, news Serper, 2026-10-30"
+    }
+  ],
+  "singleProvider": [
+    "company.traffic"
+  ],
+  "provider": "Datagma, Aviato, AnyAPI, Serper",
+  "date": "2026-10-30"
+}

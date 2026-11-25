@@ -1,0 +1,52 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "your site scores 38/100 for AI agents (2 agent-aware), 2 of 3 rivals score higher",
+  "provider": "looot-agent-readiness",
+  "date": "2026-11-25",
+  "rows": [
+    {
+      "about": "you",
+      "domain": "yourdomain.com",
+      "score": 38,
+      "level": "2 agent-aware",
+      "passed": "7 of 18",
+      "missing": "llms.txt, llms-full.txt, Markdown answer, MCP discovery, Agent Skills index",
+      "status": "answered",
+      "provider": "looot-agent-readiness"
+    },
+    {
+      "about": "Rival-a",
+      "domain": "rival-a.com",
+      "score": 61,
+      "level": "3 agent-readable",
+      "passed": "11 of 18",
+      "missing": "MCP discovery, A2A agent card, API catalog",
+      "status": "answered",
+      "provider": "looot-agent-readiness"
+    },
+    {
+      "about": "Rival-b",
+      "domain": "rival-b.com",
+      "score": 44,
+      "level": "2 agent-aware",
+      "passed": "8 of 18",
+      "missing": "llms.txt, Markdown answer, schema.org data",
+      "status": "answered",
+      "provider": "looot-agent-readiness"
+    },
+    {
+      "about": "Rival-c",
+      "domain": "rival-c.com",
+      "score": 22,
+      "level": "1 crawlable",
+      "passed": "4 of 18",
+      "missing": "AI-crawler rules, llms.txt, sitemap, schema.org data",
+      "status": "answered",
+      "provider": "looot-agent-readiness"
+    }
+  ],
+  "fixes": [
+    "llms.txt: publish /llms.txt (llmstxt.org) as text/plain or text/markdown",
+    "Markdown answer: answer Accept: text/markdown with a Markdown version of the page"
+  ]
+}

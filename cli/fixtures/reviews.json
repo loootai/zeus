@@ -1,0 +1,40 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "App Store, 4.4 average over 120 reviews, 4 themes",
+  "source": "App Store",
+  "rating": 4.4,
+  "count": 120,
+  "themes": [
+    {
+      "theme": "easy to set up",
+      "count": 31,
+      "tone": "praise"
+    },
+    {
+      "theme": "mobile app sync",
+      "count": 18,
+      "tone": "complaint"
+    },
+    {
+      "theme": "price increase",
+      "count": 9,
+      "tone": "complaint"
+    },
+    {
+      "theme": "support speed",
+      "count": 7,
+      "tone": "praise"
+    }
+  ],
+  "weakSpots": [
+    {
+      "competitor": "Rival A",
+      "theme": "price jump at Pro",
+      "count": 22,
+      "avg": 2.4,
+      "yours": "4.1"
+    }
+  ],
+  "provider": "SearchAPI.io",
+  "date": "2026-10-30"
+}

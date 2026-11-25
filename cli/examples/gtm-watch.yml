@@ -1,0 +1,51 @@
+# Template. Copy this file to .github/workflows/ in your own repo.
+# Every Monday it runs looot-zeus again inside a 5 USD cap and commits gtm/.
+# gtm/changes.md says what changed since last week. Last week's files sit in gtm/history/.
+# Commit gtm/config.yaml first (run npx looot-zeus run yourdomain.com once, check it, commit it).
+# Add your looot agent token as a repository secret named LOOOT_TOKEN.
+# gtm/ holds names and work emails. Keep this repo private.
+# --yes is here because a scheduled job has nobody to answer the question. The cap still holds.
+# Before the run, looot-zeus learn reads what happened since last week: gtm/results.csv if you commit
+# one (the replies file from your outreach tool or CRM), plus replies from Instantly when the
+# INSTANTLY_API_KEY secret is set (read only). With neither, learn does nothing and the run goes on.
+# learn writes gtm/next-run.md and gtm/config.next.yaml. It never changes gtm/config.yaml.
+# The run does not use the learnings on its own. Read next-run.md, then add --apply-learnings to the
+# run line below when you want it to.
+# Run learn after the campaign reply window has closed. Commit gtm/results.csv only then.
+# If learn fails (a broken results.csv, for example), the step is marked failed and the paid run
+# still goes on, scoring as before.
+
+name: gtm-watch
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Learn from last week's replies (does nothing without results)
+        continue-on-error: true
+        env:
+          INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
+        run: npx looot-zeus learn
+      - name: Run looot-zeus inside a 5 USD cap
+        env:
+          LOOOT_TOKEN: ${{ secrets.LOOOT_TOKEN }}
+        run: npx looot-zeus run --yes --cap 5
+      - name: Commit this week's report
+        run: |
+          git config user.name "gtm-watch"
+          git config user.email "gtm-watch@users.noreply.github.com"
+          git add gtm
+          git diff --cached --quiet || git commit -m "gtm: weekly run $(date -u +%F)"
+          git push

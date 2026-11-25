@@ -1,0 +1,159 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "ideal customer written, 25 lookalike candidates from 5 seeds",
+  "card": {
+    "industries": [
+      "software",
+      "agencies",
+      "real estate",
+      "consulting",
+      "wholesale"
+    ],
+    "sizeBand": "11-200",
+    "geos": [
+      "United States",
+      "United Kingdom",
+      "Germany",
+      "Netherlands"
+    ],
+    "titles": [
+      "Head of Sales",
+      "VP Sales",
+      "Sales Manager",
+      "Founder"
+    ],
+    "stack": [
+      "Google Workspace (5 of 5 seeds)",
+      "Stripe (4 of 5)",
+      "a free CRM tier (3 of 5)",
+      "Intercom (2 of 5)"
+    ],
+    "evidence": [
+      {
+        "claim": "Seeds sit between 20 and 180 employees",
+        "provider": "The Companies API",
+        "date": "2026-10-30"
+      },
+      {
+        "claim": "4 of 5 seeds sell to other businesses",
+        "provider": "The Companies API",
+        "date": "2026-10-30"
+      },
+      {
+        "claim": "Seeds share Google Workspace and Stripe",
+        "provider": "Tomba",
+        "date": "2026-10-30"
+      }
+    ]
+  },
+  "lookalikes": [
+    {
+      "domain": "northwind-logistics.example",
+      "name": "Northwind Logistics",
+      "industry": "logistics",
+      "similarity": "0.93",
+      "seed": "seed-one.example",
+      "provider": "Tomba",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "brightpath-agency.example",
+      "name": "Brightpath Agency",
+      "industry": "agencies",
+      "similarity": "0.90",
+      "seed": "seed-two.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "cobalt-realty.example",
+      "name": "Cobalt Realty",
+      "industry": "real estate",
+      "similarity": "0.87",
+      "seed": "seed-three.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "fernway-software.example",
+      "name": "Fernway Software",
+      "industry": "software",
+      "similarity": "0.84",
+      "seed": "seed-four.example",
+      "provider": "Tomba",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "harbor-consulting.example",
+      "name": "Harbor Consulting",
+      "industry": "consulting",
+      "similarity": "0.81",
+      "seed": "seed-five.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "lumen-wholesale.example",
+      "name": "Lumen Wholesale",
+      "industry": "wholesale",
+      "similarity": "0.78",
+      "seed": "seed-one.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "quillstone-media.example",
+      "name": "Quillstone Media",
+      "industry": "agencies",
+      "similarity": "0.75",
+      "seed": "seed-two.example",
+      "provider": "Tomba",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "redwood-advisory.example",
+      "name": "Redwood Advisory",
+      "industry": "consulting",
+      "similarity": "0.72",
+      "seed": "seed-three.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "silverline-saas.example",
+      "name": "Silverline SaaS",
+      "industry": "software",
+      "similarity": "0.69",
+      "seed": "seed-four.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "tidewater-homes.example",
+      "name": "Tidewater Homes",
+      "industry": "real estate",
+      "similarity": "0.66",
+      "seed": "seed-five.example",
+      "provider": "Tomba",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "vantage-supply.example",
+      "name": "Vantage Supply",
+      "industry": "wholesale",
+      "similarity": "0.63",
+      "seed": "seed-one.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    },
+    {
+      "domain": "willow-digital.example",
+      "name": "Willow Digital",
+      "industry": "agencies",
+      "similarity": "0.60",
+      "seed": "seed-two.example",
+      "provider": "The Companies API",
+      "date": "2026-10-30"
+    }
+  ]
+}

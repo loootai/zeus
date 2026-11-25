@@ -1,0 +1,400 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "32 people across 8 buying committees, 27 emails and 12 phone numbers found",
+  "provider": "Icypeas, Kitt AI, QuickEnrich",
+  "date": "2026-10-30",
+  "accounts": [
+    {
+      "account": "Northwind Logistics",
+      "domain": "northwind-logistics.example",
+      "grade": "A",
+      "score": 91,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Pieter de Wit",
+          "title": "CEO",
+          "email": "pieter.de.wit@northwind-logistics.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-pieter-de-wit",
+          "phone": "+44 7700 900123",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Champion",
+          "name": "Mara Vermeer",
+          "title": "Head of Sales",
+          "email": "mara.vermeer@northwind-logistics.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-1",
+          "phone": "+1 555 0142",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Anouk Smit",
+          "title": "Sales Operations Lead",
+          "email": "anouk.smit@northwind-logistics.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-anouk-smit",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "User lead",
+          "name": "Bram Jansen",
+          "title": "Account Executive Team Lead",
+          "email": "bram.jansen@northwind-logistics.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-bram-jansen",
+          "phone": "",
+          "phoneStatus": "not found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Silverline SaaS",
+      "domain": "silverline-saas.example",
+      "grade": "A",
+      "score": 90,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Hugo Laurent",
+          "title": "Co-founder and CEO",
+          "email": "hugo.laurent@silverline-saas.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-hugo-laurent",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Camille Roy",
+          "title": "Head of Revenue Operations",
+          "email": "camille.roy@silverline-saas.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-camille-roy",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "User lead",
+          "name": "Grace Moreau",
+          "title": "Sales Manager",
+          "email": "grace.moreau@silverline-saas.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-9",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Influencer",
+          "name": "Lucas Martin",
+          "title": "SDR Team Lead",
+          "email": "",
+          "emailStatus": "not found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-lucas-martin",
+          "phone": "+1 555 0187",
+          "phoneStatus": "found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Brightpath Agency",
+      "domain": "brightpath-agency.example",
+      "grade": "A",
+      "score": 88,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Joost Hale",
+          "title": "VP Sales",
+          "email": "joost.hale@brightpath-agency.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-2",
+          "phone": "+44 7700 900456",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Champion",
+          "name": "Oliver Grant",
+          "title": "Head of Client Services",
+          "email": "",
+          "emailStatus": "not found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-oliver-grant",
+          "phone": "+1 555 0119",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Ruby Shaw",
+          "title": "Operations Manager",
+          "email": "ruby.shaw@brightpath-agency.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-ruby-shaw",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Influencer",
+          "name": "Emma Clarke",
+          "title": "Managing Director",
+          "email": "emma.clarke@brightpath-agency.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-emma-clarke",
+          "phone": "",
+          "phoneStatus": "not found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Fernway Software",
+      "domain": "fernway-software.example",
+      "grade": "A",
+      "score": 86,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Tom Becker",
+          "title": "Founder",
+          "email": "tom.becker@fernway-software.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-4",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Champion",
+          "name": "Jonas Weber",
+          "title": "Head of Sales",
+          "email": "",
+          "emailStatus": "not found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-jonas-weber",
+          "phone": "+44 7700 900789",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Lea Fischer",
+          "title": "RevOps Manager",
+          "email": "lea.fischer@fernway-software.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-lea-fischer",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "User lead",
+          "name": "Max Braun",
+          "title": "Sales Team Lead",
+          "email": "max.braun@fernway-software.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-max-braun",
+          "phone": "",
+          "phoneStatus": "not found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Cobalt Realty",
+      "domain": "cobalt-realty.example",
+      "grade": "B",
+      "score": 74,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Daniel Ortiz",
+          "title": "Founder",
+          "email": "daniel.ortiz@cobalt-realty.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-daniel-ortiz",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Champion",
+          "name": "Hannah Lee",
+          "title": "Director of Sales",
+          "email": "hannah.lee@cobalt-realty.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-hannah-lee",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Kevin Park",
+          "title": "IT Manager",
+          "email": "kevin.park@cobalt-realty.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-kevin-park",
+          "phone": "+1 555 0142",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "User lead",
+          "name": "Priya Raman",
+          "title": "Sales Manager",
+          "email": "priya.raman@cobalt-realty.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-3",
+          "phone": "+1 555 0163",
+          "phoneStatus": "found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Tidewater Homes",
+      "domain": "tidewater-homes.example",
+      "grade": "B",
+      "score": 72,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Felix Klein",
+          "title": "Founder",
+          "email": "felix.klein@tidewater-homes.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-10",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Champion",
+          "name": "Laura Bennett",
+          "title": "Head of Sales",
+          "email": "laura.bennett@tidewater-homes.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-laura-bennett",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Chris Hall",
+          "title": "Operations Director",
+          "email": "chris.hall@tidewater-homes.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-chris-hall",
+          "phone": "+44 7700 900123",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "User lead",
+          "name": "Megan Cole",
+          "title": "Sales Manager",
+          "email": "megan.cole@tidewater-homes.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-megan-cole",
+          "phone": "",
+          "phoneStatus": "not found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Harbor Consulting",
+      "domain": "harbor-consulting.example",
+      "grade": "B",
+      "score": 71,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Sarah Mitchell",
+          "title": "Managing Partner",
+          "email": "sarah.mitchell@harbor-consulting.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-sarah-mitchell",
+          "phone": "+44 7700 900456",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "Champion",
+          "name": "James Wood",
+          "title": "Head of Business Development",
+          "email": "james.wood@harbor-consulting.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-james-wood",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Lena Okafor",
+          "title": "Revenue Operations Manager",
+          "email": "lena.okafor@harbor-consulting.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-5",
+          "phone": "+1 555 0187",
+          "phoneStatus": "found"
+        },
+        {
+          "role": "User lead",
+          "name": "Amy Turner",
+          "title": "Senior Consultant Lead",
+          "email": "",
+          "emailStatus": "not found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-amy-turner",
+          "phone": "",
+          "phoneStatus": "not found"
+        }
+      ],
+      "provider": "Icypeas"
+    },
+    {
+      "account": "Quillstone Media",
+      "domain": "quillstone-media.example",
+      "grade": "B",
+      "score": 69,
+      "members": [
+        {
+          "role": "Economic buyer",
+          "name": "Erik Nilsson",
+          "title": "CEO",
+          "email": "erik.nilsson@quillstone-media.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-erik-nilsson",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Champion",
+          "name": "Sofia Lindqvist",
+          "title": "Head of Sales",
+          "email": "sofia.lindqvist@quillstone-media.example",
+          "emailStatus": "verified",
+          "linkedin": "https://www.linkedin.com/in/placeholder-7",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "Technical or ops lead",
+          "name": "Maja Berg",
+          "title": "Marketing Operations Lead",
+          "email": "",
+          "emailStatus": "not found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-maja-berg",
+          "phone": "",
+          "phoneStatus": "not found"
+        },
+        {
+          "role": "User lead",
+          "name": "Nils Holm",
+          "title": "Account Manager Lead",
+          "email": "nils.holm@quillstone-media.example",
+          "emailStatus": "found",
+          "linkedin": "https://www.linkedin.com/in/placeholder-nils-holm",
+          "phone": "+1 555 0119",
+          "phoneStatus": "found"
+        }
+      ],
+      "provider": "Icypeas"
+    }
+  ]
+}

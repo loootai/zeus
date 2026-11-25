@@ -1,0 +1,257 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "41 live ads across 4 advertisers, 12 pulled with their copy, 6 angles",
+  "advertisers": [
+    {
+      "name": "YourBrand",
+      "meta": 3,
+      "linkedin": 1,
+      "google": 2,
+      "angles": [
+        "simple setup"
+      ],
+      "offers": [
+        "14-day trial"
+      ],
+      "sample": {
+        "headline": "Set up your pipeline in 10 minutes",
+        "date": "2026-10-20",
+        "provider": "ScrapeCreators"
+      },
+      "you": true,
+      "domain": "yourdomain.com",
+      "ads": [
+        {
+          "platform": "meta",
+          "advertiser": "YourBrand",
+          "headline": "Set up your pipeline in 10 minutes",
+          "body": "Simple CRM for small sales teams. Start a 14-day free trial, no credit card.",
+          "firstSeen": "2026-10-20",
+          "url": "https://www.facebook.com/ads/library/?id=9900001001",
+          "provider": "ScrapeCreators",
+          "landing": "https://yourdomain.com/trial",
+          "image": null,
+          "cta": "Start free trial"
+        },
+        {
+          "platform": "google",
+          "advertiser": "YourBrand",
+          "headline": "Simple CRM for small teams",
+          "body": "Easy pipeline tracking. Try free for 14 days.",
+          "firstSeen": "2026-10-12",
+          "url": "https://adstransparency.google.com/advertiser/AR1002",
+          "provider": "DataForSEO",
+          "landing": "https://yourdomain.com/",
+          "image": null,
+          "cta": "Learn more"
+        }
+      ],
+      "lookups": "meta hit via ScrapeCreators, linkedin hit via ScrapeCreators, google hit via DataForSEO"
+    },
+    {
+      "name": "Rival A",
+      "meta": 14,
+      "linkedin": 6,
+      "google": 4,
+      "angles": [
+        "all in one",
+        "AI assistant",
+        "switch in a day"
+      ],
+      "offers": [
+        "free migration",
+        "20% off annual"
+      ],
+      "sample": {
+        "headline": "Your whole revenue team in one place",
+        "date": "2026-10-25",
+        "provider": "ScrapeCreators"
+      },
+      "you": false,
+      "domain": "rival-a.com",
+      "ads": [
+        {
+          "platform": "meta",
+          "advertiser": "Rival A",
+          "headline": "Your whole revenue team in one place",
+          "body": "All in one CRM with an AI assistant that writes your follow ups. Trusted by 4,000 teams. Free migration this month.",
+          "firstSeen": "2026-10-25",
+          "url": "https://www.facebook.com/ads/library/?id=9900001003",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-a.com/switch",
+          "image": null,
+          "cta": "Book a demo"
+        },
+        {
+          "platform": "meta",
+          "advertiser": "Rival A",
+          "headline": "Switch in a day, keep every deal",
+          "body": "Our team moves your data for free. 20% off annual plans, limited time.",
+          "firstSeen": "2026-10-22",
+          "url": "https://www.facebook.com/ads/library/?id=9900001004",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-a.com/migrate",
+          "image": null,
+          "cta": "Get offer"
+        },
+        {
+          "platform": "linkedin",
+          "advertiser": "Rival A",
+          "headline": "The AI CRM revenue leaders pick",
+          "body": "Automate the busywork. Your reps spend more time selling and close more deals.",
+          "firstSeen": "2026-10-19",
+          "url": "https://www.linkedin.com/ad-library/detail/771005",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-a.com/ai",
+          "image": null,
+          "cta": "Learn more"
+        },
+        {
+          "platform": "google",
+          "advertiser": "Rival A",
+          "headline": "Rival A, CRM with AI built in",
+          "body": "Rated 4.7 by thousands of customers. Book a demo today.",
+          "firstSeen": "2026-10-14",
+          "url": "https://adstransparency.google.com/advertiser/AR1006",
+          "provider": "DataForSEO",
+          "landing": "https://rival-a.com/",
+          "image": null,
+          "cta": "Book a demo"
+        },
+        {
+          "platform": "linkedin",
+          "advertiser": "Rival A",
+          "headline": "Forecasts that hit, every quarter",
+          "body": "See how 300 sales teams grew revenue 23% after the switch.",
+          "firstSeen": "2026-10-09",
+          "url": "https://www.linkedin.com/ad-library/detail/771007",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-a.com/stories",
+          "image": null,
+          "cta": "Read the story"
+        }
+      ],
+      "lookups": "meta hit via ScrapeCreators, linkedin hit via ScrapeCreators, google hit via DataForSEO"
+    },
+    {
+      "name": "Rival B",
+      "meta": 2,
+      "linkedin": 7,
+      "google": 0,
+      "angles": [
+        "enterprise security",
+        "forecast accuracy"
+      ],
+      "offers": [
+        "demo"
+      ],
+      "sample": {
+        "headline": "Forecasts your board will trust",
+        "date": "2026-10-18",
+        "provider": "ScrapeCreators"
+      },
+      "you": false,
+      "domain": "rival-b.com",
+      "ads": [
+        {
+          "platform": "linkedin",
+          "advertiser": "Rival B",
+          "headline": "Forecasts your board will trust",
+          "body": "SOC 2 and GDPR ready. Enterprise security for teams that grow. Request a demo.",
+          "firstSeen": "2026-10-18",
+          "url": "https://www.linkedin.com/ad-library/detail/771008",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-b.com/enterprise",
+          "image": null,
+          "cta": "Request demo"
+        },
+        {
+          "platform": "linkedin",
+          "advertiser": "Rival B",
+          "headline": "Still using spreadsheets to forecast?",
+          "body": "Tired of guessing? Rival B gives you forecast accuracy your CFO signs off on.",
+          "firstSeen": "2026-10-11",
+          "url": "https://www.linkedin.com/ad-library/detail/771009",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-b.com/forecast",
+          "image": null,
+          "cta": "Learn more"
+        },
+        {
+          "platform": "meta",
+          "advertiser": "Rival B",
+          "headline": "Secure CRM for regulated teams",
+          "body": "Compliance built in. Book a call with our team.",
+          "firstSeen": "2026-10-03",
+          "url": "https://www.facebook.com/ads/library/?id=9900001010",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-b.com/security",
+          "image": null,
+          "cta": "Book a call"
+        }
+      ],
+      "lookups": "meta hit via ScrapeCreators, linkedin hit via ScrapeCreators, google hit via DataForSEO"
+    },
+    {
+      "name": "Rival C",
+      "meta": 2,
+      "linkedin": 0,
+      "google": 0,
+      "angles": [
+        "free forever"
+      ],
+      "offers": [
+        "free plan"
+      ],
+      "sample": {
+        "headline": "The CRM that costs nothing",
+        "date": "2026-10-11",
+        "provider": "ScrapeCreators"
+      },
+      "you": false,
+      "domain": "rival-c.com",
+      "ads": [
+        {
+          "platform": "meta",
+          "advertiser": "Rival C",
+          "headline": "The CRM that costs nothing",
+          "body": "Free forever plan for up to 3 users. No credit card. Upgrade when you grow.",
+          "firstSeen": "2026-10-11",
+          "url": "https://www.facebook.com/ads/library/?id=9900001011",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-c.com/free",
+          "image": null,
+          "cta": "Sign up"
+        },
+        {
+          "platform": "meta",
+          "advertiser": "Rival C",
+          "headline": "Cheaper than Rival A, really",
+          "body": "Half the price of the big CRMs with the features small teams use.",
+          "firstSeen": "2026-09-28",
+          "url": "https://www.facebook.com/ads/library/?id=9900001012",
+          "provider": "ScrapeCreators",
+          "landing": "https://rival-c.com/compare",
+          "image": null,
+          "cta": "Compare plans"
+        }
+      ],
+      "lookups": "meta hit via ScrapeCreators, linkedin hit via ScrapeCreators, google hit via DataForSEO"
+    }
+  ],
+  "provider": "ScrapeCreators, DataForSEO",
+  "date": "2026-10-30",
+  "gaps": {
+    "yoursMissing": [
+      "AI and automation",
+      "Social proof"
+    ],
+    "nobody": [
+      "Pain point question",
+      "Urgency"
+    ]
+  },
+  "singleProvider": [
+    "ads.google.search"
+  ]
+}

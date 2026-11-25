@@ -1,0 +1,434 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "accounts": {
+    "accounts": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "5 more accounts scored",
+      "rows": [
+        {
+          "domain": "oakridge-analytics.example",
+          "name": "Oakridge Analytics",
+          "industry": "software",
+          "employees": 54,
+          "country": "Germany",
+          "grade": "A",
+          "score": 87,
+          "reasons": "software fits, 54 staff in band",
+          "source": "search",
+          "provider": "Anysite",
+          "date": "2026-10-30"
+        },
+        {
+          "domain": "pinecrest-partners.example",
+          "name": "Pinecrest Partners",
+          "industry": "consulting",
+          "employees": 33,
+          "country": "United Kingdom",
+          "grade": "B",
+          "score": 73,
+          "reasons": "consulting fits, 33 staff in band",
+          "source": "search",
+          "provider": "Anysite",
+          "date": "2026-10-30"
+        },
+        {
+          "domain": "maple-street-realty.example",
+          "name": "Maple Street Realty",
+          "industry": "real estate",
+          "employees": 120,
+          "country": "United States",
+          "grade": "B",
+          "score": 70,
+          "reasons": "real estate fits, 120 staff in band",
+          "source": "search",
+          "provider": "Anysite",
+          "date": "2026-10-30"
+        },
+        {
+          "domain": "ironleaf-distribution.example",
+          "name": "Ironleaf Distribution",
+          "industry": "wholesale",
+          "employees": 180,
+          "country": "Netherlands",
+          "grade": "C",
+          "score": 56,
+          "reasons": "wholesale fits, 180 staff in band",
+          "source": "search",
+          "provider": "Anysite",
+          "date": "2026-10-30"
+        },
+        {
+          "domain": "northstar-studio.example",
+          "name": "Northstar Studio",
+          "industry": "agencies",
+          "employees": 24,
+          "country": "United Kingdom",
+          "grade": "A",
+          "score": 84,
+          "reasons": "agencies fits, 24 staff in band",
+          "source": "search",
+          "provider": "Anysite",
+          "date": "2026-10-30"
+        }
+      ]
+    },
+    "people": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "5 more people",
+      "rows": [
+        {
+          "account": "Oakridge Analytics",
+          "domain": "oakridge-analytics.example",
+          "grade": "A",
+          "name": "Clara Vogel",
+          "title": "Head of Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-clara-vogel",
+          "provider": "Icypeas",
+          "date": "2026-10-30"
+        },
+        {
+          "account": "Pinecrest Partners",
+          "domain": "pinecrest-partners.example",
+          "grade": "B",
+          "name": "George Hunt",
+          "title": "VP Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-george-hunt",
+          "provider": "Icypeas",
+          "date": "2026-10-30"
+        },
+        {
+          "account": "Maple Street Realty",
+          "domain": "maple-street-realty.example",
+          "grade": "B",
+          "name": "Nina Alvarez",
+          "title": "Sales Manager",
+          "linkedin": "https://www.linkedin.com/in/placeholder-nina-alvarez",
+          "provider": "Icypeas",
+          "date": "2026-10-30"
+        },
+        {
+          "account": "Ironleaf Distribution",
+          "domain": "ironleaf-distribution.example",
+          "grade": "C",
+          "name": "Joris Mulder",
+          "title": "Founder",
+          "linkedin": "https://www.linkedin.com/in/placeholder-joris-mulder",
+          "provider": "Icypeas",
+          "date": "2026-10-30"
+        },
+        {
+          "account": "Northstar Studio",
+          "domain": "northstar-studio.example",
+          "grade": "A",
+          "name": "Isla Brooks",
+          "title": "Head of Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-isla-brooks",
+          "provider": "Icypeas",
+          "date": "2026-10-30"
+        }
+      ]
+    },
+    "enrich": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "4 more emails verified",
+      "rows": [
+        {
+          "account": "Oakridge Analytics",
+          "domain": "oakridge-analytics.example",
+          "grade": "A",
+          "name": "Clara Vogel",
+          "title": "Head of Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-clara-vogel",
+          "provider": "Icypeas",
+          "date": "2026-10-30",
+          "email": "clara.vogel@oakridge-analytics.example",
+          "status": "valid",
+          "trail": "Kitt AI hit",
+          "verifiedBy": "Dropleads",
+          "phone": ""
+        },
+        {
+          "account": "Pinecrest Partners",
+          "domain": "pinecrest-partners.example",
+          "grade": "B",
+          "name": "George Hunt",
+          "title": "VP Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-george-hunt",
+          "provider": "Icypeas",
+          "date": "2026-10-30",
+          "email": "george.hunt@pinecrest-partners.example",
+          "status": "valid",
+          "trail": "Kitt AI hit",
+          "verifiedBy": "Dropleads",
+          "phone": ""
+        },
+        {
+          "account": "Maple Street Realty",
+          "domain": "maple-street-realty.example",
+          "grade": "B",
+          "name": "Nina Alvarez",
+          "title": "Sales Manager",
+          "linkedin": "https://www.linkedin.com/in/placeholder-nina-alvarez",
+          "provider": "Icypeas",
+          "date": "2026-10-30",
+          "email": "nina.alvarez@maple-street-realty.example",
+          "status": "valid",
+          "trail": "Kitt AI hit",
+          "verifiedBy": "Dropleads",
+          "phone": ""
+        },
+        {
+          "account": "Ironleaf Distribution",
+          "domain": "ironleaf-distribution.example",
+          "grade": "C",
+          "name": "Joris Mulder",
+          "title": "Founder",
+          "linkedin": "https://www.linkedin.com/in/placeholder-joris-mulder",
+          "provider": "Icypeas",
+          "date": "2026-10-30",
+          "email": "",
+          "status": "miss",
+          "trail": "Kitt AI hit",
+          "verifiedBy": "Dropleads",
+          "phone": ""
+        },
+        {
+          "account": "Northstar Studio",
+          "domain": "northstar-studio.example",
+          "grade": "A",
+          "name": "Isla Brooks",
+          "title": "Head of Sales",
+          "linkedin": "https://www.linkedin.com/in/placeholder-isla-brooks",
+          "provider": "Icypeas",
+          "date": "2026-10-30",
+          "email": "isla.brooks@northstar-studio.example",
+          "status": "valid",
+          "trail": "Kitt AI hit",
+          "verifiedBy": "Dropleads",
+          "phone": ""
+        }
+      ]
+    }
+  },
+  "committee": {
+    "committee": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "1 more committee",
+      "accounts": [
+        {
+          "account": "Willow Digital",
+          "domain": "willow-digital.example",
+          "grade": "B",
+          "score": 70,
+          "members": [
+            {
+              "role": "Economic buyer",
+              "name": "Aisha Khan",
+              "title": "Founder",
+              "email": "aisha.khan@willow-digital.example",
+              "emailStatus": "found",
+              "linkedin": "https://www.linkedin.com/in/placeholder-aisha-khan",
+              "phone": "+44 7700 900789",
+              "phoneStatus": "found"
+            },
+            {
+              "role": "Champion",
+              "name": "Ravi Shah",
+              "title": "Head of Sales",
+              "email": "ravi.shah@willow-digital.example",
+              "emailStatus": "verified",
+              "linkedin": "https://www.linkedin.com/in/placeholder-12",
+              "phone": "",
+              "phoneStatus": "not found"
+            },
+            {
+              "role": "Technical or ops lead",
+              "name": "Zoe Hart",
+              "title": "Systems Admin Lead",
+              "email": "zoe.hart@willow-digital.example",
+              "emailStatus": "found",
+              "linkedin": "https://www.linkedin.com/in/placeholder-zoe-hart",
+              "phone": "",
+              "phoneStatus": "not found"
+            },
+            {
+              "role": "Influencer",
+              "name": "Tom Reed",
+              "title": "Director of Growth",
+              "email": "tom.reed@willow-digital.example",
+              "emailStatus": "found",
+              "linkedin": "https://www.linkedin.com/in/placeholder-tom-reed",
+              "phone": "",
+              "phoneStatus": "not found"
+            }
+          ],
+          "provider": "Icypeas"
+        }
+      ]
+    }
+  },
+  "ads": {
+    "ads": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "more ads",
+      "advertisers": [
+        {
+          "name": "Rival A",
+          "meta": 2,
+          "linkedin": 1,
+          "google": 0,
+          "angles": [
+            "AI and automation"
+          ],
+          "offers": [
+            "Demo or call"
+          ],
+          "ads": [
+            {
+              "platform": "meta",
+              "advertiser": "Rival A",
+              "headline": "Meet Copilot, your AI sales agent",
+              "body": "Let AI update every deal and write follow ups. Book a demo and see it on your own pipeline.",
+              "firstSeen": "2026-10-30",
+              "url": "https://www.facebook.com/ads/library/?id=9900002001",
+              "provider": "ScrapeCreators",
+              "landing": "https://rival-a.com/copilot",
+              "image": null,
+              "cta": "Book a demo"
+            },
+            {
+              "platform": "linkedin",
+              "advertiser": "Rival A",
+              "headline": "Revenue teams switch to Rival A",
+              "body": "Join 4,000 teams. Free migration and onboarding included.",
+              "firstSeen": "2026-10-28",
+              "url": "https://www.linkedin.com/ad-library/detail/772001",
+              "provider": "ScrapeCreators",
+              "landing": "https://rival-a.com/switch",
+              "image": null,
+              "cta": "Learn more"
+            }
+          ],
+          "domain": "rival-a.com"
+        },
+        {
+          "name": "Rival C",
+          "meta": 1,
+          "linkedin": 0,
+          "google": 0,
+          "angles": [
+            "Price and savings"
+          ],
+          "offers": [
+            "Free plan"
+          ],
+          "ads": [
+            {
+              "platform": "meta",
+              "advertiser": "Rival C",
+              "headline": "Stop paying per seat",
+              "body": "Free plan for 3 users. Save on every seat after that.",
+              "firstSeen": "2026-10-29",
+              "url": "https://www.facebook.com/ads/library/?id=9900002002",
+              "provider": "ScrapeCreators",
+              "landing": "https://rival-c.com/pricing",
+              "image": null,
+              "cta": "Sign up"
+            }
+          ],
+          "domain": "rival-c.com"
+        }
+      ]
+    }
+  },
+  "social": {
+    "social": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "more posts",
+      "brands": [
+        {
+          "name": "Rival A",
+          "domain": "rival-a.com",
+          "you": false,
+          "linkedinUrl": "https://www.linkedin.com/company/rival-a",
+          "handle": "rival-a",
+          "lookups": "",
+          "posts": [
+            {
+              "network": "LinkedIn",
+              "date": "2026-10-12",
+              "text": "Our 2026 State of Sales report is out. 1,200 sales leaders on where AI helps and where it does not.",
+              "url": "https://www.linkedin.com/feed/update/placeholder-a4",
+              "likes": 410,
+              "comments": 52,
+              "shares": 60,
+              "topics": [
+                "AI",
+                "Opinion and how to"
+              ],
+              "provider": "ScrapeCreators"
+            }
+          ]
+        },
+        {
+          "name": "Rival B",
+          "domain": "rival-b.com",
+          "you": false,
+          "linkedinUrl": "https://www.linkedin.com/company/rival-b",
+          "handle": "rival-b",
+          "lookups": "",
+          "posts": [
+            {
+              "network": "LinkedIn",
+              "date": "2026-10-02",
+              "text": "Customer story. How a 40 person fintech team got forecast accuracy to 94%.",
+              "url": "https://www.linkedin.com/feed/update/placeholder-b4",
+              "likes": 121,
+              "comments": 8,
+              "shares": 5,
+              "topics": [
+                "Customer story"
+              ],
+              "provider": "ScrapeCreators"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "seo": {
+    "seo": {
+      "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+      "summary": "more keywords",
+      "ranks": [
+        {
+          "keyword": "crm for real estate agents",
+          "you": null,
+          "best": "Rival A #4",
+          "top": "rival-a.com",
+          "status": "answered",
+          "provider": "Serper",
+          "fallback": "yes"
+        },
+        {
+          "keyword": "sales pipeline template",
+          "you": 18,
+          "best": "Rival C #2",
+          "top": "rival-c.com",
+          "status": "answered",
+          "provider": "Serper",
+          "fallback": "yes"
+        },
+        {
+          "keyword": "crm for consultants",
+          "you": null,
+          "best": "Rival B #6",
+          "top": "rival-b.com",
+          "status": "answered",
+          "provider": "Serper",
+          "fallback": "yes"
+        }
+      ]
+    }
+  }
+}

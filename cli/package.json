@@ -1,0 +1,57 @@
+{
+  "name": "looot-zeus",
+  "version": "0.2.0",
+  "description": "One domain in, a full GTM dossier out. Quote first, one cap, a receipt for every call.",
+  "type": "module",
+  "bin": {
+    "looot-zeus": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "fixtures",
+    "schema",
+    "examples",
+    "docs",
+    "SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/src/cli.js",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "demo": "node dist/src/cli.js demo",
+    "fixtures": "node dist/src/cli.js fixtures",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "license": "MIT",
+  "homepage": "https://looot.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loootai/zeus.git",
+    "directory": "cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/loootai/zeus/issues"
+  },
+  "keywords": [
+    "gtm",
+    "looot",
+    "dossier",
+    "cli",
+    "sales"
+  ]
+}

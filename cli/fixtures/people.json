@@ -1,0 +1,114 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "24 people found, 2 per account (12 shown)",
+  "rows": [
+    {
+      "account": "Northwind Logistics",
+      "domain": "northwind-logistics.example",
+      "name": "Mara Vermeer",
+      "title": "Head of Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-1",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Brightpath Agency",
+      "domain": "brightpath-agency.example",
+      "name": "Joost Hale",
+      "title": "VP Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-2",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Cobalt Realty",
+      "domain": "cobalt-realty.example",
+      "name": "Priya Raman",
+      "title": "Sales Manager",
+      "linkedin": "https://www.linkedin.com/in/placeholder-3",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Fernway Software",
+      "domain": "fernway-software.example",
+      "name": "Tom Becker",
+      "title": "Founder",
+      "linkedin": "https://www.linkedin.com/in/placeholder-4",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Harbor Consulting",
+      "domain": "harbor-consulting.example",
+      "name": "Lena Okafor",
+      "title": "Revenue Operations Manager",
+      "linkedin": "https://www.linkedin.com/in/placeholder-5",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Lumen Wholesale",
+      "domain": "lumen-wholesale.example",
+      "name": "Owen Price",
+      "title": "Head of Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-6",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Quillstone Media",
+      "domain": "quillstone-media.example",
+      "name": "Sofia Lindqvist",
+      "title": "Head of Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-7",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Redwood Advisory",
+      "domain": "redwood-advisory.example",
+      "name": "Daan Bakker",
+      "title": "VP Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-8",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Silverline SaaS",
+      "domain": "silverline-saas.example",
+      "name": "Grace Moreau",
+      "title": "Sales Manager",
+      "linkedin": "https://www.linkedin.com/in/placeholder-9",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Tidewater Homes",
+      "domain": "tidewater-homes.example",
+      "name": "Felix Klein",
+      "title": "Founder",
+      "linkedin": "https://www.linkedin.com/in/placeholder-10",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Vantage Supply",
+      "domain": "vantage-supply.example",
+      "name": "Ines Duarte",
+      "title": "Revenue Operations Manager",
+      "linkedin": "https://www.linkedin.com/in/placeholder-11",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    },
+    {
+      "account": "Willow Digital",
+      "domain": "willow-digital.example",
+      "name": "Ravi Shah",
+      "title": "Head of Sales",
+      "linkedin": "https://www.linkedin.com/in/placeholder-12",
+      "provider": "Icypeas",
+      "date": "2026-10-30"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "placeholder": "PLACEHOLDER. Invented sample data for design and demo. No looot call made it.",
+  "summary": "your domain is 6 years old, registry records for 4 of 4 domains",
+  "provider": "looot-rdap",
+  "date": "2026-11-25",
+  "rows": [
+    {
+      "about": "you",
+      "domain": "yourdomain.com",
+      "age": "6 years",
+      "registrar": "Example Registrar",
+      "created": "2019-03-14",
+      "expires": "2027-03-14",
+      "status": "answered",
+      "provider": "looot-rdap"
+    },
+    {
+      "about": "Rival-a",
+      "domain": "rival-a.com",
+      "age": "12 years",
+      "registrar": "Example Registrar",
+      "created": "2013-06-02",
+      "expires": "2028-06-02",
+      "status": "answered",
+      "provider": "looot-rdap"
+    },
+    {
+      "about": "Rival-b",
+      "domain": "rival-b.com",
+      "age": "3 years",
+      "registrar": "Sample Domains",
+      "created": "2022-09-20",
+      "expires": "2026-09-20",
+      "status": "answered",
+      "provider": "looot-rdap"
+    },
+    {
+      "about": "Rival-c",
+      "domain": "rival-c.com",
+      "age": "9 years",
+      "registrar": "Sample Domains",
+      "created": "2016-01-11",
+      "expires": "2027-01-11",
+      "status": "answered",
+      "provider": "looot-rdap"
+    }
+  ]
+}

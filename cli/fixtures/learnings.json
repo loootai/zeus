@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1",
+  "placeholder": "PLACEHOLDER. Invented sample data for the learn demo. No looot call made it.",
+  "updatedAt": "2026-10-30T09:20:00.000Z",
+  "runs": [
+    {
+      "date": "2026-10-30",
+      "at": "2026-10-30T09:00:00.000Z",
+      "charged": 1.58,
+      "calls": 298,
+      "worst": 6.55,
+      "accounts": {
+        "A": 6,
+        "B": 9,
+        "C": 7,
+        "D": 3
+      },
+      "emails": {
+        "industry": {
+          "software": {
+            "attempts": 24,
+            "found": 21,
+            "valid": 18
+          },
+          "agencies": {
+            "attempts": 20,
+            "found": 16,
+            "valid": 13
+          },
+          "wholesale": {
+            "attempts": 32,
+            "found": 16,
+            "valid": 9
+          }
+        },
+        "sizeBand": {
+          "11-50": {
+            "attempts": 30,
+            "found": 25,
+            "valid": 20
+          },
+          "51-200": {
+            "attempts": 36,
+            "found": 23,
+            "valid": 17
+          }
+        }
+      },
+      "providers": {
+        "people.email.find": {
+          "Findymail": {
+            "hit": 20,
+            "miss": 4,
+            "fail": 0,
+            "fallback": 4
+          },
+          "Kitt AI": {
+            "hit": 10,
+            "miss": 12,
+            "fail": 0,
+            "fallback": 0
+          }
+        },
+        "company.enrich": {
+          "The Companies API": {
+            "hit": 20,
+            "miss": 3,
+            "fail": 0,
+            "fallback": 0
+          },
+          "Anysite": {
+            "hit": 2,
+            "miss": 0,
+            "fail": 0,
+            "fallback": 0
+          }
+        }
+      }
+    }
+  ],
+  "weights": {
+    "industry": {},
+    "sizeBand": {},
+    "country": {},
+    "title": {}
+  },
+  "angles": [],
+  "segments": [],
+  "providerPrefs": [],
+  "suppress": [],
+  "learnedFrom": []
+}
