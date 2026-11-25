@@ -6,7 +6,11 @@ You give it your domain. It reads your site, writes a short brief and asks you t
 
 It runs on [looot](https://looot.ai). You need one looot key (`LOOOT_TOKEN`) for a real run. The demo needs no key.
 
-## Install
+## Start
+
+Tell your agent: `run zeus.looot.ai for mycompany.com`. It reads zeus.looot.ai, installs what it needs and runs Zeus on your domain, price first.
+
+## Install (for developers)
 
 ```bash
 npx looot-zeus run yourdomain.com      # no install needed

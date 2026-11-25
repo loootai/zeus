@@ -9,20 +9,20 @@ function memberHtml(m: Member, pub: boolean): string {
   const title = e(maskValue(m.title, undefined, pub));
   const acts: string[] = [];
   if (m.email) acts.push(`<span>${e(maskValue(m.email, "email", pub))}</span>${pub ? "" : `<button type="button" class="cp" data-copy="${e(m.email)}">Copy</button>`}<span class="chip">${e(m.emailStatus)}</span>`);
-  else acts.push(`<span class="t">email ${e(m.emailStatus)}</span>`);
+  else acts.push(`<span class="zg-t">email ${e(m.emailStatus)}</span>`);
   if (m.phone) acts.push(`<span>${e(maskValue(m.phone, "phone", pub))}</span>${m.phoneType ? `<span class="chip">${e(m.phoneType)}</span>` : ""}`);
-  else acts.push(`<span class="t">phone ${e(m.phoneStatus)}</span>`);
+  else acts.push(`<span class="zg-t">phone ${e(m.phoneStatus)}</span>`);
   const li = safeUrl(m.linkedin);
   if (li && !pub) acts.push(`<a href="${e(li)}" target="_blank" rel="noopener noreferrer">LinkedIn</a>`);
-  return `<li class="mem"><span class="chip">${e(m.role)}</span> <b>${name}</b> <span class="t">${title}</span><div class="acts">${acts.join("")}</div></li>`;
+  return `<li class="mem"><span class="chip">${e(m.role)}</span> <b>${name}</b> <span class="zg-t">${title}</span><div class="zg-acts">${acts.join("")}</div></li>`;
 }
 
 /** Draws every buying committee, one account per card. Masks names, emails and phones when pub is true. */
 export function renderPeople(items: CommitteeCard[], pub: boolean): string {
-  return `<div class="ccs">${items.map((c) => {
+  return `<div class="zg-ccs">${items.map((c) => {
     const found = c.members.filter((m) => m.email).length;
     const ph = c.members.filter((m) => m.phone).length;
     const tone = ({ A: "go", B: "warm", D: "cold" } as Record<string, string>)[c.grade] ?? "";
-    return `<article class="cc"><header class="cc-h"><div><h4>${e(maskValue(c.account, undefined, pub))}</h4><span class="src">${e(maskValue(c.domain, undefined, pub))}</span></div><span class="chip ${tone}">grade ${e(c.grade)}</span></header><p class="src">${c.members.length} people, ${found} emails, ${ph} phones</p><ul class="mems">${c.members.map((m) => memberHtml(m, pub)).join("")}</ul></article>`;
+    return `<article class="zg-cc"><header class="zg-cc-h"><div><h4>${e(maskValue(c.account, undefined, pub))}</h4><span class="src">${e(maskValue(c.domain, undefined, pub))}</span></div><span class="chip ${tone ? "zg-" + tone : ""}">grade ${e(c.grade)}</span></header><p class="src">${c.members.length} people, ${found} emails, ${ph} phones</p><ul class="zg-mems">${c.members.map((m) => memberHtml(m, pub)).join("")}</ul></article>`;
   }).join("")}</div>`;
 }

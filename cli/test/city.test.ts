@@ -75,3 +75,28 @@ test("city page: fork it, tell your agent and powered by looot on every page; sh
   assert.ok(pub.includes('class="za zshare"'));
   assert.ok(!priv.includes('class="za zshare"'), "a private page is never offered for sharing");
 });
+
+test("the city page is David's shell filled from the run: isometric city, every slot filled, no Higgsfield data, no image", async () => {
+  const html = readFileSync(join(demo(), "city", "index.html"), "utf8");
+  assert.match(html, /<svg class="iso-svg" viewBox="0 -680 1100 1470"/);
+  assert.equal((html.match(/<a class="isa/g) ?? []).length, 64);
+  assert.doesNotMatch(html, /\{\{[\w.]+\}\}/, "an unfilled slot");
+  assert.doesNotMatch(html, /higgsfield|runwayml|<img|<image|fonts\.googleapis/i);
+  assert.match(html, /data-t="Northwind Logistics"/, "buildings carry the run's accounts");
+  assert.match(html, /<aside class="side"[\s\S]*<h6>Watch the market<\/h6>[\s\S]*>Reddit</);
+  for (const v of ["pages", "reddit", "mmap", "paid"]) assert.match(html, new RegExp(`data-view="${v}"`), v);
+});
+
+test("not-yet features come from paid.json: off is never named, coming-soon is named as coming soon", async () => {
+  const { PAID_FEATURES } = await import("../src/city/index.js");
+  const html = renderCity(bare);
+  for (const f of PAID_FEATURES.filter((x) => x.state === "off")) assert.ok(!html.includes(`>${f.label}<`) && !html.includes(`"${f.label}"`), f.label);
+  assert.match(html, /class="isa[^"]* zoff" href="#paid"[^>]*data-t="Room to grow"/);
+  const saved = PAID_FEATURES.map((f) => f.state);
+  PAID_FEATURES.find((f) => f.key === "crm")!.state = "coming-soon";
+  try {
+    const soon = renderCity(bare);
+    assert.match(soon, /data-t="CRM sync" data-s="Coming soon"/);
+    assert.match(soon, /<h3>Coming soon<\/h3>[\s\S]*<li>CRM sync<\/li>/);
+  } finally { PAID_FEATURES.forEach((f, i) => (f.state = saved[i] as never)); }
+});

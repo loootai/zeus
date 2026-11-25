@@ -225,5 +225,5 @@ test("--mask-accounts works through the CLI", () => {
   assert.match(ex, /rivals, target accounts and people are swapped out, .* 0 left/);
   const md = readFileSync(join(dir, "gtm", "public", "dossier.md"), "utf8");
   assert.ok(!md.includes("Lumen Wholesale"));
-  assert.match(md, /Account \d+/);
+  assert.match(md, /Account [A-Z]+\b/);
 });

@@ -2,6 +2,14 @@
 
 Zeus is the free first run of [looot](https://looot.ai). Give it your domain. It reads your site for free, shows the price of every step, and after your yes it spends at most your cap on real data runs. You get one dossier and one page that shows your market as a city.
 
+Tell your agent (Claude Code, Cursor, Codex):
+
+```
+run zeus.looot.ai for mycompany.com
+```
+
+For developers:
+
 ```bash
 export LOOOT_TOKEN=...          # looot.ai, Settings, Agent tokens
 npx looot-zeus run yourdomain.com
@@ -24,6 +32,8 @@ npx skills add loootai/gtm-skills
 See [cli/README.md](cli/README.md) for every command, option and module, and [cli/SKILL.md](cli/SKILL.md) for the agent flow.
 
 ## Personal data
+
+Shared and served pages also name no target account or rival: they show Account A, B, C and Rival 1, 2, 3 with sector, size and score, and the run refuses to write a shared page that still names one.
 
 Only your own local output folder (`gtm/`) can hold contacts, and only after a run with `--people`. Shared and served pages (`--public`, `export --public`, `serve`) show people as a role with an invented name, no email, phone or profile link. `npx looot-zeus delete` removes the local contacts; we suggest doing that within 30 days. `npm test` fails on a real email, phone number or person photo in any tracked file.
 

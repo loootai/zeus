@@ -12,6 +12,8 @@ import type { ModuleResult } from "./modules/types.js";
 import { readState } from "./more.js";
 import type { Receipt } from "./receipt.js";
 import { writeFile } from "./util.js";
+import { buildSnapshot } from "./history.js";
+import { scrubThirdParties, thirdPartySwaps } from "./thirdParties.js";
 
 export type SafePages = {
   "city/index.html": string;
@@ -29,7 +31,14 @@ export function renderSafePages(outDir: string): SafePages | null {
   const mods = MODULES.filter((m) => ids.has(m.id));
   const results = new Map<string, ModuleResult>(Object.entries(state.results).map(([id, r]) => [id, { ...r }]));
   const d = safeDossier(assemble({ domain: state.cfg.domain, brand: state.cfg.brand, mods, results, receipt, public: true, placeholder: state.placeholder, cfg: state.cfg, pages: state.pages, pulls: state.pulls }));
-  return { "city/index.html": renderCity(d), "dossier.html": renderHtml(d), "dossier.md": renderMarkdown(d) };
+  // No target account or rival is named on a page meant to be shared; the guard throws if one is left.
+  const outputs = Object.fromEntries([...results].map(([id, r]) => [id, r.out]));
+  const tp = thirdPartySwaps(buildSnapshot(state.cfg, outputs, receipt));
+  return {
+    "city/index.html": scrubThirdParties("city/index.html", renderCity(d), tp),
+    "dossier.html": scrubThirdParties("dossier.html", renderHtml(d), tp),
+    "dossier.md": scrubThirdParties("dossier.md", renderMarkdown(d), tp),
+  };
 }
 
 /** Writes the safe pages for `serve` into `<dir>`, with the city page as index.html. Returns the folder, or null when there is no saved run. */

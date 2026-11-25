@@ -47,19 +47,38 @@ function writeRequests(projectDir: string, list: ZeusRequest[]): void {
   renameSync(tmp, f);
 }
 
-/** The page sections a button may ask for more of. Anything else is refused. */
-export const REQUEST_SECTIONS = ["abm", "alerts", "backlinks", "battle", "brief", "calendar", "campaign", "competitive", "crm", "demand", "dmu", "formats", "geo", "guard", "hood", "inbox", "influencers", "kwgaps", "mmap", "next", "pages", "ranktracker", "reddit", "seo", "signals", "sov", "targets", "tiktok", "weekly"] as const;
+/** The page sections a button may ask for more of. Anything else is refused. Kept in step with city/menu.json (a test checks). */
+export const REQUEST_SECTIONS = [
+  "alerts", "backlinks", "brief", "calendar", "committees", "competitive", "crm", "dmu", "domains", "formats", "geo", "hiring", "influencers", "kwgaps",
+  "lookalikes", "mmap", "more-creators", "more-pages", "more-weeks", "news", "openers", "pages", "prospecting", "pricing", "ranktracker", "readiness",
+  "reddit", "refresh", "runlog", "seo", "sov", "targets", "tiktok",
+] as const;
 
 /** The known actions. Each maps to one fixed command; nothing a page sends is ever printed as an instruction. */
 export const REQUEST_ACTIONS = ["more-accounts", "more-committee", "more-ads", "more-social", "more-seo", "rerun"] as const;
 export type RequestAction = (typeof REQUEST_ACTIONS)[number];
 
-/** The action a section's button asks for. Sections without their own `more` step ask for a re-run. */
-const SECTION_ACTION: Record<string, RequestAction> = { targets: "more-accounts", abm: "more-accounts", dmu: "more-committee", competitive: "more-ads", tiktok: "more-social", influencers: "more-social", seo: "more-seo", kwgaps: "more-seo", ranktracker: "more-seo" };
+/**
+ * The action a section's button asks for. Only sections with a real looot-zeus command are here. Every other
+ * section (hiring, pricing, alerts, a CRM push and so on) has no command yet: the server refuses it with
+ * copyPrompt and the page copies the button's prompt for the user to paste into their agent. It never falls to a re-run.
+ */
+const SECTION_ACTION: Record<string, RequestAction> = {
+  targets: "more-accounts", lookalikes: "more-accounts",
+  dmu: "more-committee", committees: "more-committee",
+  competitive: "more-ads",
+  tiktok: "more-social", influencers: "more-social", "more-creators": "more-social",
+  seo: "more-seo", kwgaps: "more-seo", ranktracker: "more-seo",
+  refresh: "rerun",
+};
 
-export function defaultAction(section: string): RequestAction {
-  return SECTION_ACTION[section] ?? "rerun";
+/** The action for a section, or null when it has no command and the page should copy its prompt instead. */
+export function defaultAction(section: string): RequestAction | null {
+  return SECTION_ACTION[section] ?? null;
 }
+
+/** What the server answers for a section with no command: the page copies the prompt instead. */
+export const COPY_PROMPT = "no command for this section yet, copy the prompt into your agent";
 
 /** The one fixed command an approved request prints. Count is a checked whole number. */
 export function commandFor(r: { action: RequestAction; count: number }): string {
@@ -84,6 +103,7 @@ export function parseRequestBody(raw: string): { section: string; action: Reques
   if (!section) return "section is missing";
   if (!(REQUEST_SECTIONS as readonly string[]).includes(section)) return "unknown section";
   const action = o.action === undefined ? defaultAction(section) : o.action;
+  if (action === null) return COPY_PROMPT;
   if (typeof action !== "string" || !(REQUEST_ACTIONS as readonly string[]).includes(action)) return "unknown action";
   const n = o.count === undefined ? 10 : Number(o.count);
   if (!Number.isInteger(n) || n < 1 || n > 100) return "count must be a whole number from 1 to 100";
@@ -162,6 +182,11 @@ export function startServer(o: { root: string; projectDir: string; port?: number
   });
   const endPost = (body: string, res: ServerResponse): void => {
     const p = parseRequestBody(body);
+    if (p === COPY_PROMPT) {
+      // Not an error in the page: it copies the button's prompt for the user's agent. Nothing is stored.
+      res.writeHead(422, { "Content-Type": "application/json" }).end(JSON.stringify({ error: p, copyPrompt: true }));
+      return;
+    }
     if (typeof p === "string") {
       res.writeHead(400, { "Content-Type": "application/json" }).end(JSON.stringify({ error: p }));
       return;

@@ -257,7 +257,7 @@ test("committee emails: ben@ on Mira Sanders and an email on harborplc.example a
   assert.match(emailMismatch("ben@northwind.example", { name: "Mira Sanders" }, "northwind.example")!, /someone else/);
   assert.equal(emailMismatch("ben@northwind.example", { name: "Ben Lakeman" }, "northwind.example"), null);
   assert.match(emailMismatch("zavery@harborplc.example", { name: "Zane Avery" }, "northwind.example")!, /harborplc\.example is not northwind\.example/);
-  assert.match(emailMismatch("placeholder.person@gmail.com", { name: "Placeholder Person" }, "fernway.example")!, /gmail\.com/);
+  assert.match(emailMismatch("victorbellamy@gmail.com", { name: "Victor Bellamy" }, "fernway.example")!, /gmail\.com/);
   assert.match(emailMismatch("info@northwind.example", { name: "Hazel Kerr" }, "northwind.example")!, /shared inbox/);
   assert.equal(emailMismatch("toby.hartley@willowmedia.example", { name: "Toby Hartley" }, "willowmedia.agency"), null);
   assert.equal(emailMismatch("zh@tidepool.example", { name: "Zed Hanley" }, "tidepool.co"), null);

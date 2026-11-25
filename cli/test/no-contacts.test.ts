@@ -25,7 +25,7 @@ const PHONE = /(?<![\w.])(\+[1-9][\d ()\-.]{7,16}\d|\(?\d{3}\)?[ .-]\d{3}[ .-]\d
 
 const PLACEHOLDER_DOMAINS = ["example.com", "example.org", "example.net", "yourdomain.com", "looot.ai", "users.noreply.github.com"];
 // Free-mail addresses are allowed only when they are exactly one of these placeholders.
-const PLACEHOLDER_ADDRESSES = new Set(["placeholder.person@gmail.com"]);
+const PLACEHOLDER_ADDRESSES = new Set(["victorbellamy@gmail.com"]);
 
 /** Whether an email is a placeholder: a reserved or own domain, a noreply address, or a listed address. */
 export function isPlaceholderEmail(email: string): boolean {

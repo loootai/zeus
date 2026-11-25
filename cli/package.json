@@ -17,8 +17,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && chmod +x dist/src/cli.js",
+    "build": "tsc -p tsconfig.json && cp src/city/menu.json src/city/paid.json dist/src/city/ && cp -r src/city/shell dist/src/city/ && chmod +x dist/src/cli.js",
     "test": "npm run build && node --test dist/test/*.test.js",
+    "test:visual": "node test-visual/city.visual.mjs",
     "demo": "node dist/src/cli.js demo",
     "fixtures": "node dist/src/cli.js fixtures",
     "prepack": "npm run build",
@@ -38,14 +39,14 @@
   "homepage": "https://looot.ai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loootai/zeus.git",
+    "url": "git+https://github.com/loootai/looot-zeus.git",
     "directory": "cli"
   },
   "publishConfig": {
     "access": "public"
   },
   "bugs": {
-    "url": "https://github.com/loootai/zeus/issues"
+    "url": "https://github.com/loootai/looot-zeus/issues"
   },
   "keywords": [
     "gtm",

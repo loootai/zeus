@@ -103,6 +103,7 @@ test("demo fixtures render and the city has an agent readiness building", async 
   const html = renderCity({ sections: [readiness.render(loadFixture("readiness"), "done", { public: false })!, domains.render(loadFixture("domains"), "done", { public: false })!, { id: "receipt", blocks: [] }], public: false, domain: "yourdomain.com", brand: "YourBrand" } as any);
   assert.match(html, /data-view="readiness"/);
   assert.match(html, /Agent readiness/);
+  assert.match(html, /<a class="za zrecipe" href="https:\/\/looot\.ai\/recipes\/website-agent-readiness-check"[^>]*>Open the recipe<\/a>/);
 });
 
 test("both modules are registered, synthesis needs them, and the default worst case stays under 2", async () => {

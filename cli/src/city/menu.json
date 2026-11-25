@@ -1,0 +1,97 @@
+{
+  "about": "The Zeus left menu, one source for both city pages (build/make_hf.py and cli/src/city/index.ts). Categories in menu order. state free = part of the free run, unlock = greyed until clicked, the click sends its prompt to your agent. {domain} is filled by the page. usd is the budget the prompt names.",
+  "categories": [
+    {
+      "name": "Get customers",
+      "items": [
+        { "key": "targets", "label": "Target accounts", "state": "free", "view": "targets", "usd": 3,
+          "prompt": "Continue Zeus for {domain} with looot. Open the target accounts that are still locked with their buying committee, work emails and one opener each from a recent post. Budget $3." },
+        { "key": "committees", "label": "Buying committees (top 5)", "state": "free", "view": "committees", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Show the buying committee for the top 5 target accounts with the decision maker, the champion and the users for each one. Budget $1." },
+        { "key": "openers", "label": "Outreach openers", "state": "free", "view": "openers", "usd": 0.5,
+          "prompt": "Continue Zeus for {domain} with looot. Write one outreach opener per person in the top 5 buying committees from a recent post or company news. Send nothing. Budget $0.50." },
+        { "key": "lookalikes", "label": "Find 50 lookalike target accounts", "state": "unlock", "usd": 3,
+          "prompt": "Continue Zeus for {domain} with looot. Find 50 lookalike accounts of the top 5 target accounts with segment, team size and why each one fits. Budget $3." },
+        { "key": "hiring", "label": "Check who is hiring", "state": "unlock", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Check which target accounts are hiring right now. List the open roles that point to a need for what {domain} sells with a link to each job post. Budget $1." },
+        { "key": "dmu", "label": "Map more buying committees", "state": "unlock", "usd": 2,
+          "prompt": "Continue Zeus for {domain} with looot. Map the buying committee for the target accounts after the top 5. For each one find the decision maker, the champion and the users with title, work email and phone where looot can find them. Budget $2." }
+      ]
+    },
+    {
+      "name": "Get found",
+      "items": [
+        { "key": "seo", "label": "SEO", "state": "free", "view": "seo", "usd": 2,
+          "prompt": "Continue Zeus for {domain} with looot. Show every keyword {domain} ranks for, then pull the next 100 buyer keywords with US searches and difficulty and mark the ones a rival holds. Budget $2." },
+        { "key": "geo", "label": "AI search (GEO)", "state": "free", "view": "geo", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Ask ChatGPT, Gemini, Copilot and Google AI Mode 20 more buyer questions about what {domain} sells. Log who gets named and in what order, then list the pages that would get {domain} named. Budget $1." },
+        { "key": "readiness", "label": "AI agent readiness", "sub": "Is my website ready for agents?", "recipe": "https://looot.ai/recipes/website-agent-readiness-check", "state": "free", "view": "readiness", "usd": 0.1,
+          "prompt": "Continue Zeus for {domain} with looot. Check whether AI agents and AI search can read {domain}. Look at the AI crawler rules, llms.txt and the sitemap, then list the fixes in order. Budget $0.10." },
+        { "key": "domains", "label": "Domain lookup", "state": "free", "view": "domains", "usd": 0.1,
+          "prompt": "Continue Zeus for {domain} with looot. Look up the registry record for {domain} and its main rivals with the registrar, the date each domain was created and the date it expires. Budget $0.10." },
+        { "key": "pages", "label": "Pages", "state": "free", "view": "pages", "usd": 0,
+          "prompt": "Continue Zeus for {domain} with looot. Show the programmatic page drafts with the keyword each one targets and its live sources. Publish nothing." },
+        { "key": "more-pages", "label": "Build more pages", "state": "unlock", "usd": 2,
+          "prompt": "Continue Zeus for {domain} with looot. Write 5 more programmatic page drafts for the keyword gaps with the most US searches. One page per keyword with live sources. Publish nothing. Budget $2." },
+        { "key": "ranktracker", "label": "Track more keywords", "state": "unlock", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Run the rank tracker on my buyer keywords every Monday, add 25 more buyer keywords and flag any move of 3 places or more against the first run. Budget $1 a month." }
+      ]
+    },
+    {
+      "name": "Make content",
+      "items": [
+        { "key": "influencers", "label": "Creators", "state": "free", "view": "influencers", "usd": 0.5,
+          "prompt": "Continue Zeus for {domain} with looot. Show every creator already found with checked follower counts, average views and a contact route for each one. Budget $0.50." },
+        { "key": "formats", "label": "Format finder", "state": "free", "view": "formats", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Find 20 more posts in my space that took off this month on TikTok, X, Instagram, LinkedIn and YouTube. Group them into formats with the beat sheet to copy. Budget $1." },
+        { "key": "calendar", "label": "Content calendar", "state": "free", "view": "calendar", "usd": 0,
+          "prompt": "Continue Zeus for {domain} with looot. Show the content calendar with the channel, the format and an example post for each slot. Post nothing." },
+        { "key": "more-creators", "label": "Find more creators", "state": "unlock", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Find 30 more mid tier creators in my space on X, TikTok, Instagram and YouTube with checked follower counts, average views and a contact route. Budget $1." },
+        { "key": "more-weeks", "label": "Plan more weeks of posts", "state": "unlock", "usd": 0.5,
+          "prompt": "Continue Zeus for {domain} with looot. Plan the next 4 weeks of the content calendar from the formats that worked. One post per slot with the channel, the format and an example post. Post nothing. Budget $0.50." }
+      ]
+    },
+    {
+      "name": "Watch the market",
+      "items": [
+        { "key": "competitive", "label": "Competitive analysis", "state": "free", "view": "competitive", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Add 5 more rivals to the competitive analysis. For each one check X followers, Google top 10 spots, ChatGPT answers, pricing and launch pace. Budget $1." },
+        { "key": "reddit", "label": "Reddit", "state": "free", "view": "reddit", "usd": 0.5,
+          "prompt": "Continue Zeus for {domain} with looot. Pull 50 more Reddit threads that mention {domain} or its rivals. Sort them by complaint, praise and feature ask with a link to each thread. Budget $0.50." },
+        { "key": "mmap", "label": "Market map", "state": "free", "view": "mmap", "usd": 1,
+          "prompt": "Continue Zeus for {domain} with looot. Add 30 more players to the market map with funding, team size and the segment each one fits. Budget $1." },
+        { "key": "pricing", "label": "Watch competitor pricing", "state": "unlock", "usd": 0.5,
+          "prompt": "Set up Zeus for {domain} with looot. Check the pricing pages of my top 5 rivals every week. Tell me when a price, a plan or a free tier changes with the old and new version side by side. Budget $0.50 a week." },
+        { "key": "news", "label": "Alert me on funding, hires and news", "state": "unlock", "usd": 0.5,
+          "prompt": "Set up Zeus for {domain} with looot. Watch my target accounts and my top 5 rivals every day for new funding, senior hires and news. Send me one alert per event with the source link. Budget $0.50 a day." }
+      ]
+    },
+    {
+      "name": "Keep it running",
+      "items": [
+        { "key": "refresh", "label": "Refresh my city every month", "state": "unlock", "usd": 2,
+          "prompt": "Set up Zeus for {domain} with looot. Run Zeus again on the first Monday of each month and write what changed since the last run. Show me the price first. Budget $2 a month." },
+        { "key": "prospecting", "label": "Run prospecting every week", "state": "unlock", "usd": 2,
+          "prompt": "Set up Zeus for {domain} with looot. Every Monday find 10 new accounts like my best target accounts with their buying committee and one opener each. Send nothing. Budget $2 a week." },
+        { "key": "brief", "label": "Send me a morning brief", "state": "unlock", "usd": 0.5,
+          "prompt": "Set up Zeus for {domain} with looot. Send me one short note each morning with new signals on my target accounts, rank moves on my buyer keywords and new Reddit threads. Budget $0.50 a day." },
+        { "key": "alerts", "label": "Send alerts to Slack", "state": "unlock", "usd": 0.5,
+          "prompt": "Set up Zeus for {domain} with looot. Post to one Slack channel when a target account hires, raises money or names a rival. Budget $0.50 a day." },
+        { "key": "crm", "label": "Send to my CRM", "state": "unlock", "usd": 0.5,
+          "prompt": "Set up Zeus for {domain} with looot. Push my target accounts, their people and the openers into my CRM with a source note on each. Budget $0.50." }
+      ]
+    },
+    {
+      "name": "Under the hood",
+      "items": [
+        { "key": "runlog", "label": "Run log and cost", "state": "free", "view": "runlog", "usd": 0,
+          "prompt": "Show me the looot run log for {domain} with the cost of every run and the total against my cap." },
+        { "key": "share", "label": "Share this page", "state": "free", "action": "share", "usd": 0,
+          "prompt": "" },
+        { "key": "copy", "label": "Copy the prompt", "state": "free", "action": "copy", "usd": 0,
+          "prompt": "Install the /gtm skill with `npx looot-zeus skill > ~/.claude/skills/gtm/SKILL.md`, then run /gtm {domain}. Show me the price first and spend nothing without my yes." }
+      ]
+    }
+  ]
+}

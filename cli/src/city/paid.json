@@ -1,0 +1,25 @@
+{
+  "about": "What the city page says more credit buys. adds: commands Zeus has today, shown under 'What a paid run adds'. features: the buildings of the city that Zeus does not do yet. state off = not named anywhere on the page (the building reads 'Room to grow' and opens this list); state coming-soon = named with 'Coming soon'. Luisa and David decide which ones say coming soon. Never mark a feature available here: only adds are things Zeus does.",
+  "adds": [
+    { "what": "100 target accounts instead of 25", "command": "looot-zeus run --depth full --cap 10" },
+    { "what": "People data: work emails, buyers per account and buying committees for 10 accounts (the free run has names and roles for 5)", "command": "looot-zeus run --people --cap 10" },
+    { "what": "Phone numbers for the buying committees, on top of people data", "command": "looot-zeus run --people --phones --cap 10" },
+    { "what": "More accounts, buying committees, ads, social posts or keyword rankings in this folder", "command": "looot-zeus more accounts --count 25 --cap 2" },
+    { "what": "The run again later, for example each week, with what changed written to changes.md", "command": "looot-zeus watch --cap 5" }
+  ],
+  "features": [
+    { "key": "brief", "label": "Morning brief", "state": "off" },
+    { "key": "alerts", "label": "Slack alerts", "state": "off" },
+    { "key": "crm", "label": "CRM sync", "state": "off" },
+    { "key": "campaign", "label": "LinkedIn campaign", "state": "off" },
+    { "key": "signals", "label": "Signal engine", "state": "off" },
+    { "key": "abm", "label": "ABM", "state": "off" },
+    { "key": "guard", "label": "Guardrails", "state": "off" },
+    { "key": "hood", "label": "Data providers", "state": "off" },
+    { "key": "reply", "label": "Reply inbox", "state": "off" },
+    { "key": "weekly", "label": "Weekly report", "state": "off" },
+    { "key": "demand", "label": "Demand sensing", "state": "off" },
+    { "key": "battlecards", "label": "Battlecards", "state": "off" },
+    { "key": "plugins", "label": "Next to plug in", "state": "off" }
+  ]
+}

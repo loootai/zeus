@@ -24,6 +24,7 @@ import { buildReceipt, receiptMarkdown, validateReceipt, type Receipt } from "./
 import { PKG_ROOT, usd, writeFile } from "./util.js";
 import { archivePrevious, buildSnapshot, readSnapshot, recordRun } from "./history.js";
 import { exportPublic } from "./public.js";
+import { scrubThirdParties, thirdPartySwaps } from "./thirdParties.js";
 import { safeDossier } from "./dossier/safe.js";
 import { renderSafePages, writeSafeView } from "./safeView.js";
 import { watchDemo } from "./watch.js";
@@ -116,9 +117,12 @@ export function writeAll(outDir: string, o: { cfg: GtmConfig; mods: GtmModule[];
   // What `looot-zeus more` reads to fetch more into this folder.
   const { more: _hints, ...cleanCfg } = o.cfg as GtmConfig & { more?: unknown };
   writeState(outDir, { schemaVersion: "1", mode: o.receipt.run.mode, ...(o.placeholder ? { placeholder: o.placeholder } : {}), cfg: cleanCfg as GtmConfig, modules: o.mods.map((m) => m.id), results: Object.fromEntries([...o.results].map(([id, r]) => [id, { status: r.status, summary: r.summary, out: r.out }])), ...(o.pages ? { pages: o.pages } : {}), ...(o.pulls ? { pulls: o.pulls } : {}) });
-  writeFile(join(outDir, "dossier.html"), renderHtml(d));
-  writeFile(join(outDir, "dossier.md"), renderMarkdown(d));
-  writeFile(join(outDir, "city", "index.html"), renderCity(d));
+  // A safe page names no target account or rival: Account A, B, C and Rival 1, 2, 3, checked before writing.
+  const tp = safe ? thirdPartySwaps(buildSnapshot(o.cfg, outputsOf(o.results), o.receipt)) : [];
+  const page = (f: string, t: string) => (safe ? scrubThirdParties(f, t, tp) : t);
+  writeFile(join(outDir, "dossier.html"), page("dossier.html", renderHtml(d)));
+  writeFile(join(outDir, "dossier.md"), page("dossier.md", renderMarkdown(d)));
+  writeFile(join(outDir, "city", "index.html"), page("city/index.html", renderCity(d)));
   writeFile(join(outDir, "receipt.json"), JSON.stringify(o.receipt, null, 2) + "\n");
   writeFile(join(outDir, "receipt.md"), receiptMarkdown(o.receipt));
   if (o.writeConfig) writeFile(join(outDir, "config.yaml"), configToYaml(o.cfg, [o.placeholder ? "PLACEHOLDER config used by looot-zeus demo." : "looot-zeus config"]));
