@@ -9,7 +9,8 @@ import { cleanDomain } from "../util.js";
 import { asinsIn, looksLikeStore } from "./commerce.js";
 import { looksLocal } from "./local.js";
 import { appStoreIdsIn } from "./reviews.js";
-import { isGeneric } from "./rivals.js";
+import { isGeneric, isSeedDomain } from "./rivals.js";
+import { categoryPhrases } from "./target.js";
 import type { GtmModule, ModuleContext } from "./types.js";
 
 export type PageKind = "home" | "pricing" | "customers" | "alternatives" | "casestudies" | "usecases" | "about";
@@ -234,10 +235,17 @@ export function deriveConfig(domain: string, pages: IntakePage[]): { config: Gtm
   // write as a domain or link to stay, and the rival check in run or prepare reads each one again.
   competitors = competitors.filter((c) => !comDomainGuesses.includes(c) && !isGeneric(c));
   if (competitors.length === 0) guessed.push("competitors");
-  let seeds = outsideDomains(by("customers"), domain, base).filter((d) => !competitors.includes(d) && !d.startsWith(`${stem}.`));
+  // A customers page that is really about customers: intake may have saved another page under that name.
+  const custPage = pages.find((p) => p.kind === "customers" && p.ok);
+  const custText = custPage && (!custPage.url || /customer|case-stud|testimonial|success|clients|wall-of-love/i.test(custPage.url)) ? custPage.markdown : "";
+  let seeds = outsideDomains(custText, domain, base).filter((d) => !competitors.includes(d) && !d.startsWith(`${stem}.`) && isSeedDomain(d));
   if (seeds.length === 0) guessed.push("seeds");
   seeds = seeds.slice(0, 5);
-  let keywords = keywordsFrom(`${home}\n${by("pricing")}`, brand);
+  // What the product is, from the title and headings ("data api"), comes first: the phrases a buyer
+  // searches. Then how they search for it, then the most frequent phrases of the pages.
+  const category = categoryPhrases(pages.filter((p) => p.ok), brand, domain);
+  const fromCategory = category.length > 0 ? [...category, `best ${category[0]}`, `${category[0]} pricing`, `${category[0]} alternatives`] : [];
+  let keywords = [...new Set([...fromCategory, ...keywordsFrom(`${home}\n${by("pricing")}`, brand)])];
   if (keywords.length < 3) guessed.push("keywords");
   keywords = keywords.slice(0, 10);
   const industries = industriesFrom(`${by("customers")}\n${home}`);
@@ -256,8 +264,10 @@ export function deriveConfig(domain: string, pages: IntakePage[]): { config: Gtm
   const compNames = competitors.slice(0, 3).map((c) => titleCase(c.split(".")[0]));
   const kw = keywords.length > 0 ? keywords : ["your category"];
   const questions = [
-    ...kw.slice(0, 6).map((k) => `what is the best ${k} tool`),
+    ...(category.length > 0 ? category.slice(0, 3).map((c) => `what is the best ${c}`) : kw.slice(0, 6).map((k) => `what is the best ${k} tool`)),
+    ...(category.length > 0 ? [`which ${category[0]} should I use`] : []),
     ...compNames.map((c) => `best ${c} alternatives`),
+    `${brand} alternatives`,
     `is ${brand} worth it`,
   ].slice(0, 10);
   // Auto fields. Reviews, local and commerce run only when the pages give a reason to.
@@ -271,6 +281,7 @@ export function deriveConfig(domain: string, pages: IntakePage[]): { config: Gtm
     domain,
     brand,
     offer,
+    category,
     icp: { industries, sizeBand: enterprise ? "51-1000" : "11-200", geos, titles },
     seeds,
     competitors: rivals,

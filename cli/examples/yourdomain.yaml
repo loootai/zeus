@@ -17,6 +17,9 @@ seeds:
   - seed-customer-5.example
 # Generic names. Put your real competitors here.
 competitors: [rival-a.com, rival-b.com, rival-c.com]
+# What the product is, as 1 to 3 short phrases. Steers the rival search ("best <phrase>") and the
+# category match. Leave it out and Zeus reads it from your site's title and headings.
+# category: [linkedin post scheduler]
 keywords:
   - sales crm
   - crm for small business

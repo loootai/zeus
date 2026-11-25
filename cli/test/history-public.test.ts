@@ -124,8 +124,9 @@ async function realLookingRun(): Promise<{ out: string; originals: string[] }> {
   return { out, originals: [...REAL.map(([, b]) => b), ...people] };
 }
 
-test("export --public swaps domain, brand, rivals and people, and 0 originals are left", async () => {
-  const { out, originals } = await realLookingRun();
+test("export --public keeps the owner's own domain and brand, swaps rivals and people, and 0 originals are left", async () => {
+  const { out, originals: all } = await realLookingRun();
+  const originals = all.filter((s) => s !== "acmereal.io" && s !== "Acme Real");
   // the originals really are in the dossier before the export
   const before = PUBLIC_FILES.map((f) => readFileSync(join(out, f), "utf8")).join("\n");
   for (const s of ["acmereal.io", "Acme Real", "Bigrival", "megacorp.io"]) assert.ok(before.includes(s), s);
@@ -137,18 +138,27 @@ test("export --public swaps domain, brand, rivals and people, and 0 originals ar
     for (const s of originals) assert.equal(t.split(s.toLowerCase()).length - 1, 0, `${f} still has ${s}`);
   }
   const md = readFileSync(join(e.dir, "dossier.md"), "utf8");
-  for (const s of ["yourdomain.com", "Rival A", "rival-b.com", "Person 1"]) assert.ok(md.includes(s), s);
+  for (const s of ["acmereal.io", "Acme Real", "Rival A", "rival-b.com", "Person 1"]) assert.ok(md.includes(s), s);
+  for (const f of PUBLIC_FILES) {
+    const t = readFileSync(join(e.dir, f), "utf8");
+    assert.ok(!/yourbrand|yourdomain\.com/i.test(t), `${f} must not mask the owner`);
+  }
   const r = JSON.parse(readFileSync(join(e.dir, "receipt.json"), "utf8"));
   assert.deepEqual(validateReceipt(r), []);
-  assert.equal(r.run.domain, "yourdomain.com");
+  assert.equal(r.run.domain, "acmereal.io");
 });
 
 test("the leak check catches an original that slipped through", () => {
   const swaps = swapsFor({ domain: "acmereal.io", brand: "Acme Real", competitors: [{ domain: "bigrival.com", name: "Bigrival" }], people: [{ name: "Jane Smith", email: "jane@x.example", linkedin: "", phone: "" }] });
   const clean = applySwaps("Acme Real (acmereal.io) vs Bigrival. Ask Jane Smith, jane@x.example. Bigrivals.", swaps);
-  assert.equal(clean, "yourbrand (yourdomain.com) vs Rival A. Ask Person 1, person1@example.com. Bigrivals.");
+  assert.equal(clean, "Acme Real (acmereal.io) vs Rival A. Ask Person 1, person1@example.com. Bigrivals.");
   assert.deepEqual(leaks(clean, swaps), []);
   assert.deepEqual(leaks(`${clean} jane smith`, swaps), [{ from: "Jane Smith", hits: 1 }]);
+});
+
+test("the owner's brand inside a command (npx looot-zeus) is never rewritten on a public page", () => {
+  const swaps = swapsFor({ domain: "looot.ai", brand: "looot", competitors: [{ domain: "apollo.io", name: "Apollo" }], people: [] });
+  assert.equal(applySwaps("npx looot-zeus run looot.ai, looot vs Apollo", swaps), "npx looot-zeus run looot.ai, looot vs Rival A");
 });
 
 test("demo --public through the CLI writes gtm/public with the four files", () => {
@@ -196,7 +206,7 @@ test("export --public --mask-accounts turns target accounts into Account N with 
   const e = exportPublic(out, undefined, { maskAccounts: true });
   for (const f of PUBLIC_FILES) {
     const t = readFileSync(join(e.dir, f), "utf8").toLowerCase();
-    for (const s of [...originals, ...accountStrings]) assert.equal(t.split(s.toLowerCase()).length - 1, 0, `${f} still has ${s}`);
+    for (const s of [...originals.filter((x) => x !== "acmereal.io" && x !== "Acme Real"), ...accountStrings]) assert.equal(t.split(s.toLowerCase()).length - 1, 0, `${f} still has ${s}`);
   }
   // no half-swapped names either: the first word of each account name is gone too
   const firstWords = [...new Set(accounts.map((a) => a.name.split(/\s+/)[0]).filter((w) => w.length >= 5))];

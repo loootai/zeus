@@ -101,13 +101,13 @@ test("not-yet features come from paid.json: off shows only its district, locked;
   assert.match(html, /<h3>Coming soon<\/h3>[\s\S]*<li>Push to my CRM<\/li>/);
 });
 
-test("the sidebar shows the company logo the run fetched, never on a public page and never an SVG", async () => {
+test("the sidebar shows the company logo the run fetched, on its own public page too, never an SVG", async () => {
   const { setLogos } = await import("../src/assets.js");
   const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   try {
     setLogos(new Map([[bare.domain, png]]));
     assert.ok(renderCity(bare).includes(`<span class="logo"><img src="${png}"`));
-    assert.ok(!renderCity({ ...bare, public: true }).includes(png));
+    assert.ok(renderCity({ ...bare, public: true }).includes(`<span class="logo"><img src="${png}"`), "the owner keeps its logo on its public page");
     setLogos(new Map([[bare.domain, "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="]]));
     assert.ok(!renderCity(bare).includes("svg+xml"));
     assert.match(renderCity(bare), /<span class="logo"><span class="lgt"/);

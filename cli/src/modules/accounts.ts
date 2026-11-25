@@ -416,7 +416,7 @@ export const accounts: GtmModule = {
   needs: ["icp"],
   quote: (cfg) => ({
     lines: [
-      { job: searchJob(cfg), calls: searchCalls(cfg), rows: SEARCH_ROWS, note: "twice the accounts kept, to score" },
+      { job: searchJob(cfg), calls: searchCalls(cfg) + 1, rows: SEARCH_ROWS, note: "twice the accounts kept, to score, plus one wider search when all come back empty" },
       { job: "company.enrich", calls: cfg.limits.accounts },
       { job: "web.scrape.markdown", calls: cfg.limits.accounts, note: "each kept account's home page, to check the use case and drop rivals" },
     ],
@@ -516,6 +516,23 @@ export const accounts: GtmModule = {
           });
         ctx.partial(build());
       });
+      // Fallback: every search came back empty. One wider search with no country filter, so a narrow
+      // or wrong country guess does not leave the section empty.
+      const first = inputs[0] as any;
+      if (cands.size === 0 && first && (first.location || first.account?.location)) {
+        const wide = first.account ? { ...first, account: { ...first.account, location: undefined } } : { ...first, location: undefined };
+        if (wide.account) delete wide.account.location;
+        else delete wide.location;
+        const res = await ctx.call(searchJob(cfg), wide, `search-wide:${more?.pageOffset ?? 0}`);
+        calls.push(trailLine("search again without the country filter", res));
+        if (answered(res)) {
+          const rows = payloads(res).map((p) => rowsOf(p)).find((r) => r.length > 0) ?? [];
+          rows.map((r) => normalizeCompany(r)).filter((c): c is Company => !!c && !skip(c.domain)).forEach((c, i) => {
+            if (!cands.has(c.domain)) cands.set(c.domain, { company: c, similarity: null, searchRank: i + 1, provider: res.record.provider, enriched: false, searchInd: c.industries });
+          });
+        }
+        ctx.partial(build());
+      }
       // Score on what search and lookalikes gave, keep the best, then enrich those to score again.
       for (const c of [...cands.values()]) {
         // A description that already reads like a rival's product goes before any paid lookup.
@@ -566,7 +583,8 @@ export const accounts: GtmModule = {
         { kind: "stat", items: (["A", "B", "C", "D"] as Grade[]).map((g) => ({ label: `Grade ${g}`, value: String(f.rows.filter((r) => r.grade === g).length) })) },
         { kind: "table", columns: [{ key: "grade", label: "Grade" }, { key: "score", label: "Score", num: true }, { key: "name", label: "Company", logoKey: "domain" }, { key: "industry", label: "Industry" }, { key: "employees", label: "Staff", num: true }, { key: "country", label: "Country" }, { key: "reasons", label: "Why" }, { key: "provider", label: "Provider" }, { key: "date", label: "Date" }], rows: f.rows.map((r) => ({ ...r })), ...(f.considered && f.considered > f.rows.length ? { total: f.considered } : {}) },
         ...(f.dropped && f.dropped.length > 0 ? [{ kind: "note" as const, text: `The ICP filter dropped ${f.dropped.reduce((n, d) => n + d.count, 0)} accounts before grading: ${f.dropped.map((d) => `${d.count} ${d.reason}`).join(", ")}. They are not shown.` }] : []),
-        ...(f.rows.length < FEW ? [{ kind: "note" as const, text: `Only ${f.rows.length} ${f.rows.length === 1 ? "account fits" : "accounts fit"} the ICP after the filter. Nothing was added to pad the list. Fetch the next pages of the search with the command below.` }, { kind: "more" as const, label: "More accounts", command: "npx looot-zeus more accounts", price: "the price is shown before anything is spent" }] : []),
+        ...(f.rows.length === 0 ? [{ kind: "note" as const, text: `No account fits yet. ${f.considered ? `${f.considered} companies came back and none passed the ICP filter.` : "The lookalike and profile searches returned no company for this ideal customer."} Next step: add 3 to 5 domains of your real customers under seeds: in gtm/config.yaml (they steer the lookalikes), check the industries and size there, then fetch accounts again with the command below.` }, { kind: "more" as const, label: "More accounts", command: "npx looot-zeus more accounts", price: "the price is shown before anything is spent" }] : []),
+        ...(f.rows.length > 0 && f.rows.length < FEW ? [{ kind: "note" as const, text: `Only ${f.rows.length} ${f.rows.length === 1 ? "account fits" : "accounts fit"} the ICP after the filter. Nothing was added to pad the list. Fetch the next pages of the search with the command below.` }, { kind: "more" as const, label: "More accounts", command: "npx looot-zeus more accounts", price: "the price is shown before anything is spent" }] : []),
         { kind: "note", text: `Grades. A at ${GRADES.A} points or more, B at ${GRADES.B}, C at ${GRADES.C}. Size and industry carry 25 points each, lookalike 20, country 15, shared stack 15. When the brief names use case phrases, saying them on its own site or profile carries 30. The score is the share of the points the data could earn. Data a provider did not return earns no points.` },
       ];
       const tt = trailTable(f.calls ?? []);

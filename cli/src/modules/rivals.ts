@@ -4,10 +4,12 @@
 // 1. Target. Who your own pages say the product is for (roles, size words, industries, named
 //    customers, use cases) and the category words that say what it is. Read from gtm/intake/, free.
 // 2. Rival candidates. Your site ("vs", "alternative to", comparison links), Google results for
-//    "<brand> alternatives", "<brand> vs" and "<category> tool" (google.serp.organic), and
-//    company.similar on your domain. A word is never taken as a domain.
+//    "<domain> alternatives", "<brand> vs", "best <category>" and "<category> alternatives"
+//    (google.serp.organic), the products the top "best <category>" lists link to, and
+//    company.similar on your domain. The category is a phrase from your title and headings
+//    ("data api"), or `category` in the brief. A word is never taken as a domain.
 // 3. Rival check. Each candidate's home page is read (web.scrape.markdown). It stays only when it is
-//    a real product page that shares enough of your category words, and is not a directory, a
+//    a real product page that says your category phrase, shares enough of your category words, and is not a directory, a
 //    marketplace, a media site or a big platform. Top 3 to 5 kept, each with its reason.
 // 4. Profiles. company.enrich on you and each rival (name, logo, social pages), then the social links
 //    on each site's own footer, which win over provider data.
@@ -25,7 +27,7 @@ import { cleanDomain } from "../util.js";
 import { answered, companyObject, isObj, normalizeCompany, payloads, rowsOf } from "./icp.js";
 import { markdownOf } from "./intake.js";
 import { domainOf, list, str } from "./modc-helpers.js";
-import { categoryTerms, extractTarget, linkedDomains, overlap, relevantKeyword, roleLabels, sizeBandFrom, socialLinks, titlesFrom, type SitePage } from "./target.js";
+import { categoryPhrases, categoryTerms, extractTarget, saysPhrase, linkedDomains, overlap, relevantKeyword, roleLabels, sizeBandFrom, socialLinks, titlesFrom, type SitePage } from "./target.js";
 import type { GtmModule, ModuleContext } from "./types.js";
 
 export const RIVALS_WANTED = 3;
@@ -38,7 +40,9 @@ export const CHECK_MAX = 16;
 export const NAMES_TRIED = 5;
 /** Share of your category words a rival home page must have. */
 export const OVERLAP_MIN = 0.45;
-const SERP_QUERIES = 3;
+const SERP_QUERIES = 5;
+/** "Best <category>" listicles read for the products they link to. */
+const LISTICLE_PAGES = 2;
 const REVIEW_QUERIES = 3;
 const CUSTOMER_PAGES = 3;
 
@@ -72,6 +76,28 @@ export function isGeneric(domain: string): boolean {
   // Image hosts, CDNs and site builders' asset domains are never a company.
   if (/(^|[.-])(cdn|static|assets?|img|images|media|files|usercontent|cloudfront|akamai|fastly|imgix|cloudinary|gravatar|wp|s3)([.-]|$)/.test(d) || /usercontent|cloudfront|amazonaws|googleapis|gstatic|framer\.(website|app)|webflow\.io|wixstatic|squarespace-cdn|hubspotusercontent|ctfassets|sanity\.io|prismic\.io|vercel\.app|netlify\.app|calendly\.com|typeform\.com|youtu\.be|loom\.com|stripe\.com|intercom|crisp\.chat|zendesk/.test(d)) return true;
   return /\.(gov|mil|edu)(\.[a-z]{2})?$/.test(d);
+}
+
+/** Review and list sites whose "best X" and "X alternatives" pages name the products of a category. */
+const LIST_SITES = new Set("g2.com capterra.com getapp.com softwareadvice.com trustradius.com alternativeto.net saashub.com saasworthy.com sourceforge.net producthunt.com stackshare.io".split(" "));
+
+/** A page worth reading for the products it lists: a review or list site, or any non-generic site's own list post. */
+export function isListSource(domain: string): boolean {
+  const d = cleanDomain(domain);
+  return LIST_SITES.has(d) || !isGeneric(d);
+}
+
+/** App hosts whose subdomains are someone's project, never a customer company. */
+const APP_HOSTS = /\.(supabase\.(co|in)|firebaseapp\.com|web\.app|herokuapp\.com|pages\.dev|workers\.dev|onrender\.com|fly\.dev|railway\.app|azurewebsites\.net|appspot\.com|repl\.co|glitch\.me|ngrok\.io|ngrok-free\.app|myshopify\.com|bubbleapps\.io|lovable\.app|replit\.app)$/;
+
+/** A domain that can be a seed customer: a company's own site, not a platform, an app host or a random project id. */
+export function isSeedDomain(domain: string): boolean {
+  const d = cleanDomain(domain);
+  if (!d.includes(".") || isGeneric(d) || APP_HOSTS.test(d)) return false;
+  const label = d.split(".")[0];
+  // qwtacnykulkgtsveodvs.supabase.co: a long label with almost no vowels is a generated id.
+  if (label.length >= 14 && (label.match(/[aeiou]/g) ?? []).length / label.length < 0.25) return false;
+  return true;
 }
 
 export interface Need {
@@ -115,6 +141,8 @@ export interface RivalsOut {
   reasons?: Record<string, string>;
   excluded?: string[];
   categoryTerms?: string[];
+  /** The category phrases the search and the match used ("data api"). */
+  category?: string[];
   target?: Target;
   profiles?: Record<string, Profile>;
   /** Customer domains and names found on rivals' customer pages. */
@@ -185,6 +213,7 @@ export function applyRivals(cfg: GtmConfig, out: Pick<RivalsOut, "competitors" |
     icp,
     keywords,
     categoryTerms: terms,
+    category: cfg.category?.length ? cfg.category : out.category ?? [],
     rivalReasons: { ...(out.reasons ?? {}), ...(cfg.rivalReasons ?? {}) },
     excluded: [...new Set([...(cfg.excluded ?? []), ...(out.excluded ?? [])])].filter((d) => !out.competitors.includes(d)),
     profiles,
@@ -308,9 +337,9 @@ export function rivalsModule(need: Need): GtmModule {
       const rivals = full ? RIVALS_WANTED : cfg.competitors.length;
       const lines = [];
       if (full) {
-        lines.push({ job: "google.serp.organic", calls: SERP_QUERIES + REVIEW_QUERIES, note: `"${cfg.brand} alternatives", "${cfg.brand} vs", your category and reviews of the top rivals` });
+        lines.push({ job: "google.serp.organic", calls: SERP_QUERIES + REVIEW_QUERIES, note: `"${cfg.domain} alternatives", "${cfg.brand} vs", "best <your category>", "<your category> alternatives" and reviews of the top rivals` });
         lines.push({ job: "company.similar", calls: 1, rows: RIVALS_ROWS, note: "companies like your domain" });
-        lines.push({ job: "web.scrape.markdown", calls: CHECK_MAX + CUSTOMER_PAGES, note: "reads each rival candidate's home page to check it, then rivals' customer pages" });
+        lines.push({ job: "web.scrape.markdown", calls: CHECK_MAX + CUSTOMER_PAGES + LISTICLE_PAGES, note: "reads 2 \"best <your category>\" lists, each rival candidate's home page to check it, then rivals' customer pages" });
       } else {
         lines.push({ job: "web.scrape.markdown", calls: rivals + (need.seeds ? Math.min(CUSTOMER_PAGES, rivals) : 0), note: "each rival's home page for its social links, then customer pages" });
       }
@@ -325,6 +354,8 @@ export function rivalsModule(need: Need): GtmModule {
       let terms = cfg.categoryTerms.length > 0 ? cfg.categoryTerms : categoryTerms(ownText, cfg.brand, cfg.domain);
       if (terms.length < 3) terms = categoryTerms(`${cfg.offer} ${cfg.keywords.join(" ")}\n`.repeat(2), cfg.brand, cfg.domain);
       const target = extractTarget(pages, cfg.brand);
+      // What the product is, as phrases: from the brief, else the site's title and headings.
+      const category = cfg.category?.length ? cfg.category : categoryPhrases(pages, cfg.brand, cfg.domain);
       const providers = new Set<string>();
       const seen = (p: string) => p && providers.add(p);
       const homes = new Map<string, string>();
@@ -350,7 +381,10 @@ export function rivalsModule(need: Need): GtmModule {
       if (full) {
         for (const d of siteCandidates(pages, cfg.domain, cfg.brand)) add(d, "your own site");
         for (const d of cfg.competitors) add(d, "the brief");
-        const queries = [`${cfg.brand} alternatives`, `${cfg.brand} vs`, `${categoryPhrase(terms)} tool`].slice(0, SERP_QUERIES);
+        // The domain is searched, not only the brand: a short brand ("looot") alone finds board games.
+        const cat = category[0] ?? categoryPhrase(terms);
+        const queries = [`${cfg.domain} alternatives`, `${cfg.brand} vs`, `best ${cat}`, `${cat} alternatives`, ...(category[1] ? [`best ${category[1]}`] : [`${cat} platform`])].slice(0, SERP_QUERIES);
+        const listicles: string[] = [];
         const vsNames = new Map<string, number>();
         for (const q of queries) {
           const res = await ctx.call("google.serp.organic", { query: q }, `rivals-serp:${q}`);
@@ -358,6 +392,8 @@ export function rivalsModule(need: Need): GtmModule {
           if (!answered(res)) continue;
           for (const r of serpRows(res.data)) {
             const h = domainOf(r.link);
+            // A "best X" or "X alternatives" list names the products of the category: read it, it is not a rival.
+            if (h && isListSource(h) && /\b(best|top \d+|\d+ best|alternatives|competitors|vs\.?)\b/i.test(r.title) && /^(best|.* alternatives)/.test(q) && !listicles.includes(r.link)) listicles.push(r.link);
             if (h) add(h, `Google search "${q}"`);
             for (const n of namesNearVs(`${r.title}. ${r.snippet}`, cfg.brand)) vsNames.set(n, (vsNames.get(n) ?? 0) + 1);
           }
@@ -382,6 +418,12 @@ export function rivalsModule(need: Need): GtmModule {
             const c = cands.get(d);
             if (c) c.named = k;
           }
+        }
+        // The products the top lists link to are candidates; each still has to pass the home page check.
+        for (const url of listicles.slice(0, LISTICLE_PAGES)) {
+          const md = await scrape(url, `rivals-list:${url}`);
+          const host = domainOf(url) ?? "";
+          for (const d of linkedDomains(md, host).slice(0, 25)) if (d !== host) add(d, `listed in ${host}`);
         }
         const sim = await ctx.call("company.similar", { domain: cfg.domain, limit: RIVALS_ROWS }, `rivals:${cfg.domain}`);
         seen(sim.record.provider);
@@ -408,8 +450,13 @@ export function rivalsModule(need: Need): GtmModule {
           c.product = looksLikeProduct(md);
           const t = md.match(/^Title:\s*(.+)$/m)?.[1];
           if (t) c.name = t.split(/[|:–—]| - /)[0].trim().slice(0, 40) || c.name;
+          const phrase = saysPhrase(md, category);
           if (!c.product) c.reason = "no pricing, sign up or trial on the home page, so not a product page";
-          else if (terms[0] && !o.shared.includes(terms[0])) {
+          else if (category.length > 0 && !phrase && (c.named ?? 0) < 2) {
+            // Sharing common words ("agent", "data") is not a category match: the page must say what you are.
+            c.reason = `never says "${category.join('" or "')}", your category, so another market`;
+            c.overlap = Math.min(o.score, OVERLAP_MIN - 0.01);
+          } else if (category.length === 0 && terms[0] && !o.shared.includes(terms[0])) {
             c.reason = `never says "${terms[0]}", your main category word`;
             c.overlap = Math.min(o.score, OVERLAP_MIN - 0.01);
           } else if (o.score < OVERLAP_MIN) c.reason = `shares ${o.shared.length} of ${terms.length} category words, below the bar`;
@@ -426,7 +473,8 @@ export function rivalsModule(need: Need): GtmModule {
         const kept = ok.slice(0, RIVALS_MAX);
         for (const c of kept) {
           c.kept = true;
-          c.reason = `Its home page shares ${c.shared.length} of ${terms.length} category words (${c.shared.slice(0, 5).join(", ")}). Found in ${c.sources.join("; ")}.`;
+          const ph = saysPhrase(homes.get(c.domain) ?? "", category);
+          c.reason = `${ph ? `Its home page says "${ph}", your category, and shares` : "Its home page shares"} ${c.shared.length} of ${terms.length} category words (${c.shared.slice(0, 5).join(", ")}). Found in ${c.sources.join("; ")}.`;
           reasons[c.domain] = c.reason;
         }
         for (const c of order) if (!c.kept) {
@@ -472,18 +520,20 @@ export function rivalsModule(need: Need): GtmModule {
       const rivalCustomers: { rival: string; url: string; domains: string[] }[] = [];
       let seeds = cfg.seeds;
       if (need.seeds) {
-        const ownCustomers = pages.filter((p) => p.kind === "customers" || p.kind === "casestudies").flatMap((p) => linkedDomains(p.markdown, cfg.domain));
+        // Only a page that really is about customers: intake may have saved another page under that name.
+        const isCustomerPage = (p: SitePage) => (p.kind === "customers" || p.kind === "casestudies") && (!p.url || /customer|case-stud|testimonial|success|wall-of-love|clients/i.test(p.url));
+        const ownCustomers = pages.filter(isCustomerPage).flatMap((p) => linkedDomains(p.markdown, cfg.domain));
         const pool: string[] = [...ownCustomers];
         for (const r of competitors.slice(0, CUSTOMER_PAGES)) {
           const home = homes.get(r) ?? "";
           const link = [...home.matchAll(/\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g)].map((m) => m[1]).find((h) => /customers|case-stud|testimonial|wall-of-love|success-stor|reviews/i.test(h) && !/\.(png|jpe?g|gif|webp|svg|avif|mp4|pdf)(\?|$)/i.test(h));
           const url = link ? new URL(link, `https://${r}/`).toString() : `https://${r}/customers`;
           const md = await scrape(url, `rivals-customers:${r}`);
-          const domains = linkedDomains(md, r).filter((d) => !isGeneric(d) && !competitors.includes(d) && d !== cfg.domain).slice(0, 15);
+          const domains = linkedDomains(md, r).filter((d) => isSeedDomain(d) && !competitors.includes(d) && d !== cfg.domain).slice(0, 15);
           rivalCustomers.push({ rival: r, url, domains });
           pool.push(...domains);
         }
-        seeds = [...new Set(pool)].filter((d) => !isGeneric(d) && !competitors.includes(d) && d !== cfg.domain && !excluded.includes(d)).slice(0, SEEDS_WANTED);
+        seeds = [...new Set(pool)].filter((d) => isSeedDomain(d) && !competitors.includes(d) && d !== cfg.domain && !excluded.includes(d)).slice(0, SEEDS_WANTED);
       }
 
       // Reviews: what reviewers of you and the top rivals say, from Google snippets.
@@ -512,6 +562,7 @@ export function rivalsModule(need: Need): GtmModule {
         reasons,
         excluded,
         categoryTerms: terms,
+        category,
         target,
         profiles,
         rivalCustomers,

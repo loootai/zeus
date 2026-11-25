@@ -18,8 +18,9 @@ export const DEFAULT_CAPS: CapLimits = {
   sections: {
     // Decided by Luisa 2026-11-25 (looot-zeus#11): "Caps so a run fits $2".
     intake: { usd: 0.07, runs: 7 },
-    // Decided by Luisa 2026-11-25 (looot-zeus#11): "Caps so a run fits $2".
-    icp: { usd: 0.15, runs: 12 },
+    // Decided by Luisa 2026-11-25 (looot-zeus#11): "Caps so a run fits $2" (usd 0.15, runs 12).
+    // runs 12 -> 14 in #47 for the lookalike fallback on your own domain; the USD cap is hers and unchanged.
+    icp: { usd: 0.15, runs: 14 },
     // Decided by Luisa 2026-11-25 (looot-zeus#11): "Caps so a run fits $2".
     accounts: { usd: 0.25, runs: 20 },
     // Decided by Luisa 2026-11-25 (looot-zeus#11): "Caps so a run fits $2".

@@ -54,6 +54,8 @@ export interface GtmConfig {
   commerce: { mode: Auto; asins: string[]; competitors: Record<string, string[]> };
   /** Words that say what the category is. SEO gaps and rival checks use them. Filled by prepare or by the agent. */
   categoryTerms: string[];
+  /** Two- or three-word phrases that say what the product is ("data api"). Read from your site when empty; set them to steer the rival search. */
+  category: string[];
   /** Why each rival is in the list, one line per rival domain. */
   rivalReasons: Record<string, string>;
   /** Candidates that were checked and turned down. Their SEO gaps and ads are dropped. */
@@ -193,6 +195,7 @@ export function normalizeConfig(raw: unknown, overrides: { depth?: Depth; phones
       competitors: domainMap(r.commerce?.competitors, "commerce.competitors", (x, f) => strList(x, f)),
     },
     categoryTerms: strList(r.categoryTerms, "categoryTerms").map((x) => x.toLowerCase()).slice(0, 40),
+    category: strList(r.category, "category").map((x) => x.toLowerCase().trim()).filter(Boolean).slice(0, 5),
     rivalReasons: Object.fromEntries(Object.entries((r.rivalReasons && typeof r.rivalReasons === "object" && !Array.isArray(r.rivalReasons) ? r.rivalReasons : {}) as Record<string, unknown>).map(([k, v]) => [cleanDomain(k), String(v ?? "")])),
     excluded: strList(r.excluded, "excluded").map(cleanDomain),
     profiles: domainMap(r.profiles, "profiles", (x) => {

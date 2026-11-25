@@ -165,14 +165,16 @@ test("icp hit: card from the seeds, lookalikes without seeds, competitors or you
 });
 
 test("icp miss: no seed resolves, the card keeps the intake draft and the charged misses are shown", async () => {
-  const { runner } = mockRunner((job) => (job === "company.technographics" ? { outcome: "fail" } : { outcome: "miss", charged: 0.002 }));
+  const { runner, sent } = mockRunner((job) => (job === "company.technographics" ? { outcome: "fail" } : { outcome: "miss", charged: 0.002 }));
   const r = await icp.run(ctxFor({}, runner));
   const out = r.out as IcpOut;
+  // No seed resolved: one fallback lookalike search on your own domain (the 6th miss).
+  assert.ok(sent.some((x: any) => x.job === "company.similar" && x.input.domain === "acme.example"), JSON.stringify(sent.map((x: any) => [x.job, x.input.domain])));
   assert.equal(out.card.from.industries, "config");
   assert.deepEqual(out.card.industries, ["software"]);
   assert.equal(out.lookalikes.length, 0);
   const s = text(icp.render(out, "done", { public: false }));
-  assert.match(s, /misses charged \$0\.0100 in total/);
+  assert.match(s, /misses charged \$0\.0120 in total/);
   assert.match(s, /3 failed calls charged \$0\.0000/);
   assert.ok(!/free/i.test(s));
 });
@@ -373,4 +375,18 @@ test("enrich at the cap: finished rows keep their result, the rest say not check
   const s = text(enrich.render(partial, "capped", { public: false }));
   assert.match(s, /stopped at the cap during this module/);
   assert.match(s, /not checked, cap reached/);
+});
+
+test("icp: lookalikes run before the stack, so a capped section still finds lookalikes", async () => {
+  const { runner, sent } = mockRunner(happy);
+  await icp.run(ctxFor({}, runner));
+  const jobs = sent.map((x) => x.job);
+  assert.ok(jobs.lastIndexOf("company.similar") < jobs.indexOf("company.technographics"), jobs.join(","));
+  assert.ok(jobs.filter((j) => j === "company.technographics").length <= 3);
+});
+
+test("icp: a .ai seed listed in Anguilla (AI) is not read as a country, and one seed never sets the geos", () => {
+  const c = normalizeCompany({ domain: "smithery.ai", name: "Smithery", industry: "Software", country: "AI" });
+  assert.equal(c!.country, null);
+  assert.equal(normalizeCompany({ domain: "acme.de", country: "DE" })!.country, "DE");
 });

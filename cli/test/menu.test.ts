@@ -83,7 +83,7 @@ test("the CLI city sidebar uses the menu categories and greys the unlock items w
   assert.ok(!html.includes("{domain}"));
   assert.ok(!nav.includes("zshare"), "a private page is never offered for sharing");
   const pub = renderCity({ ...bare, public: true });
-  assert.ok(!pub.includes("acme.example"));
+  assert.ok(pub.includes("acme.example"), "the owner's own domain stays on its public page");
   assert.match(pub, /Find 50 lookalike accounts of the top 5 target accounts/);
   assert.match(pub, /class="znb zshare"/);
   // Free stays what Luisa's free run makes, people stay off. One view per free menu section (David's menu, #26):

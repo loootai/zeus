@@ -113,24 +113,37 @@ test("Your looot GTM OS: data-driven, all coming soon, numbers only from the run
   assert.match(html, /Get it built/);
 });
 
-test("Take it to the next step: Deploy to Vercel clones the public zeus repo with Supabase, no secret in any link", () => {
+test("Take it to the next step: Deploy to Vercel clones the public zeus web-starter with Supabase, no secret in any link", () => {
   const n = GTM_OS.next;
   const u = new URL(n.deploy.url);
   assert.equal(u.origin + u.pathname, "https://vercel.com/new/clone");
-  assert.equal(u.searchParams.get("repository-url"), "https://github.com/loootai/zeus");
-  assert.ok(u.searchParams.get("integration-ids"));
+  // Vercel docs (deploy-button/source): repository-url may include a subdirectory; that folder is the app.
+  assert.equal(u.searchParams.get("repository-url"), "https://github.com/loootai/zeus/tree/main/web-starter");
   // Supabase's own Vercel integration id (supabase/supabase examples use the same one).
   assert.equal(u.searchParams.get("integration-ids"), "oac_VqOgBHqhEoFTPzGkPd7L0iH6");
-  // Env NAMES only (Vercel docs: values may never go in the URL); no envDefaults.
-  assert.equal(u.searchParams.get("env"), "LOOOT_TOKEN");
+  // Env NAMES only; the read-only app never needs the looot key, so the form does not ask for it.
+  assert.equal(u.searchParams.get("env"), "ZEUS_OWNER_EMAIL");
   assert.deepEqual([...u.searchParams.keys()].sort(), ["env", "envDescription", "envLink", "integration-ids", "project-name", "repository-name", "repository-url"]);
-  for (const v of u.searchParams.values()) assert.doesNotMatch(v, /looot_[a-z0-9]{8,}|eyJ[a-zA-Z0-9]|sk_|service_role/i, v);
+  for (const v of u.searchParams.values()) assert.doesNotMatch(v, /looot_[a-z0-9]{8,}|eyJ[a-zA-Z0-9]|sk_|service_role|LOOOT_TOKEN/i, v);
   assert.match(n.supabase.url, /^https:\/\/supabase\.com\//);
   assert.match(n.copy, /free tiers/);
   assert.match(n.copy, /never sees your database credentials/);
-  for (const w of [/Deploy/, /Supabase/, /LOOOT_TOKEN/, /accounts, committees, plays/, /never print their values/]) assert.match(n.prompt, w);
+  for (const w of [/Deploy/, /web-starter/, /Supabase/, /ZEUS_OWNER_EMAIL/, /auth\/callback/, /accounts, committees, plays/, /never print their values/, /never needs my looot key/]) assert.match(n.prompt, w);
   const html = renderCity(bare);
   assert.match(html, />Take it to the next step</);
   assert.match(html, />Deploy to Vercel</);
   assert.ok(html.includes('data-copy="Help me host my looot Zeus results for example.com'));
+});
+
+test("web-starter: a Next app the button can build, with the same migration as the repo root", () => {
+  const root = join(import.meta.dirname, "..", "..", "..");
+  const ws = join(root, "web-starter");
+  const pkg = JSON.parse(readFileSync(join(ws, "package.json"), "utf8"));
+  assert.ok(pkg.dependencies.next && pkg.scripts.build === "next build");
+  for (const v of Object.values({ ...pkg.dependencies, ...pkg.devDependencies }) as string[]) assert.match(v, /^\d+\.\d+\.\d+$/, "exact versions");
+  const mig = "supabase/migrations/20261125120000_zeus.sql";
+  assert.equal(readFileSync(join(ws, mig), "utf8"), readFileSync(join(root, mig), "utf8"), "web-starter migration must match the root one");
+  const env = readFileSync(join(ws, "lib", "env.ts"), "utf8");
+  assert.match(env, /ZEUS_OWNER_EMAIL/);
+  assert.doesNotMatch(readFileSync(join(ws, ".env.example"), "utf8"), /=\S/, "names only, no values");
 });

@@ -63,6 +63,63 @@ export function categoryTerms(text: string, brand: string, domain: string, n = 2
     .map(([w]) => w);
 }
 
+/** Words a category phrase may hold although they are boilerplate on their own ("data API", "AI agent"). */
+const PHRASE_OK = new Set(["api", "apis", "ai", "integration", "integrations", "security", "enterprise", "email", "video", "web", "app", "apps", "product", "account", "customer", "dashboard", "profile", "news"]);
+/** Words that never start or end a category phrase. */
+const PHRASE_EDGE = new Set(["google", "maps", "claude", "code", "cursor", "codex", "chatgpt", "openai", "linkedin", "tiktok", "instagram", "youtube", "facebook", "twitter", "reddit", "amazon", "shopify", "slack", "notion", "hubspot", "salesforce", "now", "can", "lowest", "every", "needs", "across", "only", "own", "pay", "paying", "find", "send", "call", "calls", "pick", "choose", "order", "name", "key", "keys", "get", "done", "connect", "connects", "need", "needs", "checked", "help", "helps", "go", "let"]);
+
+/** A singular noun form so "data APIs" and "data API" count as one phrase. */
+const phraseWord = (w: string) => (w === "apis" ? "api" : stemWord(w));
+
+/**
+ * The two- and three-word phrases that say what the product is ("data api", "mcp server"), most
+ * telling first. A phrase in the home page title or an H1 counts most, then how often the pages say
+ * it. Used for the rival search queries and the category match. No model, word rules only.
+ */
+export function categoryPhrases(pages: SitePage[], brand: string, domain: string, n = 3): string[] {
+  const skip = new Set([brand.toLowerCase(), domain.split(".")[0].toLowerCase(), ...brand.toLowerCase().split(/\s+/)]);
+  const ok = (w: string) => w.length >= 2 && !/\d/.test(w) && !skip.has(w) && (!BOILER.has(w) || PHRASE_OK.has(w));
+  const words = (t: string) => t.toLowerCase().replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/https?:\/\/\S+/g, " ").replace(/[^a-z0-9\s-]/g, " ").split(/[\s]+/).filter(Boolean);
+  const score = new Map<string, number>();
+  const add = (t: string, w: number) => {
+    const ws = words(t);
+    for (let i = 0; i < ws.length; i++) {
+      for (const len of [2, 3]) {
+        const g = ws.slice(i, i + len);
+        if (g.length < len || !g.every(ok)) continue;
+        const st = g.map(phraseWord);
+        // A third-party product name never makes a category ("google maps", "claude code"), and the edges are nouns.
+        if (st.some((x) => PHRASE_EDGE.has(x) && !["code", "key", "name", "order", "call"].includes(x)) || PHRASE_EDGE.has(st[0]) || PHRASE_EDGE.has(st[len - 1])) continue;
+        // One content word at least that is not a generic one: "ai api" alone says little.
+        if (g.every((x) => PHRASE_OK.has(x))) continue;
+        const k = st.join(" ");
+        score.set(k, (score.get(k) ?? 0) + w * (len === 3 ? 0.8 : 1));
+      }
+    }
+  };
+  for (const p of pages) {
+    const title = p.markdown.match(/^Title:\s*(.+)$/m)?.[1] ?? "";
+    const h1 = [...p.markdown.matchAll(/^#\s+(.+)$/gm)].map((m) => m[1]).join("\n");
+    add(title, p.kind === "home" ? 8 : 1);
+    add(h1, p.kind === "home" ? 2 : 1);
+    add(p.markdown.replace(/^Title:.*$/m, ""), 0.25);
+  }
+  const out: string[] = [];
+  for (const [k] of [...score.entries()].filter(([, v]) => v >= 1.5).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+    // Skip a phrase that only repeats one already picked ("data api" then "every data api").
+    if (out.some((o) => o.includes(k) || k.includes(o))) continue;
+    out.push(k);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+
+/** True when the page says one of the category phrases (plural or singular, words next to each other). */
+export function saysPhrase(text: string, phrases: string[]): string | null {
+  const t = ` ${text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).map(phraseWord).join(" ")} `;
+  return phrases.find((p) => t.includes(` ${p} `)) ?? null;
+}
+
 /**
  * How much of your category a page shares, 0 to 1. Each category word found on the page counts,
  * the first words (your most used) count more. Returns the share and the words it found.

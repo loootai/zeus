@@ -56,3 +56,55 @@ test("a run goes to job:<id> with fallback and the per-call ceiling, then polls"
   assert.equal(r.record.charged, 0.001);
   assert.deepEqual(r.data, { ok: 1 });
 });
+
+test("a 429 too_many_inflight_runs is retried after retryAfterSeconds with the same key, not dropped", async () => {
+  const keys: string[] = [];
+  const waits: number[] = [];
+  let posts = 0;
+  const fake: typeof fetch = async (_url, init) => {
+    if (init?.method === "POST") {
+      posts++;
+      keys.push(JSON.parse(String(init.body)).idempotencyKey);
+      if (posts <= 2) return new Response(JSON.stringify({ error: { code: "too_many_inflight_runs", message: "busy" }, inflight: 8, limit: 8, retryAfterSeconds: 2 }), { status: 429, headers: { "retry-after": "2" } });
+      return new Response(JSON.stringify({ runId: "run_9", status: "completed", outcome: "hit", actualCost: 0.002, result: { ok: 1 } }), { status: 201 });
+    }
+    throw new Error("no poll expected");
+  };
+  const c = new LoootClient({ token: "t", fetch: fake, sleep: async (ms) => { waits.push(ms); }, baseUrl: "https://api.test" });
+  const r = await c.call("news.search", { query: "acme" }, { module: "mentions", step: "news:acme", maxCostUsd: 0.01, quotedUsd: 0.001 });
+  assert.equal(posts, 3);
+  assert.equal(new Set(keys).size, 1, "every try uses the same idempotency key");
+  assert.ok(waits.every((w) => w >= 2000), `waited ${waits}`);
+  assert.equal(r.record.outcome, "hit");
+  assert.equal(r.record.charged, 0.002);
+});
+
+test("a call still busy after every try is recorded as failed with the code, charged 0", async () => {
+  let posts = 0;
+  const fake: typeof fetch = async () => { posts++; return new Response(JSON.stringify({ error: { code: "too_many_inflight_runs" }, retryAfterSeconds: 1 }), { status: 429 }); };
+  const c = new LoootClient({ token: "t", fetch: fake, sleep: async () => {}, baseUrl: "https://api.test", busyTries: 3 });
+  const r = await c.call("news.search", { query: "x" }, { module: "mentions", step: "news:x", maxCostUsd: 0.01, quotedUsd: 0.001 });
+  assert.equal(posts, 3);
+  assert.equal(r.record.outcome, "fail");
+  assert.equal(r.record.charged, 0);
+  assert.match(r.record.note ?? "", /too_many_inflight_runs/);
+});
+
+test("the client never has more runs in flight than maxInflight, and every call finishes", async () => {
+  let inflight = 0;
+  let peak = 0;
+  const fake: typeof fetch = async (url, init) => {
+    if (init?.method === "POST") {
+      inflight++;
+      peak = Math.max(peak, inflight);
+      return new Response(JSON.stringify({ runId: `r${Math.random()}`, status: "running" }), { status: 201 });
+    }
+    await new Promise((r) => setTimeout(r, 2));
+    inflight--;
+    return new Response(JSON.stringify({ runId: String(url).split("/").pop(), status: "completed", outcome: "hit", actualCost: 0 }), { status: 200 });
+  };
+  const c = new LoootClient({ token: "t", fetch: fake, sleep: async () => { await new Promise((r) => setTimeout(r, 1)); }, baseUrl: "https://api.test", maxInflight: 6 });
+  const all = await Promise.all(Array.from({ length: 30 }, (_, i) => c.call("news.search", { query: `q${i}` }, { module: "mentions", step: `n${i}`, maxCostUsd: 0.01, quotedUsd: 0 })));
+  assert.equal(all.filter((r) => r.record.outcome === "hit").length, 30);
+  assert.ok(peak <= 6, `peak ${peak}`);
+});

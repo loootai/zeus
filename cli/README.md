@@ -192,7 +192,7 @@ Safe output is company-level data only. Each person shows as their role and titl
 looot-zeus export --public
 ```
 
-It writes `gtm/public/` with `receipt.json`, `dossier.html`, `dossier.md` and `city/index.html`, in safe demo mode. Your domain and brand become `yourdomain.com` and `yourbrand`. Your competitors become Rival A, Rival B and Rival C (`rival-a.com` and so on). People become Person 1, Person 2 with `example.com` emails. Then it searches the four files for every original string. If one is left, it deletes the copy and tells you which string.
+It writes `gtm/public/` with `receipt.json`, `dossier.html`, `dossier.md` and `city/index.html`, in safe demo mode. Your own domain, brand and logo stay: it is your page. Masking is for third parties only. Your competitors become Rival A, Rival B and Rival C (`rival-a.com` and so on). People become Person 1, Person 2 with `example.com` emails. Then it searches the four files for every original string. If one is left, it deletes the copy and tells you which string.
 
 Target accounts keep their names unless you add `--mask-accounts`. Then accounts and lookalikes become Account 1, Account 2 on `account-1.example`, their industry shows as Business and your seed customers become `customer-1.example`. Use it when the target list is your own pipeline.
 
@@ -345,7 +345,7 @@ It writes `gtm/crm/<format>/companies.csv` (one row per target account), plus `c
 
 ## Host it on your own Vercel and Supabase
 
-The `Take it to the next step` card on your private page has a Deploy to Vercel button. It clones the public [loootai/zeus](https://github.com/loootai/zeus) repo into your Git account and asks you to add the Supabase integration from the Vercel Marketplace, which creates a Supabase project and sets its env vars on the Vercel project (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and the public anon key). The form asks for `LOOOT_TOKEN`: you paste it there. No value is in the link, only env names.
+The `Take it to the next step` card on your private page has a Deploy to Vercel button. It clones the `web-starter/` folder of the public [loootai/zeus](https://github.com/loootai/zeus) repo into your Git account: a small Next.js app, your private Zeus GTM OS, that shows your accounts, committees, people, plays and rivals read from your own Supabase tables. It is read only and only your email can sign in (Supabase Auth email link). The button asks you to add the Supabase integration from the Vercel Marketplace, which creates a Supabase project and sets its env vars on the Vercel project (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and the public anon key). It also asks for `ZEUS_OWNER_EMAIL`: your email. The app never needs your looot key. No value is in the link, only env names. In Supabase, Authentication, URL Configuration, set the Site URL to your Vercel URL and add `<your Vercel URL>/auth/callback` to Redirect URLs. `web-starter/README.md` has the steps.
 
 1. Apply the tables: `supabase/migrations/20261125120000_zeus.sql` (with `supabase db push` from the cloned repo, or paste it in the Supabase SQL editor). It creates `runs`, `accounts`, `committees`, `people` (email and phone nullable), `plays` and `rivals`. RLS is on for every table with no policy. Anon and authenticated get no grants: nothing is readable with the public key until you add a policy.
 2. See what would be written, with no key needed:

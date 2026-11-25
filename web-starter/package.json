@@ -1,0 +1,24 @@
+{
+  "name": "zeus-gtm-os",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Your own Zeus GTM OS: your Zeus run's accounts, committees, people, plays and rivals, read from your Supabase project. Only the owner's email can sign in.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
+    "next": "15.5.28",
+    "react": "19.1.10",
+    "react-dom": "19.1.10"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.0",
+    "@types/react": "19.1.10",
+    "typescript": "5.9.3"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

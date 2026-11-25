@@ -279,7 +279,9 @@ test("prepare: free site read, quoted rival check, candidates.json and a brief f
   // the price is printed before any paid call
   assert.ok(text.indexOf("google.serp.organic") < text.indexOf("Rivals the rules kept"));
   assert.deepEqual(out!.competitors, ["taplio.com"]);
-  assert.ok(!sent.some((s) => s.includes("competitors.com") || s.includes("every.com") || s.includes("g2.com")), sent.join("\n"));
+  // g2.com may be read as a list of the category's products, never checked or kept as a rival.
+  assert.ok(!sent.some((s) => s.includes("competitors.com") || s.includes("every.com") || (s.includes("g2.com") && !s.startsWith("web.scrape.markdown {\"url\":\"https://www.g2.com/"))), sent.join("\n"));
+  assert.ok(!sent.some((s) => s.startsWith("company.enrich") && s.includes("g2.com")));
   const cands = JSON.parse(readFileSync(join(outDir, "candidates.json"), "utf8"));
   assert.equal(cands.candidates.find((c: any) => c.domain === "beanco.example").kept, false);
   assert.match(cands.picked.reasons["taplio.com"], /category words/);

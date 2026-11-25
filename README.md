@@ -52,3 +52,5 @@ Only your own local output folder (`gtm/`) can hold contacts, and only after a r
 ## Licence
 
 MIT, see [LICENSE](LICENSE).
+
+Host your results on your own Vercel and Supabase: `web-starter/` is the app the "Deploy to Vercel" button clones (see `web-starter/README.md`).

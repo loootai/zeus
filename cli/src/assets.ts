@@ -161,5 +161,6 @@ export function stripAssets(html: string): string {
   return html
     .replace(/<span class="lg[^"]*" style="--s:(\d+)px"[^>]*>[\s\S]*?<\/span>/g, '<span class="lg" style="--s:$1px" aria-hidden="true"></span>')
     .replace(/<img [^>]*data-src="assets\/[^"]*"[^>]*>/g, "")
-    .replace(/(<span class="mark" aria-hidden="true">)<img [^>]*>(<\/span>)/g, "$1Y$2");
+    // The owner's own mark (a data: URI of its logo) stays: it is the run's company, not a third party.
+    .replace(/(<span class="mark" aria-hidden="true">)<img (?![^>]*src="data:image\/)[^>]*>(<\/span>)/g, "$1Y$2");
 }

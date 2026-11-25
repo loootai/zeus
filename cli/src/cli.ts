@@ -58,8 +58,8 @@ Step by step
                      placeholder rows for free.
   log                Notes who your outreach tool will email and with which angle, so learn can
                      match replies. --campaign <name> --angle <text> --file gtm/exports/instantly.csv
-  export --public    A copy of the dossier to show anyone, in gtm/public/. Your domain, brand,
-                     rivals and people are swapped for yourdomain.com, Rival A and Person 1.
+  export --public    A copy of the dossier to show anyone, in gtm/public/. Your own domain and brand
+                     stay; rivals and people are swapped for Rival A and Person 1.
                      --mask-accounts also turns target accounts into Account 1 on account-1.example.
                      The copy has the dossier and the city page, company-level data only.
   export --crm       CSV files your CRM imports, in gtm/crm/<format>/: companies.csv (target

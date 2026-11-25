@@ -23,6 +23,10 @@ export class LoootError extends Error {
     readonly code?: string,
     /** The top-up link a 402 insufficient_balance answer carries, when it has one. */
     readonly topUpUrl?: string,
+    /** Seconds to wait before the next try, from a 429's body or Retry-After header. */
+    readonly retryAfterSeconds?: number,
+    /** The workspace's in-flight run limit, from a 429 too_many_inflight_runs body. */
+    readonly limit?: number,
   ) {
     super(message);
     this.name = "LoootError";
@@ -181,6 +185,32 @@ export interface LoootClientOptions {
   now?: () => number;
   /** How long to keep reading a run whose cost is not known yet, after the poll timeout or a lost answer. Default 60 s. */
   readBackMs?: number;
+  /** Most runs this client keeps in flight at once. Default 6, under the gateway's per-workspace limit of 8. */
+  maxInflight?: number;
+  /** Tries of one call refused with 429 (too_many_inflight_runs, run_rate_limited) before it is recorded as failed. Default 6. */
+  busyTries?: number;
+}
+
+/** The 429 answers that mean "busy, nothing was charged, try again shortly". */
+export const BUSY_CODES = new Set(["too_many_inflight_runs", "run_rate_limited"]);
+
+/** A counting gate: at most `max` holders at once, the rest wait in order. `max` can shrink when looot says its limit is lower. */
+export class Gate {
+  #active = 0;
+  readonly #waiting: (() => void)[] = [];
+  constructor(public max: number) {}
+  get active(): number { return this.#active; }
+  async acquire(): Promise<void> {
+    if (this.#active < this.max && this.#waiting.length === 0) { this.#active++; return; }
+    await new Promise<void>((r) => this.#waiting.push(r));
+  }
+  release(): void {
+    this.#active--;
+    while (this.#active < this.max && this.#waiting.length > 0) {
+      this.#active++;
+      this.#waiting.shift()!();
+    }
+  }
 }
 
 export class LoootClient implements JobRunner {
@@ -192,6 +222,8 @@ export class LoootClient implements JobRunner {
   readonly #sleep: (ms: number) => Promise<void>;
   readonly #now: () => number;
   readonly #readBackMs: number;
+  readonly #gate: Gate;
+  readonly #busyTries: number;
 
   constructor(o: LoootClientOptions) {
     this.#token = o.token;
@@ -202,6 +234,32 @@ export class LoootClient implements JobRunner {
     this.#sleep = o.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
     this.#now = o.now ?? Date.now;
     this.#readBackMs = o.readBackMs ?? 60_000;
+    this.#gate = new Gate(Math.max(1, o.maxInflight ?? 6));
+    this.#busyTries = Math.max(1, o.busyTries ?? 6);
+  }
+
+  /**
+   * Starts and polls a run inside the in-flight gate. A 429 busy answer (nothing was charged and no run
+   * exists) waits retryAfterSeconds, or a growing backoff, and tries again with the same key, up to busyTries.
+   */
+  async #gatedRunAndWait(job: string, input: Record<string, unknown>, key: string, maxCostUsd: number, seen?: (run: LoootRun) => void): Promise<LoootRun> {
+    for (let i = 1; ; i++) {
+      await this.#gate.acquire();
+      let err: unknown;
+      try {
+        return await this.runAndWait(job, input, key, maxCostUsd, seen);
+      } catch (e) {
+        err = e;
+      } finally {
+        this.#gate.release();
+      }
+      const le = err as LoootError;
+      if (!(err instanceof LoootError) || le.status !== 429 || !BUSY_CODES.has(le.code ?? "") || i >= this.#busyTries) throw err;
+      // looot says its limit is lower than ours: stay under it from now on.
+      if (le.limit && le.limit > 0 && le.limit - 2 < this.#gate.max) this.#gate.max = Math.max(1, le.limit - 2);
+      const wait = Math.min(30_000, Math.max(le.retryAfterSeconds ? le.retryAfterSeconds * 1000 : 0, 1000 * 2 ** (i - 1)));
+      await this.#sleep(wait);
+    }
   }
 
   async #request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -222,10 +280,11 @@ export class LoootClient implements JobRunner {
       json = null;
     }
     if (!res.ok) {
-      const j = json as { error?: { message?: string; code?: string }; topUpUrl?: unknown; topUp?: { url?: unknown; checkoutUrl?: unknown } } | null;
+      const j = json as { error?: { message?: string; code?: string }; topUpUrl?: unknown; topUp?: { url?: unknown; checkoutUrl?: unknown }; retryAfterSeconds?: unknown; limit?: unknown } | null;
       const err = j?.error;
       const link = [j?.topUpUrl, j?.topUp?.checkoutUrl, j?.topUp?.url].find((x): x is string => typeof x === "string" && x !== "");
-      throw new LoootError(err?.message ?? `looot answered HTTP ${res.status}`, res.status, err?.code, link);
+      const after = num(j?.retryAfterSeconds) ?? num(res.headers?.get?.("retry-after") ?? undefined);
+      throw new LoootError(err?.message ?? `looot answered HTTP ${res.status}`, res.status, err?.code, link, after, num(j?.limit));
     }
     return json as T;
   }
@@ -289,7 +348,7 @@ export class LoootClient implements JobRunner {
       let last: LoootRun | undefined;
       unknown = false;
       try {
-        const r = await this.runAndWait(job, input, k, opts.maxCostUsd, (x) => (last = x));
+        const r = await this.#gatedRunAndWait(job, input, k, opts.maxCostUsd, (x) => (last = x));
         if (TERMINAL.has(r.status)) return r;
         // Still running when the poll timeout passed: looot may still charge it. Read it back.
         const back = await this.#readBack(r.runId);

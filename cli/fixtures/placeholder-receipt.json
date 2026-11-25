@@ -5,15 +5,15 @@
     "domain": "yourdomain.com",
     "mode": "demo",
     "startedAt": "2026-10-30T09:00:00.000Z",
-    "finishedAt": "2026-10-30T09:00:44.807Z",
+    "finishedAt": "2026-10-30T09:00:40.243Z",
     "cap": 10,
-    "expected": 2.2846,
-    "worst": 13.49592,
+    "expected": 2.2974,
+    "worst": 13.53592,
     "worstCapped": 1.904,
     "totalRuns": 150,
-    "charged": 0.55945,
-    "calls": 156,
-    "durationMs": 44807,
+    "charged": 0.60793,
+    "calls": 158,
+    "durationMs": 40243,
     "capStopped": false,
     "priceSource": "the dated price table checked 2026-10-30 (offline estimate)"
   },
@@ -41,19 +41,19 @@
       "label": "ICP",
       "status": "capped",
       "capScope": "section",
-      "calls": 12,
-      "quoted": 0.1123,
-      "worst": 0.49,
+      "calls": 14,
+      "quoted": 0.0951,
+      "worst": 0.48,
       "worstCapped": 0.15,
-      "expectedCapped": 0.1123,
+      "expectedCapped": 0.0951,
       "cap": {
         "usd": 0.15,
-        "runs": 12
+        "runs": 14
       },
-      "charged": 0.0678,
+      "charged": 0.0862,
       "summary": "ideal customer written, 25 lookalike candidates from 5 seeds",
       "startedAtMs": 3264,
-      "endedAtMs": 9739
+      "endedAtMs": 12134
     },
     {
       "id": "accounts",
@@ -61,18 +61,18 @@
       "status": "capped",
       "capScope": "section",
       "calls": 20,
-      "quoted": 0.1125,
-      "worst": 0.85,
+      "quoted": 0.1425,
+      "worst": 0.9,
       "worstCapped": 0.25,
-      "expectedCapped": 0.1125,
+      "expectedCapped": 0.1425,
       "cap": {
         "usd": 0.25,
         "runs": 20
       },
-      "charged": 0.0923,
+      "charged": 0.1204,
       "summary": "25 accounts scored, 6 A, 9 B, 7 C, 3 D (12 shown)",
-      "startedAtMs": 9779,
-      "endedAtMs": 18904
+      "startedAtMs": 12174,
+      "endedAtMs": 20206
     },
     {
       "id": "people",
@@ -90,8 +90,8 @@
       },
       "charged": 0.01824,
       "summary": "24 people found, 2 per account (12 shown)",
-      "startedAtMs": 18944,
-      "endedAtMs": 25583
+      "startedAtMs": 20246,
+      "endedAtMs": 23703
     },
     {
       "id": "enrich",
@@ -109,8 +109,8 @@
       },
       "charged": 0.08856,
       "summary": "19 emails verified, 3 miss, 2 risky",
-      "startedAtMs": 25623,
-      "endedAtMs": 38578
+      "startedAtMs": 23743,
+      "endedAtMs": 36187
     },
     {
       "id": "committee",
@@ -126,10 +126,10 @@
         "usd": 0.2,
         "runs": 10
       },
-      "charged": 0.04028,
+      "charged": 0.04256,
       "summary": "32 people across 8 buying committees, 27 emails and 12 phone numbers found",
-      "startedAtMs": 38618,
-      "endedAtMs": 44447
+      "startedAtMs": 36227,
+      "endedAtMs": 39883
     },
     {
       "id": "signals",
@@ -145,10 +145,10 @@
         "usd": 0.2,
         "runs": 8
       },
-      "charged": 0.0043,
+      "charged": 0.004,
       "summary": "14 signals on 10 accounts, 3 hot, 4 warm",
-      "startedAtMs": 18944,
-      "endedAtMs": 22691
+      "startedAtMs": 20246,
+      "endedAtMs": 21834
     },
     {
       "id": "competitors",
@@ -167,7 +167,7 @@
       "charged": 0.0289,
       "summary": "3 rival cards, 22 claims, each with its source and date",
       "startedAtMs": 3264,
-      "endedAtMs": 8310
+      "endedAtMs": 5340
     },
     {
       "id": "ads",
@@ -183,10 +183,10 @@
         "usd": 0.08,
         "runs": 10
       },
-      "charged": 0.0188,
+      "charged": 0.01692,
       "summary": "41 live ads across 4 advertisers, 12 pulled with their copy, 6 angles",
       "startedAtMs": 3264,
-      "endedAtMs": 7510
+      "endedAtMs": 7563
     },
     {
       "id": "social",
@@ -202,10 +202,10 @@
         "usd": 0.08,
         "runs": 10
       },
-      "charged": 0.01466,
+      "charged": 0.01654,
       "summary": "12 recent posts from you and 3 of 3 rivals on LinkedIn and X",
       "startedAtMs": 3264,
-      "endedAtMs": 7677
+      "endedAtMs": 6939
     },
     {
       "id": "seo",
@@ -224,7 +224,7 @@
       "charged": 0.077,
       "summary": "5 keyword gaps, ranked on 3 of 4 keywords, named in 2 of 4 AI answers",
       "startedAtMs": 3264,
-      "endedAtMs": 7329
+      "endedAtMs": 9947
     },
     {
       "id": "reviews",
@@ -242,7 +242,7 @@
       "charged": 0.012,
       "summary": "App Store, 4.4 average over 120 reviews, 4 themes",
       "startedAtMs": 3264,
-      "endedAtMs": 4272
+      "endedAtMs": 5412
     },
     {
       "id": "mentions",
@@ -261,7 +261,7 @@
       "charged": 0.00977,
       "summary": "5 mentions in 7 days, 3 buying-intent posts",
       "startedAtMs": 3264,
-      "endedAtMs": 6615
+      "endedAtMs": 6988
     },
     {
       "id": "market",
@@ -280,7 +280,7 @@
       "charged": 0.06532,
       "summary": "4 companies, traffic, funding and hiring side by side",
       "startedAtMs": 3264,
-      "endedAtMs": 5571
+      "endedAtMs": 4213
     },
     {
       "id": "local",
@@ -326,7 +326,7 @@
       "charged": 0.02,
       "summary": "your site scores 38/100 for AI agents (2 agent-aware), 2 of 3 rivals score higher",
       "startedAtMs": 3264,
-      "endedAtMs": 5844
+      "endedAtMs": 3839
     },
     {
       "id": "domains",
@@ -344,7 +344,7 @@
       "charged": 0,
       "summary": "your domain is 6 years old, registry records for 4 of 4 domains",
       "startedAtMs": 3264,
-      "endedAtMs": 5327
+      "endedAtMs": 5608
     },
     {
       "id": "synthesis",
@@ -357,8 +357,8 @@
       "expectedCapped": 0,
       "charged": 0,
       "summary": "summary and 10 plays (placeholder)",
-      "startedAtMs": 44487,
-      "endedAtMs": 44607
+      "startedAtMs": 39923,
+      "endedAtMs": 40043
     }
   ],
   "calls": [
@@ -441,71 +441,125 @@
       "ts": "2026-10-30T09:00:03.104Z"
     },
     {
-      "module": "ads",
-      "job": "ads.meta.search",
-      "provider": "ScrapeCreators",
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 625,
-      "ts": "2026-10-30T09:00:03.889Z"
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 339,
+      "ts": "2026-10-30T09:00:03.603Z"
     },
     {
-      "module": "ads",
-      "job": "ads.meta.search",
-      "provider": "ScrapeCreators",
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 829,
-      "ts": "2026-10-30T09:00:03.889Z"
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 2275,
+      "ts": "2026-10-30T09:00:03.603Z"
     },
     {
-      "module": "ads",
-      "job": "ads.meta.search",
-      "provider": "ScrapeCreators",
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 1556,
-      "ts": "2026-10-30T09:00:03.889Z"
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 1090,
+      "ts": "2026-10-30T09:00:03.603Z"
     },
     {
-      "module": "ads",
-      "job": "ads.meta.search",
-      "provider": "ScrapeCreators",
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 2087,
-      "ts": "2026-10-30T09:00:03.889Z"
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 1633,
+      "ts": "2026-10-30T09:00:03.603Z"
     },
     {
-      "module": "social",
-      "job": "linkedin.company.posts",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "fail",
-      "quoted": 0.00188,
-      "charged": 0,
-      "ms": 804,
-      "ts": "2026-10-30T09:00:04.068Z",
-      "note": "provider_timeout (provider)"
+      "module": "readiness",
+      "job": "web.agent.readiness",
+      "provider": "provider",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.005,
+      "charged": 0.005,
+      "ms": 455,
+      "ts": "2026-10-30T09:00:03.719Z"
     },
     {
-      "module": "social",
-      "job": "linkedin.company.posts",
-      "provider": "ScrapeCreators",
+      "module": "readiness",
+      "job": "web.agent.readiness",
+      "provider": "provider",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.005,
+      "charged": 0.005,
+      "ms": 2529,
+      "ts": "2026-10-30T09:00:03.719Z"
+    },
+    {
+      "module": "readiness",
+      "job": "web.agent.readiness",
+      "provider": "provider",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.005,
+      "charged": 0.005,
+      "ms": 1943,
+      "ts": "2026-10-30T09:00:03.719Z"
+    },
+    {
+      "module": "readiness",
+      "job": "web.agent.readiness",
+      "provider": "provider",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.005,
+      "charged": 0.005,
+      "ms": 2576,
+      "ts": "2026-10-30T09:00:03.719Z"
+    },
+    {
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 1951,
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 465,
       "ts": "2026-10-30T09:00:04.068Z"
+    },
+    {
+      "module": "competitors",
+      "job": "web.scrape.markdown",
+      "provider": "Jina Reader",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0002,
+      "charged": 0.0002,
+      "ms": 2467,
+      "ts": "2026-10-30T09:00:04.068Z"
+    },
+    {
+      "module": "market",
+      "job": "company.traffic",
+      "provider": "Datagma",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.06532,
+      "charged": 0.06532,
+      "ms": 829,
+      "ts": "2026-10-30T09:00:04.093Z"
     },
     {
       "module": "social",
@@ -516,7 +570,7 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 911,
-      "ts": "2026-10-30T09:00:04.068Z"
+      "ts": "2026-10-30T09:00:04.175Z"
     },
     {
       "module": "social",
@@ -527,29 +581,62 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 2081,
-      "ts": "2026-10-30T09:00:04.068Z"
+      "ts": "2026-10-30T09:00:04.175Z"
     },
     {
-      "module": "seo",
-      "job": "keywords.domain.overview",
-      "provider": "DataForSEO",
-      "singleProvider": true,
+      "module": "social",
+      "job": "linkedin.company.posts",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.012,
-      "charged": 0.012,
-      "ms": 887,
-      "ts": "2026-10-30T09:00:04.151Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1627,
+      "ts": "2026-10-30T09:00:04.175Z"
     },
     {
-      "module": "seo",
-      "job": "keywords.domain.overview",
-      "provider": "DataForSEO",
-      "singleProvider": true,
+      "module": "social",
+      "job": "linkedin.company.posts",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.012,
-      "charged": 0.012,
-      "ms": 1738,
-      "ts": "2026-10-30T09:00:04.151Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1437,
+      "ts": "2026-10-30T09:00:04.175Z"
+    },
+    {
+      "module": "competitors",
+      "job": "company.technographics",
+      "provider": "Tomba",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0089,
+      "charged": 0.0089,
+      "ms": 323,
+      "ts": "2026-10-30T09:00:04.391Z"
+    },
+    {
+      "module": "competitors",
+      "job": "company.technographics",
+      "provider": "Tomba",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0089,
+      "charged": 0.0089,
+      "ms": 2184,
+      "ts": "2026-10-30T09:00:04.391Z"
+    },
+    {
+      "module": "competitors",
+      "job": "company.technographics",
+      "provider": "Tomba",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0089,
+      "charged": 0.0089,
+      "ms": 625,
+      "ts": "2026-10-30T09:00:04.391Z"
     },
     {
       "module": "seo",
@@ -560,7 +647,7 @@
       "quoted": 0.012,
       "charged": 0,
       "ms": 1550,
-      "ts": "2026-10-30T09:00:04.151Z",
+      "ts": "2026-10-30T09:00:04.814Z",
       "note": "provider_timeout (provider)"
     },
     {
@@ -572,205 +659,51 @@
       "quoted": 0.012,
       "charged": 0.012,
       "ms": 1309,
-      "ts": "2026-10-30T09:00:04.151Z"
+      "ts": "2026-10-30T09:00:04.814Z"
     },
     {
-      "module": "reviews",
-      "job": "reviews.appstore.reviews",
-      "provider": "SearchAPI.io",
+      "module": "seo",
+      "job": "keywords.domain.overview",
+      "provider": "DataForSEO",
       "singleProvider": true,
       "outcome": "hit",
-      "quoted": 0.004,
-      "charged": 0.004,
-      "ms": 888,
-      "ts": "2026-10-30T09:00:04.152Z"
+      "quoted": 0.012,
+      "charged": 0.012,
+      "ms": 1612,
+      "ts": "2026-10-30T09:00:04.814Z"
     },
     {
-      "module": "reviews",
-      "job": "reviews.appstore.reviews",
-      "provider": "SearchAPI.io",
+      "module": "seo",
+      "job": "keywords.domain.overview",
+      "provider": "DataForSEO",
       "singleProvider": true,
       "outcome": "hit",
-      "quoted": 0.004,
-      "charged": 0.004,
-      "ms": 2561,
-      "ts": "2026-10-30T09:00:04.152Z"
+      "quoted": 0.012,
+      "charged": 0.012,
+      "ms": 865,
+      "ts": "2026-10-30T09:00:04.814Z"
     },
     {
-      "module": "reviews",
-      "job": "reviews.appstore.reviews",
-      "provider": "SearchAPI.io",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.004,
-      "charged": 0.004,
-      "ms": 2028,
-      "ts": "2026-10-30T09:00:04.152Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 1187,
-      "ts": "2026-10-30T09:00:04.451Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 1599,
-      "ts": "2026-10-30T09:00:04.451Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 339,
-      "ts": "2026-10-30T09:00:04.451Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 2275,
-      "ts": "2026-10-30T09:00:04.451Z"
-    },
-    {
-      "module": "mentions",
-      "job": "reddit.post.search",
+      "module": "ads",
+      "job": "ads.meta.search",
       "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
       "quoted": 0.00188,
       "charged": 0.00188,
-      "ms": 1293,
-      "ts": "2026-10-30T09:00:04.557Z"
+      "ms": 1556,
+      "ts": "2026-10-30T09:00:04.820Z"
     },
     {
-      "module": "mentions",
-      "job": "reddit.post.search",
+      "module": "ads",
+      "job": "ads.meta.search",
       "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
       "quoted": 0.00188,
       "charged": 0.00188,
-      "ms": 1130,
-      "ts": "2026-10-30T09:00:04.557Z"
-    },
-    {
-      "module": "mentions",
-      "job": "reddit.post.search",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 2127,
-      "ts": "2026-10-30T09:00:04.557Z"
-    },
-    {
-      "module": "mentions",
-      "job": "reddit.post.search",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 2308,
-      "ts": "2026-10-30T09:00:04.557Z"
-    },
-    {
-      "module": "domains",
-      "job": "domain.rdap.lookup",
-      "provider": "provider",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0,
-      "charged": 0,
-      "ms": 1943,
-      "ts": "2026-10-30T09:00:05.207Z"
-    },
-    {
-      "module": "domains",
-      "job": "domain.rdap.lookup",
-      "provider": "provider",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0,
-      "charged": 0,
-      "ms": 2576,
-      "ts": "2026-10-30T09:00:05.207Z"
-    },
-    {
-      "module": "domains",
-      "job": "domain.rdap.lookup",
-      "provider": "provider",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0,
-      "charged": 0,
-      "ms": 2224,
-      "ts": "2026-10-30T09:00:05.207Z"
-    },
-    {
-      "module": "domains",
-      "job": "domain.rdap.lookup",
-      "provider": "provider",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0,
-      "charged": 0,
-      "ms": 1962,
-      "ts": "2026-10-30T09:00:05.207Z"
-    },
-    {
-      "module": "market",
-      "job": "company.traffic",
-      "provider": "Datagma",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.06532,
-      "charged": 0.06532,
-      "ms": 2187,
-      "ts": "2026-10-30T09:00:05.451Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 1090,
-      "ts": "2026-10-30T09:00:05.541Z"
-    },
-    {
-      "module": "competitors",
-      "job": "web.scrape.markdown",
-      "provider": "Jina Reader",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0002,
-      "charged": 0.0002,
-      "ms": 1633,
-      "ts": "2026-10-30T09:00:05.541Z"
+      "ms": 2087,
+      "ts": "2026-10-30T09:00:04.820Z"
     },
     {
       "module": "ads",
@@ -781,7 +714,7 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 1664,
-      "ts": "2026-10-30T09:00:05.553Z"
+      "ts": "2026-10-30T09:00:04.820Z"
     },
     {
       "module": "ads",
@@ -792,7 +725,139 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 1263,
-      "ts": "2026-10-30T09:00:05.553Z"
+      "ts": "2026-10-30T09:00:04.820Z"
+    },
+    {
+      "module": "competitors",
+      "job": "news.search",
+      "provider": "Serper",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.001,
+      "charged": 0.001,
+      "ms": 829,
+      "ts": "2026-10-30T09:00:05.220Z"
+    },
+    {
+      "module": "reviews",
+      "job": "reviews.appstore.reviews",
+      "provider": "SearchAPI.io",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.004,
+      "charged": 0.004,
+      "ms": 2028,
+      "ts": "2026-10-30T09:00:05.292Z"
+    },
+    {
+      "module": "reviews",
+      "job": "reviews.appstore.reviews",
+      "provider": "SearchAPI.io",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.004,
+      "charged": 0.004,
+      "ms": 1293,
+      "ts": "2026-10-30T09:00:05.292Z"
+    },
+    {
+      "module": "reviews",
+      "job": "reviews.appstore.reviews",
+      "provider": "SearchAPI.io",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.004,
+      "charged": 0.004,
+      "ms": 1130,
+      "ts": "2026-10-30T09:00:05.292Z"
+    },
+    {
+      "module": "mentions",
+      "job": "reddit.post.search",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 2127,
+      "ts": "2026-10-30T09:00:05.391Z"
+    },
+    {
+      "module": "mentions",
+      "job": "reddit.post.search",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 2308,
+      "ts": "2026-10-30T09:00:05.391Z"
+    },
+    {
+      "module": "mentions",
+      "job": "reddit.post.search",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1938,
+      "ts": "2026-10-30T09:00:05.391Z"
+    },
+    {
+      "module": "mentions",
+      "job": "reddit.post.search",
+      "provider": "ScrapeCreators",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 307,
+      "ts": "2026-10-30T09:00:05.391Z"
+    },
+    {
+      "module": "domains",
+      "job": "domain.rdap.lookup",
+      "provider": "provider",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0,
+      "charged": 0,
+      "ms": 2224,
+      "ts": "2026-10-30T09:00:05.488Z"
+    },
+    {
+      "module": "domains",
+      "job": "domain.rdap.lookup",
+      "provider": "provider",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0,
+      "charged": 0,
+      "ms": 1962,
+      "ts": "2026-10-30T09:00:05.488Z"
+    },
+    {
+      "module": "domains",
+      "job": "domain.rdap.lookup",
+      "provider": "provider",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0,
+      "charged": 0,
+      "ms": 2449,
+      "ts": "2026-10-30T09:00:05.488Z"
+    },
+    {
+      "module": "domains",
+      "job": "domain.rdap.lookup",
+      "provider": "provider",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0,
+      "charged": 0,
+      "ms": 1315,
+      "ts": "2026-10-30T09:00:05.488Z"
     },
     {
       "module": "icp",
@@ -846,30 +911,8 @@
       "outcome": "hit",
       "quoted": 0.00188,
       "charged": 0.00188,
-      "ms": 1627,
-      "ts": "2026-10-30T09:00:05.695Z"
-    },
-    {
-      "module": "social",
-      "job": "linkedin.company.posts",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 1437,
-      "ts": "2026-10-30T09:00:05.695Z"
-    },
-    {
-      "module": "social",
-      "job": "linkedin.company.posts",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
       "ms": 1757,
-      "ts": "2026-10-30T09:00:05.695Z"
+      "ts": "2026-10-30T09:00:05.932Z"
     },
     {
       "module": "social",
@@ -880,183 +923,73 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 320,
-      "ts": "2026-10-30T09:00:05.695Z"
+      "ts": "2026-10-30T09:00:05.932Z"
     },
     {
-      "module": "readiness",
-      "job": "web.agent.readiness",
-      "provider": "provider",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.005,
-      "charged": 0.005,
-      "ms": 2460,
-      "ts": "2026-10-30T09:00:05.724Z"
-    },
-    {
-      "module": "readiness",
-      "job": "web.agent.readiness",
-      "provider": "provider",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.005,
-      "charged": 0.005,
-      "ms": 829,
-      "ts": "2026-10-30T09:00:05.724Z"
-    },
-    {
-      "module": "readiness",
-      "job": "web.agent.readiness",
-      "provider": "provider",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.005,
-      "charged": 0.005,
-      "ms": 455,
-      "ts": "2026-10-30T09:00:05.724Z"
-    },
-    {
-      "module": "readiness",
-      "job": "web.agent.readiness",
-      "provider": "provider",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.005,
-      "charged": 0.005,
-      "ms": 2529,
-      "ts": "2026-10-30T09:00:05.724Z"
-    },
-    {
-      "module": "seo",
-      "job": "dataforseolabs.google.domain-intersection.live-ai",
-      "provider": "DataForSEO",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.012,
-      "charged": 0.012,
-      "ms": 1612,
-      "ts": "2026-10-30T09:00:05.763Z"
-    },
-    {
-      "module": "seo",
-      "job": "dataforseolabs.google.domain-intersection.live-ai",
-      "provider": "DataForSEO",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.012,
-      "charged": 0.012,
-      "ms": 865,
-      "ts": "2026-10-30T09:00:05.763Z"
-    },
-    {
-      "module": "seo",
-      "job": "dataforseolabs.google.domain-intersection.live-ai",
-      "provider": "DataForSEO",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.012,
-      "charged": 0.012,
-      "ms": 2144,
-      "ts": "2026-10-30T09:00:05.763Z"
-    },
-    {
-      "module": "competitors",
-      "job": "company.technographics",
-      "provider": "Tomba",
+      "module": "social",
+      "job": "linkedin.company.posts",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0089,
-      "charged": 0.0089,
-      "ms": 465,
-      "ts": "2026-10-30T09:00:06.006Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1862,
+      "ts": "2026-10-30T09:00:05.932Z"
     },
     {
-      "module": "competitors",
-      "job": "company.technographics",
-      "provider": "Tomba",
+      "module": "social",
+      "job": "linkedin.company.posts",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0089,
-      "charged": 0.0089,
-      "ms": 2467,
-      "ts": "2026-10-30T09:00:06.006Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1049,
+      "ts": "2026-10-30T09:00:05.932Z"
     },
     {
-      "module": "competitors",
-      "job": "company.technographics",
-      "provider": "Tomba",
+      "module": "ads",
+      "job": "ads.meta.search",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0089,
-      "charged": 0.0089,
-      "ms": 323,
-      "ts": "2026-10-30T09:00:06.006Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1837,
+      "ts": "2026-10-30T09:00:06.657Z"
     },
     {
-      "module": "seo",
-      "job": "google.serp.organic",
-      "provider": "Serper",
+      "module": "ads",
+      "job": "ads.meta.search",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.001,
-      "charged": 0.001,
-      "ms": 346,
-      "ts": "2026-10-30T09:00:06.109Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1131,
+      "ts": "2026-10-30T09:00:06.657Z"
     },
     {
-      "module": "seo",
-      "job": "google.serp.organic",
-      "provider": "Serper",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.001,
-      "charged": 0.001,
-      "ms": 961,
-      "ts": "2026-10-30T09:00:06.109Z"
-    },
-    {
-      "module": "seo",
-      "job": "google.serp.organic",
-      "provider": "Serper",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.001,
-      "charged": 0.001,
-      "ms": 308,
-      "ts": "2026-10-30T09:00:06.109Z"
-    },
-    {
-      "module": "seo",
-      "job": "google.serp.organic",
-      "provider": "Serper",
-      "singleProvider": false,
-      "outcome": "miss",
-      "quoted": 0.001,
-      "charged": 0.001,
-      "ms": 1884,
-      "ts": "2026-10-30T09:00:06.109Z"
-    },
-    {
-      "module": "mentions",
+      "module": "social",
       "job": "x.post.search",
       "provider": "AnyAPI",
       "singleProvider": false,
       "outcome": "hit",
       "quoted": 0.00075,
       "charged": 0.00075,
-      "ms": 1938,
-      "ts": "2026-10-30T09:00:06.495Z"
+      "ms": 887,
+      "ts": "2026-10-30T09:00:06.819Z"
     },
     {
-      "module": "mentions",
+      "module": "social",
       "job": "x.post.search",
       "provider": "AnyAPI",
       "singleProvider": false,
       "outcome": "hit",
       "quoted": 0.00075,
       "charged": 0.00075,
-      "ms": 307,
-      "ts": "2026-10-30T09:00:06.495Z"
+      "ms": 1738,
+      "ts": "2026-10-30T09:00:06.819Z"
     },
     {
       "module": "mentions",
@@ -1067,7 +1000,7 @@
       "quoted": 0.00075,
       "charged": 0.00075,
       "ms": 1477,
-      "ts": "2026-10-30T09:00:06.495Z"
+      "ts": "2026-10-30T09:00:06.868Z"
     },
     {
       "module": "mentions",
@@ -1078,8 +1011,85 @@
       "quoted": 0.00075,
       "charged": 0,
       "ms": 2644,
-      "ts": "2026-10-30T09:00:06.495Z",
+      "ts": "2026-10-30T09:00:06.868Z",
       "note": "provider_timeout (provider)"
+    },
+    {
+      "module": "mentions",
+      "job": "x.post.search",
+      "provider": "AnyAPI",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00075,
+      "charged": 0.00075,
+      "ms": 2187,
+      "ts": "2026-10-30T09:00:06.868Z"
+    },
+    {
+      "module": "mentions",
+      "job": "x.post.search",
+      "provider": "AnyAPI",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00075,
+      "charged": 0.00075,
+      "ms": 2460,
+      "ts": "2026-10-30T09:00:06.868Z"
+    },
+    {
+      "module": "seo",
+      "job": "dataforseolabs.google.domain-intersection.live-ai",
+      "provider": "DataForSEO",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.012,
+      "charged": 0.012,
+      "ms": 2144,
+      "ts": "2026-10-30T09:00:06.958Z"
+    },
+    {
+      "module": "seo",
+      "job": "dataforseolabs.google.domain-intersection.live-ai",
+      "provider": "DataForSEO",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.012,
+      "charged": 0.012,
+      "ms": 346,
+      "ts": "2026-10-30T09:00:06.958Z"
+    },
+    {
+      "module": "seo",
+      "job": "dataforseolabs.google.domain-intersection.live-ai",
+      "provider": "DataForSEO",
+      "singleProvider": true,
+      "outcome": "hit",
+      "quoted": 0.012,
+      "charged": 0.012,
+      "ms": 961,
+      "ts": "2026-10-30T09:00:06.958Z"
+    },
+    {
+      "module": "seo",
+      "job": "google.serp.organic",
+      "provider": "Serper",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.001,
+      "charged": 0.001,
+      "ms": 308,
+      "ts": "2026-10-30T09:00:07.266Z"
+    },
+    {
+      "module": "seo",
+      "job": "google.serp.organic",
+      "provider": "Serper",
+      "singleProvider": false,
+      "outcome": "miss",
+      "quoted": 0.001,
+      "charged": 0.001,
+      "ms": 1884,
+      "ts": "2026-10-30T09:00:07.266Z"
     },
     {
       "module": "seo",
@@ -1090,29 +1100,18 @@
       "quoted": 0.001,
       "charged": 0.001,
       "ms": 1100,
-      "ts": "2026-10-30T09:00:07.209Z"
+      "ts": "2026-10-30T09:00:07.266Z"
     },
     {
-      "module": "ads",
-      "job": "ads.linkedin.search",
-      "provider": "ScrapeCreators",
+      "module": "seo",
+      "job": "google.serp.organic",
+      "provider": "Serper",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 1837,
-      "ts": "2026-10-30T09:00:07.390Z"
-    },
-    {
-      "module": "ads",
-      "job": "ads.linkedin.search",
-      "provider": "ScrapeCreators",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00188,
-      "charged": 0.00188,
-      "ms": 1131,
-      "ts": "2026-10-30T09:00:07.390Z"
+      "quoted": 0.001,
+      "charged": 0.001,
+      "ms": 888,
+      "ts": "2026-10-30T09:00:07.266Z"
     },
     {
       "module": "ads",
@@ -1123,7 +1122,7 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 786,
-      "ts": "2026-10-30T09:00:07.390Z"
+      "ts": "2026-10-30T09:00:07.443Z"
     },
     {
       "module": "ads",
@@ -1134,29 +1133,30 @@
       "quoted": 0.00188,
       "charged": 0.00188,
       "ms": 897,
-      "ts": "2026-10-30T09:00:07.390Z"
+      "ts": "2026-10-30T09:00:07.443Z"
     },
     {
-      "module": "social",
-      "job": "x.post.search",
-      "provider": "AnyAPI",
+      "module": "ads",
+      "job": "ads.linkedin.search",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00075,
-      "charged": 0.00075,
-      "ms": 1862,
-      "ts": "2026-10-30T09:00:07.557Z"
+      "outcome": "fail",
+      "quoted": 0.00188,
+      "charged": 0,
+      "ms": 804,
+      "ts": "2026-10-30T09:00:07.443Z",
+      "note": "provider_timeout (provider)"
     },
     {
-      "module": "social",
-      "job": "x.post.search",
-      "provider": "AnyAPI",
+      "module": "ads",
+      "job": "ads.linkedin.search",
+      "provider": "ScrapeCreators",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.00075,
-      "charged": 0.00075,
-      "ms": 1049,
-      "ts": "2026-10-30T09:00:07.557Z"
+      "quoted": 0.00188,
+      "charged": 0.00188,
+      "ms": 1951,
+      "ts": "2026-10-30T09:00:07.443Z"
     },
     {
       "module": "icp",
@@ -1179,17 +1179,6 @@
       "charged": 0.0019,
       "ms": 1580,
       "ts": "2026-10-30T09:00:07.753Z"
-    },
-    {
-      "module": "competitors",
-      "job": "news.search",
-      "provider": "Serper",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.001,
-      "charged": 0.001,
-      "ms": 2184,
-      "ts": "2026-10-30T09:00:08.190Z"
     },
     {
       "module": "icp",
@@ -1248,25 +1237,47 @@
     },
     {
       "module": "icp",
+      "job": "company.similar",
+      "provider": "The Companies API",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0095,
+      "charged": 0.0095,
+      "ms": 302,
+      "ts": "2026-10-30T09:00:09.317Z"
+    },
+    {
+      "module": "seo",
+      "job": "google.serp.organic",
+      "provider": "Serper",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.001,
+      "charged": 0.001,
+      "ms": 2561,
+      "ts": "2026-10-30T09:00:09.827Z"
+    },
+    {
+      "module": "icp",
       "job": "company.technographics",
       "provider": "Tomba",
       "singleProvider": false,
       "outcome": "hit",
       "quoted": 0.0089,
       "charged": 0.0089,
-      "ms": 302,
-      "ts": "2026-10-30T09:00:09.619Z"
-    },
-    {
-      "module": "accounts",
-      "job": "company.search.filtered",
-      "provider": "AI Ark",
-      "singleProvider": true,
-      "outcome": "hit",
-      "quoted": 0.03,
-      "charged": 0.03,
       "ms": 2697,
-      "ts": "2026-10-30T09:00:12.476Z"
+      "ts": "2026-10-30T09:00:12.014Z"
+    },
+    {
+      "module": "icp",
+      "job": "company.technographics",
+      "provider": "Tomba",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0089,
+      "charged": 0.0089,
+      "ms": 1629,
+      "ts": "2026-10-30T09:00:12.014Z"
     },
     {
       "module": "accounts",
@@ -1276,41 +1287,30 @@
       "outcome": "hit",
       "quoted": 0.03,
       "charged": 0.03,
-      "ms": 1629,
-      "ts": "2026-10-30T09:00:12.476Z"
-    },
-    {
-      "module": "accounts",
-      "job": "company.enrich",
-      "provider": "The Companies API",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.0019,
-      "charged": 0.0019,
       "ms": 2067,
-      "ts": "2026-10-30T09:00:14.543Z"
+      "ts": "2026-10-30T09:00:14.241Z"
     },
     {
       "module": "accounts",
-      "job": "company.enrich",
-      "provider": "The Companies API",
-      "singleProvider": false,
+      "job": "company.search.filtered",
+      "provider": "AI Ark",
+      "singleProvider": true,
       "outcome": "hit",
-      "quoted": 0.0019,
-      "charged": 0.0019,
+      "quoted": 0.03,
+      "charged": 0.03,
       "ms": 2160,
-      "ts": "2026-10-30T09:00:14.543Z"
+      "ts": "2026-10-30T09:00:14.241Z"
     },
     {
       "module": "accounts",
-      "job": "company.enrich",
-      "provider": "The Companies API",
-      "singleProvider": false,
+      "job": "company.search.filtered",
+      "provider": "AI Ark",
+      "singleProvider": true,
       "outcome": "hit",
-      "quoted": 0.0019,
-      "charged": 0.0019,
+      "quoted": 0.03,
+      "charged": 0.03,
       "ms": 847,
-      "ts": "2026-10-30T09:00:14.543Z"
+      "ts": "2026-10-30T09:00:14.241Z"
     },
     {
       "module": "accounts",
@@ -1321,7 +1321,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 981,
-      "ts": "2026-10-30T09:00:14.543Z"
+      "ts": "2026-10-30T09:00:15.222Z"
     },
     {
       "module": "accounts",
@@ -1332,7 +1332,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 322,
-      "ts": "2026-10-30T09:00:14.865Z"
+      "ts": "2026-10-30T09:00:15.222Z"
     },
     {
       "module": "accounts",
@@ -1343,7 +1343,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1940,
-      "ts": "2026-10-30T09:00:14.865Z"
+      "ts": "2026-10-30T09:00:15.222Z"
     },
     {
       "module": "accounts",
@@ -1354,7 +1354,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1857,
-      "ts": "2026-10-30T09:00:14.865Z"
+      "ts": "2026-10-30T09:00:15.222Z"
     },
     {
       "module": "accounts",
@@ -1365,7 +1365,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 639,
-      "ts": "2026-10-30T09:00:14.865Z"
+      "ts": "2026-10-30T09:00:15.861Z"
     },
     {
       "module": "accounts",
@@ -1376,7 +1376,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1378,
-      "ts": "2026-10-30T09:00:16.243Z"
+      "ts": "2026-10-30T09:00:15.861Z"
     },
     {
       "module": "accounts",
@@ -1387,7 +1387,7 @@
       "quoted": 0.0019,
       "charged": 0,
       "ms": 2113,
-      "ts": "2026-10-30T09:00:16.243Z"
+      "ts": "2026-10-30T09:00:15.861Z"
     },
     {
       "module": "accounts",
@@ -1398,7 +1398,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 749,
-      "ts": "2026-10-30T09:00:16.243Z"
+      "ts": "2026-10-30T09:00:15.861Z"
     },
     {
       "module": "accounts",
@@ -1409,7 +1409,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 2104,
-      "ts": "2026-10-30T09:00:16.243Z"
+      "ts": "2026-10-30T09:00:17.965Z"
     },
     {
       "module": "accounts",
@@ -1420,7 +1420,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1643,
-      "ts": "2026-10-30T09:00:17.886Z"
+      "ts": "2026-10-30T09:00:17.965Z"
     },
     {
       "module": "accounts",
@@ -1431,7 +1431,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 387,
-      "ts": "2026-10-30T09:00:17.886Z"
+      "ts": "2026-10-30T09:00:17.965Z"
     },
     {
       "module": "accounts",
@@ -1442,7 +1442,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 2215,
-      "ts": "2026-10-30T09:00:17.886Z"
+      "ts": "2026-10-30T09:00:17.965Z"
     },
     {
       "module": "accounts",
@@ -1453,7 +1453,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1207,
-      "ts": "2026-10-30T09:00:17.886Z"
+      "ts": "2026-10-30T09:00:19.172Z"
     },
     {
       "module": "accounts",
@@ -1464,7 +1464,7 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 898,
-      "ts": "2026-10-30T09:00:18.784Z"
+      "ts": "2026-10-30T09:00:19.172Z"
     },
     {
       "module": "accounts",
@@ -1475,30 +1475,29 @@
       "quoted": 0.0019,
       "charged": 0.0019,
       "ms": 1937,
-      "ts": "2026-10-30T09:00:18.784Z"
+      "ts": "2026-10-30T09:00:19.172Z"
     },
     {
-      "module": "signals",
-      "job": "jobs.search",
-      "provider": "AnyAPI",
+      "module": "accounts",
+      "job": "company.enrich",
+      "provider": "The Companies API",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0005,
-      "charged": 0.0005,
-      "ms": 1153,
-      "ts": "2026-10-30T09:00:20.097Z"
+      "quoted": 0.0019,
+      "charged": 0.0019,
+      "ms": 1940,
+      "ts": "2026-10-30T09:00:19.172Z"
     },
     {
-      "module": "signals",
-      "job": "jobs.search",
-      "provider": "Anysite",
+      "module": "accounts",
+      "job": "company.enrich",
+      "provider": "The Companies API",
       "singleProvider": false,
-      "outcome": "fallback",
-      "fallbackFrom": "AnyAPI",
-      "quoted": 0.0005,
-      "charged": 0.0008,
-      "ms": 4710,
-      "ts": "2026-10-30T09:00:20.097Z"
+      "outcome": "hit",
+      "quoted": 0.0019,
+      "charged": 0.0019,
+      "ms": 914,
+      "ts": "2026-10-30T09:00:20.086Z"
     },
     {
       "module": "signals",
@@ -1509,7 +1508,7 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 1109,
-      "ts": "2026-10-30T09:00:20.097Z"
+      "ts": "2026-10-30T09:00:21.355Z"
     },
     {
       "module": "signals",
@@ -1520,51 +1519,7 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 339,
-      "ts": "2026-10-30T09:00:20.097Z"
-    },
-    {
-      "module": "people",
-      "job": "people.search",
-      "provider": "Icypeas",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00152,
-      "charged": 0.00152,
-      "ms": 1940,
-      "ts": "2026-10-30T09:00:20.884Z"
-    },
-    {
-      "module": "people",
-      "job": "people.search",
-      "provider": "Icypeas",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00152,
-      "charged": 0.00152,
-      "ms": 914,
-      "ts": "2026-10-30T09:00:20.884Z"
-    },
-    {
-      "module": "people",
-      "job": "people.search",
-      "provider": "Icypeas",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00152,
-      "charged": 0.00152,
-      "ms": 1571,
-      "ts": "2026-10-30T09:00:20.884Z"
-    },
-    {
-      "module": "people",
-      "job": "people.search",
-      "provider": "Icypeas",
-      "singleProvider": false,
-      "outcome": "hit",
-      "quoted": 0.00152,
-      "charged": 0.00152,
-      "ms": 1546,
-      "ts": "2026-10-30T09:00:20.884Z"
+      "ts": "2026-10-30T09:00:21.355Z"
     },
     {
       "module": "signals",
@@ -1575,7 +1530,7 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 2474,
-      "ts": "2026-10-30T09:00:22.571Z"
+      "ts": "2026-10-30T09:00:21.355Z"
     },
     {
       "module": "signals",
@@ -1586,7 +1541,7 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 493,
-      "ts": "2026-10-30T09:00:22.571Z"
+      "ts": "2026-10-30T09:00:21.355Z"
     },
     {
       "module": "signals",
@@ -1597,7 +1552,7 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 359,
-      "ts": "2026-10-30T09:00:22.571Z"
+      "ts": "2026-10-30T09:00:21.714Z"
     },
     {
       "module": "signals",
@@ -1608,7 +1563,51 @@
       "quoted": 0.0005,
       "charged": 0.0005,
       "ms": 836,
-      "ts": "2026-10-30T09:00:22.571Z"
+      "ts": "2026-10-30T09:00:21.714Z"
+    },
+    {
+      "module": "signals",
+      "job": "jobs.search",
+      "provider": "AnyAPI",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0005,
+      "charged": 0.0005,
+      "ms": 1187,
+      "ts": "2026-10-30T09:00:21.714Z"
+    },
+    {
+      "module": "signals",
+      "job": "jobs.search",
+      "provider": "AnyAPI",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0005,
+      "charged": 0.0005,
+      "ms": 1599,
+      "ts": "2026-10-30T09:00:21.714Z"
+    },
+    {
+      "module": "people",
+      "job": "people.search",
+      "provider": "Icypeas",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00152,
+      "charged": 0.00152,
+      "ms": 1571,
+      "ts": "2026-10-30T09:00:21.817Z"
+    },
+    {
+      "module": "people",
+      "job": "people.search",
+      "provider": "Icypeas",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.00152,
+      "charged": 0.00152,
+      "ms": 1546,
+      "ts": "2026-10-30T09:00:21.817Z"
     },
     {
       "module": "people",
@@ -1619,7 +1618,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 1995,
-      "ts": "2026-10-30T09:00:22.879Z"
+      "ts": "2026-10-30T09:00:21.817Z"
     },
     {
       "module": "people",
@@ -1630,7 +1629,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 2287,
-      "ts": "2026-10-30T09:00:22.879Z"
+      "ts": "2026-10-30T09:00:21.817Z"
     },
     {
       "module": "people",
@@ -1641,7 +1640,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 326,
-      "ts": "2026-10-30T09:00:22.879Z"
+      "ts": "2026-10-30T09:00:22.143Z"
     },
     {
       "module": "people",
@@ -1652,7 +1651,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 1380,
-      "ts": "2026-10-30T09:00:22.879Z"
+      "ts": "2026-10-30T09:00:22.143Z"
     },
     {
       "module": "people",
@@ -1663,7 +1662,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 2584,
-      "ts": "2026-10-30T09:00:25.463Z"
+      "ts": "2026-10-30T09:00:22.143Z"
     },
     {
       "module": "people",
@@ -1674,7 +1673,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 1107,
-      "ts": "2026-10-30T09:00:25.463Z"
+      "ts": "2026-10-30T09:00:22.143Z"
     },
     {
       "module": "people",
@@ -1685,7 +1684,7 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 1440,
-      "ts": "2026-10-30T09:00:25.463Z"
+      "ts": "2026-10-30T09:00:23.583Z"
     },
     {
       "module": "people",
@@ -1696,29 +1695,29 @@
       "quoted": 0.00152,
       "charged": 0.00152,
       "ms": 1781,
-      "ts": "2026-10-30T09:00:25.463Z"
+      "ts": "2026-10-30T09:00:23.583Z"
     },
     {
-      "module": "enrich",
-      "job": "people.email.find",
-      "provider": "Kitt AI",
+      "module": "people",
+      "job": "people.search",
+      "provider": "Icypeas",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0036,
-      "charged": 0.0036,
+      "quoted": 0.00152,
+      "charged": 0.00152,
       "ms": 2525,
-      "ts": "2026-10-30T09:00:28.148Z"
+      "ts": "2026-10-30T09:00:23.583Z"
     },
     {
-      "module": "enrich",
-      "job": "people.email.find",
-      "provider": "Kitt AI",
+      "module": "people",
+      "job": "people.search",
+      "provider": "Icypeas",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0036,
-      "charged": 0.0036,
+      "quoted": 0.00152,
+      "charged": 0.00152,
       "ms": 2246,
-      "ts": "2026-10-30T09:00:28.148Z"
+      "ts": "2026-10-30T09:00:23.583Z"
     },
     {
       "module": "enrich",
@@ -1729,7 +1728,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1119,
-      "ts": "2026-10-30T09:00:28.148Z"
+      "ts": "2026-10-30T09:00:24.862Z"
     },
     {
       "module": "enrich",
@@ -1740,7 +1739,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 585,
-      "ts": "2026-10-30T09:00:28.148Z"
+      "ts": "2026-10-30T09:00:24.862Z"
     },
     {
       "module": "enrich",
@@ -1752,7 +1751,7 @@
       "quoted": 0.0036,
       "charged": 0.00576,
       "ms": 3558,
-      "ts": "2026-10-30T09:00:29.927Z"
+      "ts": "2026-10-30T09:00:24.862Z"
     },
     {
       "module": "enrich",
@@ -1763,7 +1762,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1422,
-      "ts": "2026-10-30T09:00:29.927Z"
+      "ts": "2026-10-30T09:00:24.862Z"
     },
     {
       "module": "enrich",
@@ -1774,7 +1773,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1824,
-      "ts": "2026-10-30T09:00:29.927Z"
+      "ts": "2026-10-30T09:00:26.686Z"
     },
     {
       "module": "enrich",
@@ -1785,7 +1784,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2536,
-      "ts": "2026-10-30T09:00:29.927Z"
+      "ts": "2026-10-30T09:00:26.686Z"
     },
     {
       "module": "enrich",
@@ -1796,7 +1795,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1215,
-      "ts": "2026-10-30T09:00:31.142Z"
+      "ts": "2026-10-30T09:00:26.686Z"
     },
     {
       "module": "enrich",
@@ -1807,7 +1806,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2352,
-      "ts": "2026-10-30T09:00:31.142Z"
+      "ts": "2026-10-30T09:00:26.686Z"
     },
     {
       "module": "enrich",
@@ -1818,7 +1817,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2188,
-      "ts": "2026-10-30T09:00:31.142Z"
+      "ts": "2026-10-30T09:00:28.874Z"
     },
     {
       "module": "enrich",
@@ -1829,7 +1828,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1594,
-      "ts": "2026-10-30T09:00:31.142Z"
+      "ts": "2026-10-30T09:00:28.874Z"
     },
     {
       "module": "enrich",
@@ -1840,7 +1839,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 662,
-      "ts": "2026-10-30T09:00:31.804Z"
+      "ts": "2026-10-30T09:00:28.874Z"
     },
     {
       "module": "enrich",
@@ -1851,7 +1850,7 @@
       "quoted": 0.0036,
       "charged": 0,
       "ms": 2182,
-      "ts": "2026-10-30T09:00:31.804Z",
+      "ts": "2026-10-30T09:00:28.874Z",
       "note": "provider_timeout (provider)"
     },
     {
@@ -1863,7 +1862,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2628,
-      "ts": "2026-10-30T09:00:31.804Z"
+      "ts": "2026-10-30T09:00:31.502Z"
     },
     {
       "module": "enrich",
@@ -1874,7 +1873,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 582,
-      "ts": "2026-10-30T09:00:31.804Z"
+      "ts": "2026-10-30T09:00:31.502Z"
     },
     {
       "module": "enrich",
@@ -1885,7 +1884,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2289,
-      "ts": "2026-10-30T09:00:34.093Z"
+      "ts": "2026-10-30T09:00:31.502Z"
     },
     {
       "module": "enrich",
@@ -1896,7 +1895,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1924,
-      "ts": "2026-10-30T09:00:34.093Z"
+      "ts": "2026-10-30T09:00:31.502Z"
     },
     {
       "module": "enrich",
@@ -1907,7 +1906,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1796,
-      "ts": "2026-10-30T09:00:34.093Z"
+      "ts": "2026-10-30T09:00:33.298Z"
     },
     {
       "module": "enrich",
@@ -1918,7 +1917,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 338,
-      "ts": "2026-10-30T09:00:34.093Z"
+      "ts": "2026-10-30T09:00:33.298Z"
     },
     {
       "module": "enrich",
@@ -1929,7 +1928,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 2657,
-      "ts": "2026-10-30T09:00:36.750Z"
+      "ts": "2026-10-30T09:00:33.298Z"
     },
     {
       "module": "enrich",
@@ -1940,7 +1939,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 694,
-      "ts": "2026-10-30T09:00:36.750Z"
+      "ts": "2026-10-30T09:00:33.298Z"
     },
     {
       "module": "enrich",
@@ -1951,7 +1950,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1543,
-      "ts": "2026-10-30T09:00:36.750Z"
+      "ts": "2026-10-30T09:00:34.841Z"
     },
     {
       "module": "enrich",
@@ -1962,7 +1961,7 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1382,
-      "ts": "2026-10-30T09:00:36.750Z"
+      "ts": "2026-10-30T09:00:34.841Z"
     },
     {
       "module": "enrich",
@@ -1973,29 +1972,29 @@
       "quoted": 0.0036,
       "charged": 0.0036,
       "ms": 1708,
-      "ts": "2026-10-30T09:00:38.458Z"
+      "ts": "2026-10-30T09:00:34.841Z"
     },
     {
-      "module": "committee",
-      "job": "people.search",
-      "provider": "Icypeas",
+      "module": "enrich",
+      "job": "people.email.find",
+      "provider": "Kitt AI",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0038,
-      "charged": 0.0038,
+      "quoted": 0.0036,
+      "charged": 0.0036,
       "ms": 1489,
-      "ts": "2026-10-30T09:00:40.107Z"
+      "ts": "2026-10-30T09:00:34.841Z"
     },
     {
-      "module": "committee",
-      "job": "people.search",
-      "provider": "Icypeas",
+      "module": "enrich",
+      "job": "people.email.find",
+      "provider": "Kitt AI",
       "singleProvider": false,
       "outcome": "hit",
-      "quoted": 0.0038,
-      "charged": 0.0038,
+      "quoted": 0.0036,
+      "charged": 0.0036,
       "ms": 1226,
-      "ts": "2026-10-30T09:00:40.107Z"
+      "ts": "2026-10-30T09:00:36.067Z"
     },
     {
       "module": "committee",
@@ -2006,7 +2005,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 904,
-      "ts": "2026-10-30T09:00:40.107Z"
+      "ts": "2026-10-30T09:00:37.131Z"
     },
     {
       "module": "committee",
@@ -2017,7 +2016,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 1610,
-      "ts": "2026-10-30T09:00:40.107Z"
+      "ts": "2026-10-30T09:00:37.131Z"
     },
     {
       "module": "committee",
@@ -2028,7 +2027,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 1993,
-      "ts": "2026-10-30T09:00:42.100Z"
+      "ts": "2026-10-30T09:00:37.131Z"
     },
     {
       "module": "committee",
@@ -2040,7 +2039,7 @@
       "quoted": 0.0038,
       "charged": 0.00608,
       "ms": 2716,
-      "ts": "2026-10-30T09:00:42.100Z"
+      "ts": "2026-10-30T09:00:37.131Z"
     },
     {
       "module": "committee",
@@ -2051,7 +2050,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 1479,
-      "ts": "2026-10-30T09:00:42.100Z"
+      "ts": "2026-10-30T09:00:38.610Z"
     },
     {
       "module": "committee",
@@ -2062,7 +2061,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 2321,
-      "ts": "2026-10-30T09:00:42.100Z"
+      "ts": "2026-10-30T09:00:38.610Z"
     },
     {
       "module": "committee",
@@ -2073,7 +2072,7 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 2227,
-      "ts": "2026-10-30T09:00:44.327Z"
+      "ts": "2026-10-30T09:00:38.610Z"
     },
     {
       "module": "committee",
@@ -2084,7 +2083,30 @@
       "quoted": 0.0038,
       "charged": 0.0038,
       "ms": 1477,
-      "ts": "2026-10-30T09:00:44.327Z"
+      "ts": "2026-10-30T09:00:38.610Z"
+    },
+    {
+      "module": "committee",
+      "job": "people.search",
+      "provider": "Icypeas",
+      "singleProvider": false,
+      "outcome": "hit",
+      "quoted": 0.0038,
+      "charged": 0.0038,
+      "ms": 1153,
+      "ts": "2026-10-30T09:00:39.763Z"
+    },
+    {
+      "module": "committee",
+      "job": "people.search",
+      "provider": "Dropleads",
+      "singleProvider": false,
+      "outcome": "fallback",
+      "fallbackFrom": "Icypeas",
+      "quoted": 0.0038,
+      "charged": 0.00608,
+      "ms": 4710,
+      "ts": "2026-10-30T09:00:39.763Z"
     }
   ]
 }

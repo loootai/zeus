@@ -77,7 +77,7 @@ test("accounts: the search asks AI Ark for the use case phrases first, then the 
   assert.equal(ins[0].account.productAndServices.any.include.mode, "SMART");
   assert.ok(ins[4].account.industries, "the industry searches follow");
   const q = accounts.quote(cfg);
-  assert.deepEqual(q.lines.map((l) => [l.job, l.calls]), [["company.search.filtered", 6], ["company.enrich", 25], ["web.scrape.markdown", 25]]);
+  assert.deepEqual(q.lines.map((l) => [l.job, l.calls]), [["company.search.filtered", 7], ["company.enrich", 25], ["web.scrape.markdown", 25]]); // 6 plus one wider search when all are empty
 });
 
 test("accounts: a full run keeps the LinkedIn content agency and drops the rival tool, the Havas shop and the row with no country", async () => {

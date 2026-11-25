@@ -662,7 +662,7 @@ export function renderHtml(d: Dossier): string {
 <a class="skip" href="#main">Skip to the dossier</a>
 <div class="app">
 <aside class="side">
-<div class="brand"><span class="mark" aria-hidden="true">${!d.public && logoData(d.domain) ? `<img src="${logoData(d.domain)}" alt="" width="40" height="40">` : e(initial)}</span><div><b>${e(d.brand)}</b><small>GTM dossier</small></div></div>
+<div class="brand"><span class="mark" aria-hidden="true">${logoData(d.domain) ? `<img src="${logoData(d.domain)}" alt="" width="40" height="40">` : e(initial)}</span><div><b>${e(d.brand)}</b><small>GTM dossier</small></div></div>
 <nav class="nav" aria-label="Views">
 ${nav}
 </nav>

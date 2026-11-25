@@ -164,16 +164,16 @@
       "key": "next-step",
       "label": "Take it to the next step",
       "stack": "AI-native business stack: looot + Vercel + Supabase",
-      "copy": "Host your Zeus page and GTM OS on your own Vercel and Supabase accounts. Both have free tiers and you own both accounts. looot never sees your database credentials.",
+      "copy": "Host your Zeus GTM OS (accounts, committees, people, plays and rivals) on your own Vercel and Supabase accounts, private to your email. Both have free tiers and you own both accounts. looot never sees your database credentials.",
       "deploy": {
         "label": "Deploy to Vercel",
-        "url": "https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Floootai%2Fzeus&project-name=zeus&repository-name=zeus&integration-ids=oac_VqOgBHqhEoFTPzGkPd7L0iH6&env=LOOOT_TOKEN&envDescription=Your%20looot%20API%20key%20from%20looot.ai.%20You%20paste%20it%20here%3B%20it%20is%20never%20in%20this%20link.&envLink=https%3A%2F%2Flooot.ai%2Fskill.md"
+        "url": "https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Floootai%2Fzeus%2Ftree%2Fmain%2Fweb-starter&project-name=zeus-gtm-os&repository-name=zeus-gtm-os&integration-ids=oac_VqOgBHqhEoFTPzGkPd7L0iH6&env=ZEUS_OWNER_EMAIL&envDescription=Your%20email.%20Only%20this%20address%20can%20sign%20in%20to%20your%20private%20Zeus%20GTM%20OS.&envLink=https%3A%2F%2Fgithub.com%2Floootai%2Fzeus%2Ftree%2Fmain%2Fweb-starter%23deploy"
       },
       "supabase": {
         "label": "Create a Supabase project",
         "url": "https://supabase.com/dashboard/new"
       },
-      "prompt": "Help me host my looot Zeus results for {domain} on my own AI-native business stack (looot + Vercel + Supabase). 1. Deploy https://github.com/loootai/zeus to my Vercel account with the Supabase integration from the Vercel Marketplace, so Vercel creates the Supabase project and its env vars. 2. Check the Supabase env vars are set in Vercel, never print their values. 3. Load my Zeus results (accounts, committees, plays, people and rivals from gtm/state.json) into my Supabase project: apply supabase/migrations/20261125120000_zeus.sql from the repo (RLS on, no public access), then run `npx looot-zeus import-supabase --dry-run`, show me the counts. After my yes, run it without --dry-run with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env. It upserts by company domain. 4. Add my looot key as the LOOOT_TOKEN env var in Vercel; I paste it myself. Free tiers are fine. Ask me before any paid plan. Spend nothing on looot without my yes."
+      "prompt": "Help me host my looot Zeus results for {domain} on my own AI-native business stack (looot + Vercel + Supabase). 1. Deploy https://github.com/loootai/zeus/tree/main/web-starter to my Vercel account with the Supabase integration from the Vercel Marketplace, so Vercel creates the Supabase project and its env vars. Set ZEUS_OWNER_EMAIL to my email. 2. Check the Supabase env vars are set in Vercel, never print their values. In Supabase Authentication, URL Configuration, set the Site URL to my Vercel URL and add <my Vercel URL>/auth/callback to Redirect URLs. 3. Load my Zeus results (accounts, committees, plays, people and rivals from gtm/state.json) into my Supabase project: apply supabase/migrations/20261125120000_zeus.sql from the repo (RLS on, no public access), then run `npx looot-zeus import-supabase --dry-run`, show me the counts. After my yes, run it without --dry-run with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env. It upserts by company domain. 4. Open my Vercel URL and sign in with my email. The app is read only and never needs my looot key. Free tiers are fine. Ask me before any paid plan. Spend nothing on looot without my yes."
     }
   }
 }

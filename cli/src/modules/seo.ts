@@ -165,12 +165,15 @@ async function run(ctx: ModuleContext) {
         return { keyword: g.keyword, intent: keywordIntent(g.keyword), volume: g.volume, you: "-", rival: best ? `${best.d}${best.rank ? ` #${best.rank}` : ""}` : "-", fallback: fallbackText(SEO_JOBS.gap) };
       });
     const ranked = ranks.filter((r) => r.you !== null).length;
+    // A failed or capped call is not a zero: only answered checks count in "of N".
+    const rankDone = ranks.filter((r) => r.status === "answered").length;
     const aiDone = ai.filter((a) => a.status === "answered");
     const youNamed = aiDone.filter((a) => a.you).length;
+    const gapsAsked = gapMap.size > 0 || cfg.competitors.length > 0;
     const parts = [
-      `${gaps.length} keyword gaps${offTopic > 0 ? ` about your category (${offTopic} off-topic or from rejected rivals left out)` : ""}`,
-      `ranked on ${ranked} of ${ranks.length} keywords`,
-      `named in ${youNamed} of ${aiDone.length} AI answers`,
+      gapsAsked ? `${gaps.length} keyword gaps${offTopic > 0 ? ` about your category (${offTopic} off-topic or from rejected rivals left out)` : ""}` : "no rivals to find keyword gaps against",
+      rankDone > 0 ? `ranked in the top 10 on ${ranked} of ${rankDone} keywords checked` : "no keyword rank measured",
+      aiDone.length > 0 ? `named in ${youNamed} of ${aiDone.length} AI answers` : "no AI answer measured",
     ];
     return {
       summary: parts.join(", "),
@@ -188,16 +191,19 @@ async function run(ctx: ModuleContext) {
   };
 
   type Task = () => Promise<void>;
-  const tasks: Task[] = [];
+  const overviews: Task[] = [];
+  const gapTasks: Task[] = [];
+  const rankTasks: Task[] = [];
+  const aiTasks: Task[] = [];
   for (const d of [cfg.domain, ...cfg.competitors]) {
-    tasks.push(async () => {
+    overviews.push(async () => {
       const r = await tracked(ctx, t, calls, SEO_JOBS.overview, { target: d, location_name: loc, language_code: "en" }, `overview:${d}`);
       const o = answered(r) ? parseOverview(r.data) : null;
       footprint.push({ domain: d, keywords: o?.keywords ?? null, traffic: o?.traffic ?? null, status: o ? "answered" : answered(r) ? "answered, no organic data" : outcomeText(r.record), fallback: fallbackText(SEO_JOBS.overview) });
     });
   }
   for (const c of cfg.competitors) {
-    tasks.push(async () => {
+    gapTasks.push(async () => {
       const input = { target1: c, target2: cfg.domain, intersections: false, location_name: loc, language_code: "en", limit: GAPS_PER_RIVAL, order_by: ["keyword_data.keyword_info.search_volume,desc"] };
       const r = await tracked(ctx, t, calls, SEO_JOBS.gap, input, `gap:${c}`);
       if (!answered(r)) return;
@@ -211,7 +217,7 @@ async function run(ctx: ModuleContext) {
     });
   }
   for (const kw of cfg.keywords) {
-    tasks.push(async () => {
+    rankTasks.push(async () => {
       const r = await tracked(ctx, t, calls, SEO_JOBS.serp, { query: kw, location: loc, language: "en" }, `rank:${kw}`);
       const organic = answered(r) ? parseOrganic(r.data) : [];
       const mine = organic.find((o) => onDomain(o.host, cfg.domain));
@@ -233,7 +239,7 @@ async function run(ctx: ModuleContext) {
       ["Google AI Mode", SEO_JOBS.aiMode, { query: q, location: loc, language: "en" }],
       ["ChatGPT", SEO_JOBS.chatgpt, { query: q }],
     ] as [string, string, Obj][]) {
-      tasks.push(async () => {
+      aiTasks.push(async () => {
         const r = await tracked(ctx, t, calls, jobId, input, `${jobId === SEO_JOBS.chatgpt ? "chatgpt" : "aimode"}:${q}`);
         const b = answered(r) ? brandsInAnswer(r.data, brands) : { named: [], cited: [] };
         const youLabel = brands[0].label;
@@ -242,6 +248,10 @@ async function run(ctx: ModuleContext) {
     }
   }
 
+  // The section cap can stop the run part way. Each kind of finding gets its first calls early, so a
+  // capped run still measures your footprint, the gaps, a few ranks and a few AI answers, instead of
+  // spending the whole cap on ranks and leaving the AI answers unmeasured.
+  const tasks: Task[] = [...overviews.slice(0, 1), ...gapTasks, ...rankTasks.slice(0, 3), ...aiTasks.slice(0, 4), ...overviews.slice(1), ...rankTasks.slice(3), ...aiTasks.slice(4)];
   try {
     await pool(tasks, CONCURRENCY, async (task) => {
       await task();
@@ -262,18 +272,31 @@ const pct = (n: number | undefined) => `${Math.round((n ?? 0) * 100)}%`;
 
 function blocks(o: SeoOut): Block[] {
   const done = o.ai.filter((a) => (a.status ?? "answered") === "answered");
+  const rankDone = o.ranks.filter((r) => (r.status ?? "answered") === "answered");
   const out: Block[] = [
     { kind: "stat", items: [
       { label: "Keyword gaps", value: String(o.gaps.length) },
-      { label: "Keywords you rank on", value: `${o.ranks.filter((r) => r.you !== null).length} of ${o.ranks.length}` },
-      { label: "AI answers naming you", value: `${done.filter((a) => a.you).length} of ${done.length}` },
+      { label: "Keywords you rank on", value: rankDone.length > 0 ? `${rankDone.filter((r) => r.you !== null).length} of ${rankDone.length}` : "not measured" },
+      { label: "AI answers naming you", value: done.length > 0 ? `${done.filter((a) => a.you).length} of ${done.length}` : "not measured" },
     ] },
   ];
+  // Real zeros are findings, said in words. A zero that only means "not measured" is said as that.
+  const findings: string[] = [];
+  if (rankDone.length > 0 && rankDone.every((r) => r.you === null)) findings.push(`You are not in Google's top 10 for any of the ${rankDone.length} keywords checked${o.location ? ` in ${o.location}` : ""}. The top results are in the table below: those pages are the ones to beat.`);
+  if (done.length > 0 && done.every((a) => !a.you)) findings.push(`No AI answer named you in ${done.length} answers to buyer questions. The brands they name instead are in the table below.`);
+  if (o.ai.length > 0 && done.length === 0) findings.push(`The AI answer checks did not come back (${[...new Set(o.ai.map((a) => a.status))].join(", ")}), so AI answer share is not measured, not 0%.`);
+  if (o.ai.length === 0 && o.ranks.length === 0) findings.push("This run stopped before any rank or AI answer check. Run it again with a higher cap, or looot-zeus more seo.");
+  if (o.footprint?.length && o.gaps.length === 0) findings.push("No keyword gap about your category: your rivals rank for no on-topic keyword you are missing, or they rank for other markets.");
+  // AI answer findings go in their own note, so the GEO view shows them and the SEO view does not.
+  const aiFind = findings.filter((f) => /AI answer/.test(f));
+  const rest = findings.filter((f) => !/AI answer/.test(f));
+  if (rest.length) out.push({ kind: "note", text: rest.join(" ") });
+  if (aiFind.length) out.push({ kind: "note", text: aiFind.join(" ") });
   if (o.footprint?.length) out.push({ kind: "table", caption: "Organic footprint", columns: [{ key: "domain", label: "Domain" }, { key: "keywords", label: "Ranking keywords", num: true }, { key: "traffic", label: "Est. visits/mo", num: true }, { key: "fallback", label: "Fallback" }], rows: o.footprint.map((f) => ({ ...f, keywords: f.keywords ?? f.status, traffic: f.traffic ?? "-" })) });
   out.push({ kind: "table", caption: "Keyword gaps, a competitor ranks and you do not", columns: [{ key: "keyword", label: "Keyword" }, { key: "intent", label: "Intent" }, { key: "volume", label: "Searches/mo", num: true }, { key: "you", label: "You" }, { key: "rival", label: "Best rival", logoKey: "rivalDomain" }, { key: "fallback", label: "Fallback" }], rows: o.gaps.map((g) => ({ ...g, rivalDomain: g.rival.split(" ")[0], volume: g.volume ?? "-", fallback: g.fallback ?? "one provider, no fallback" })) });
   out.push({ kind: "table", caption: `Google ranks${o.location ? ` in ${o.location}` : ""}`, columns: [{ key: "keyword", label: "Keyword" }, { key: "you", label: "You" }, { key: "best", label: "Best rival" }, { key: "top", label: "Top result" }, { key: "provider", label: "Provider" }], rows: o.ranks.map((r) => ({ ...r, you: r.you ?? (r.status && r.status !== "answered" ? r.status : "not in top 10"), top: r.top ?? "-", provider: r.provider ?? "-" })) });
   const share = Object.entries(o.share ?? {}).sort((a, b) => b[1] - a[1]);
-  if (share.length) out.push({ kind: "table", caption: "AI answer share, answers that name the brand", columns: [{ key: "brand", label: "Brand" }, { key: "share", label: "Share", num: true }], rows: share.map(([brand, s]) => ({ brand: brand === "you" ? "You" : brand, share: pct(s) })) });
+  if (share.length && done.length > 0) out.push({ kind: "table", caption: "AI answer share, answers that name the brand", columns: [{ key: "brand", label: "Brand" }, { key: "share", label: "Share", num: true }], rows: share.map(([brand, s]) => ({ brand: brand === "you" ? "You" : brand, share: pct(s) })) });
   out.push({ kind: "table", caption: "AI answers per buyer question", columns: [{ key: "question", label: "Question" }, { key: "engine", label: "Engine" }, { key: "named", label: "Brands named" }, { key: "you", label: "You named" }, { key: "status", label: "Answer" }, { key: "fallback", label: "Fallback" }], rows: o.ai.map((a) => ({ ...a, you: a.you ? "yes" : "no", named: a.named.length ? a.named : "-", status: a.status ?? "answered", fallback: a.fallback ?? (a.engine === "ChatGPT" ? "one provider, no fallback" : "yes") })) });
   if (o.singleProvider?.length) out.push({ kind: "note", text: `One provider, no fallback for ${o.singleProvider.join(", ")}. A miss on those rows has no second provider behind it.` });
   out.push({ kind: "note", text: `Ranks and AI answers are for ${o.location ?? "the geographies in the run"}, read on ${o.date}. They move week to week.` });

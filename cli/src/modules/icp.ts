@@ -107,6 +107,18 @@ export function companyObject(result: unknown): Obj | null {
   return isObj(cur) ? cur : null;
 }
 
+/** Country-code TLDs sold as vanity domains (.ai, .io, .co): a provider country equal to one is a guess from the domain. */
+const VANITY_TLDS = new Set(["ai", "io", "co", "so", "me", "tv", "gg", "ly", "fm", "sh", "to", "ws", "cc", "vc", "app", "dev", "is", "it", "am", "im", "md", "ms", "nu", "tk", "ac", "la", "xyz"]);
+
+/** The country, unless it is only the vanity TLD read back as a country (smithery.ai as Anguilla). */
+export function countryFor(domain: string, raw: string | null): string | null {
+  const k = countryKey(raw);
+  if (!k) return null;
+  const tld = domain.toLowerCase().split(".").pop() ?? "";
+  if (VANITY_TLDS.has(tld) && k.toLowerCase() === tld) return null;
+  return k;
+}
+
 /** Reads one company from a provider row, under the field names the public docs use. null when there is no domain. */
 export function normalizeCompany(row: unknown, fallbackDomain?: string): Company | null {
   if (!isObj(row)) return null;
@@ -135,7 +147,7 @@ export function normalizeCompany(row: unknown, fallbackDomain?: string): Company
     name: typeof name === "string" ? name : null,
     industries: clean(industries),
     employees: parseEmployees(employeesRaw),
-    country: countryKey(typeof countryRaw === "string" ? countryRaw : null),
+    country: countryFor(domain, typeof countryRaw === "string" ? countryRaw : null),
     technologies: clean(technologies),
     keywords: clean([...strings(first(row, ["keywords", "tags", "specialties", "topics", "keyword_tags"])), ...strings(about.keywords)]),
     ...(() => {
@@ -423,6 +435,8 @@ export function buildCard(cfg: GtmConfig, traits: Traits | null, seedProvider: s
   const from: IcpCard["from"] = {};
   const evidence: IcpCard["evidence"] = [];
   const t = traits && traits.seeds > 0 ? traits : null;
+  // One seed is an anecdote: it may set the industries, but size and countries need two seeds that agree.
+  const firm = !!t && t.seeds >= 2;
   let industries = cfg.icp.industries;
   from.industries = "config";
   if (t && t.industries.length > 0) {
@@ -432,14 +446,14 @@ export function buildCard(cfg: GtmConfig, traits: Traits | null, seedProvider: s
   }
   let sizeBand = cfg.icp.sizeBand;
   from.sizeBand = "config";
-  if (t?.size) {
+  if (firm && t?.size) {
     sizeBand = `${t.size.min}-${t.size.max}`;
     from.sizeBand = "seeds";
     evidence.push({ claim: `Seeds sit between ${t.size.min} and ${t.size.max} employees`, provider: seedProvider, date });
   }
   let geos = cfg.icp.geos;
   from.geos = "config";
-  if (t && t.countries.length > 0) {
+  if (firm && t && t.countries.length > 0 && t.countries[0].n >= 2) {
     geos = t.countries.map((c) => countryName(c.value));
     from.geos = "seeds";
     evidence.push({ claim: `${t.countries[0].n} of ${t.seeds} seeds are based in ${countryName(t.countries[0].value)}`, provider: seedProvider, date });
@@ -465,6 +479,8 @@ const SPEC: ShellSpec = {
 
 export const LOOKALIKES_KEPT = 25;
 export const SIMILAR_PER_SEED = 5;
+/** Stack lookups: you and the first two seeds. They only add a stack line, so they run last. */
+export const TECH_CALLS = 3;
 
 export const icp: GtmModule = {
   id: "icp",
@@ -473,8 +489,8 @@ export const icp: GtmModule = {
   quote: (cfg) => ({
     lines: [
       { job: "company.enrich", calls: 1 + cfg.seeds.length, note: "your own domain and every seed" },
-      { job: "company.similar", calls: Math.max(1, cfg.seeds.length), rows: SIMILAR_PER_SEED, note: "lookalikes per seed" },
-      { job: "company.technographics", calls: 1 + cfg.seeds.length },
+      { job: "company.similar", calls: cfg.seeds.length + 1, rows: SIMILAR_PER_SEED, note: "lookalikes per seed, and of your own domain when fewer than 2 seeds resolve" },
+      { job: "company.technographics", calls: Math.min(1 + cfg.seeds.length, TECH_CALLS), note: "you and the first seeds, after the lookalikes" },
     ],
   }),
   async run(ctx: ModuleContext) {
@@ -536,20 +552,7 @@ export const icp: GtmModule = {
         }
         ctx.partial(build());
       });
-      await pool(domains, 4, async (d) => {
-        const res = await ctx.call("company.technographics", { domain: d }, `tech:${d}`);
-        calls.push(trailLine(`tech ${d}`, res));
-        if (answered(res)) {
-          const list = payloads(res).map(techOf).find((x) => x.length > 0) ?? [];
-          if (list.length > 0) {
-            techs.set(d, list);
-            providers.tech ||= res.record.provider;
-          }
-        }
-        ctx.partial(build());
-      });
-      const bases = cfg.seeds.length > 0 ? cfg.seeds : [cfg.domain];
-      await pool(bases, 4, async (seed) => {
+      const similar = async (seed: string) => {
         const res = await ctx.call("company.similar", { domain: seed, limit: SIMILAR_PER_SEED }, `similar:${seed}`);
         calls.push(trailLine(`similar ${seed}`, res));
         if (answered(res)) {
@@ -560,7 +563,7 @@ export const icp: GtmModule = {
             .forEach((c, i) => {
               const cur = cands.get(c.domain);
               if (cur) {
-                cur.seeds.push(seed);
+                if (!cur.seeds.includes(seed)) cur.seeds.push(seed);
                 cur.ranks.push(i + 1);
                 cur.company.industries = cur.company.industries.length ? cur.company.industries : c.industries;
                 cur.company.employees ??= c.employees;
@@ -568,6 +571,24 @@ export const icp: GtmModule = {
               } else cands.set(c.domain, { company: c, seeds: [seed], ranks: [i + 1], provider: res.record.provider });
             });
           providers.similar ||= res.record.provider;
+        }
+        ctx.partial(build());
+      };
+      // Lookalikes before the stack: they feed accounts. Seeds a provider knows go first.
+      const bases = [...cfg.seeds].sort((a, b) => Number(companies.has(b)) - Number(companies.has(a)));
+      await pool(bases, 4, similar);
+      // Fallback: too few seeds resolved, or none gave a lookalike. Companies like your own domain.
+      const resolved = cfg.seeds.filter((d) => companies.has(d)).length;
+      if (resolved < 2 || cands.size === 0) await similar(cfg.domain);
+      await pool(domains.slice(0, TECH_CALLS), 3, async (d) => {
+        const res = await ctx.call("company.technographics", { domain: d }, `tech:${d}`);
+        calls.push(trailLine(`tech ${d}`, res));
+        if (answered(res)) {
+          const list = payloads(res).map(techOf).find((x) => x.length > 0) ?? [];
+          if (list.length > 0) {
+            techs.set(d, list);
+            providers.tech ||= res.record.provider;
+          }
         }
         ctx.partial(build());
       });

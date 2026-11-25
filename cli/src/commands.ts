@@ -153,7 +153,7 @@ function publicLine(outDir: string, log: Log, maskAccounts = false): void {
   try {
     // The public copy is rebuilt from the saved run, so the private pages never feed it.
     const e = exportPublic(outDir, undefined, { maskAccounts, rendered: renderSafePages(outDir) ?? undefined });
-    log(`Public copy in ${e.dir}/ (receipt.json, dossier.html, dossier.md, city/index.html). People are a role and an invented name, no email, phone or profile link. Your domain, brand, rivals${maskAccounts ? ", target accounts" : ""} and people are swapped out, checked against ${e.checked} original strings, 0 left.`);
+    log(`Public copy in ${e.dir}/ (receipt.json, dossier.html, dossier.md, city/index.html). People are a role and an invented name, no email, phone or profile link. Your own domain and brand stay; rivals${maskAccounts ? ", target accounts" : ""} and people are swapped out, checked against ${e.checked} original strings, 0 left.`);
   } catch (err) {
     fail((err as Error).message, 5);
   }
@@ -323,8 +323,8 @@ export async function cmdInit(domainArg: string | undefined, a: Args, outDir: st
 
 /** gtm/candidates.json: every rival candidate with its check, the target read from the site, profiles and review snippets. */
 export function writeCandidates(outDir: string, out: RivalsOut): void {
-  const { summary, competitors, seeds, candidates, reasons, excluded, categoryTerms, target, profiles, rivalCustomers, reviews, unresolved } = out;
-  writeFile(join(outDir, "candidates.json"), JSON.stringify({ generatedAt: new Date().toISOString(), summary, picked: { competitors, seeds, reasons }, excluded, categoryTerms, target, candidates, profiles, rivalCustomers, reviews, unresolved }, null, 2) + "\n");
+  const { summary, competitors, seeds, candidates, reasons, excluded, categoryTerms, category, target, profiles, rivalCustomers, reviews, unresolved } = out;
+  writeFile(join(outDir, "candidates.json"), JSON.stringify({ generatedAt: new Date().toISOString(), summary, picked: { competitors, seeds, reasons }, excluded, category, categoryTerms, target, candidates, profiles, rivalCustomers, reviews, unresolved }, null, 2) + "\n");
 }
 
 /**

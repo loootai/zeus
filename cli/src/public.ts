@@ -1,6 +1,6 @@
 // `looot-zeus export --public`: a copy of the dossier you can show anyone. It writes gtm/public/
-// with receipt.json, dossier.html and dossier.md. Your domain and brand become yourdomain.com and
-// yourbrand, competitors become Rival A, B, C (rival-a.com ...) and people become Person 1, 2, 3
+// with receipt.json, dossier.html and dossier.md. Your own domain, brand and logo stay as they are;
+// competitors become Rival A, B, C (rival-a.com ...) and people become Person 1, 2, 3
 // with example.com emails. Then it searches the three files for every original string. One hit
 // and the export is deleted and refused.
 
@@ -61,8 +61,8 @@ export function swapsFor(o: { domain: string; brand: string; competitors: { doma
     if (p.phone) out.push({ from: p.phone, to: "+1 555 0100" });
     out.push({ from: p.name, to: `Person ${n}`, word: true });
   }
-  out.push({ from: o.domain, to: "yourdomain.com" });
-  if (o.brand && o.brand.length >= 2) out.push({ from: o.brand, to: "yourbrand", word: true });
+  // The run's own company keeps its name, domain and logo on its own public page. Masking is for
+  // third parties only (rivals, accounts, people), so o.domain and o.brand are never swapped.
   const withHtml: Swap[] = [];
   for (const s of out) {
     withHtml.push(s);

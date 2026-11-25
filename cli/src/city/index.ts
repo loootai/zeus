@@ -60,7 +60,7 @@ interface CityView {
   pick?: (b: Block) => boolean;
 }
 
-const isAi = (b: Block) => b.kind === "table" && /^AI answer/i.test(b.caption ?? "");
+const isAi = (b: Block) => (b.kind === "table" && /^AI answer/i.test(b.caption ?? "")) || (b.kind === "note" && /^(No AI answer|The AI answer checks)/.test(b.text));
 
 /** The free-run views, in menu order. Headings here are what the tests look for. */
 export const CITY_VIEWS: CityView[] = [
@@ -299,7 +299,8 @@ function cityValues(d: Dossier, brand: string, domain: string, counts: Map<strin
 
 /** Builds the whole city page from an assembled dossier. Pure, no file or network access. */
 export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's own run: real brand and domain, people still masked. */ showBrand?: boolean } = {}): string {
-  const real = !d.public || o.showBrand === true;
+  // The run's own brand and domain are shown on every page, public included; only third parties are masked.
+  const real = !d.public || o.showBrand !== false;
   const brand = real ? d.brand || d.domain : "Your brand";
   const domain = real ? d.domain : "yourdomain.com";
   const counts = new Map(CITY_VIEWS.map((v) => [v.id, countOf(viewBlocks(d, v).flatMap((p) => p.blocks))]));
@@ -311,8 +312,9 @@ export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's o
     `<div class="ngroup zcat"><h6>${e(GTM_OS.title)}</h6><div class="nav">${GTM_OS.items.map((i) => `<a href="#os">${ICONS._lock ?? ""}<span class="mt">${e(i.label)}<small class="zsub">Coming soon</small></span></a>`).join("")}<a href="#os">${ICONS.overview ?? ""}<span class="mt">${e(GTM_OS.next.label)}</span></a></div></div>` +
     `<div class="ngroup zcat"><h6>More credit</h6><div class="nav"><a href="#paid">${ICONS.runlog ?? ""}<span class="mt">What a paid run adds</span></a></div></div>`;
   const date = (d.generatedAt ?? "").slice(0, 10);
-  // The real logo, fetched by the run's safe asset fetch (assets.ts) and embedded as a data: URI. Never on a public page.
-  const logoSrc = d.public ? undefined : logoData(d.domain);
+  // The real logo, fetched by the run's safe asset fetch (assets.ts) and embedded as a data: URI. Shown on the public page too: it is the owner.
+  // The owner's own logo is shown on its public page too; rival and account logos never are.
+  const logoSrc = d.public && !real ? undefined : logoData(d.domain);
   const logo = logoSrc && /^data:image\/(png|jpeg|gif|webp|x-icon|vnd\.microsoft\.icon);base64,[A-Za-z0-9+/=]+$/.test(logoSrc) ? logoSrc : undefined;
   const side = `<aside class="side" aria-label="Sections"><div class="brand"><span class="logo">${logo ? `<img src="${e(logo)}" alt="" width="28" height="28">` : `<span class="lgt" aria-hidden="true">${e((brand.trim()[0] ?? "Z").toUpperCase())}</span>`}</span><b>${e(brand)}</b><small>looot Zeus, ${d.placeholder ? "example run" : "free run"}</small></div>${nav}<div class="sfoot">Built <b>${e(date)}</b><br>Data from looot runs. Each section says where it came from.</div></aside>`;
   // Buildings Zeus does not have yet are greyed and open the paid list, as David greys locked ones.
