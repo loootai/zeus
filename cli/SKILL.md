@@ -53,6 +53,20 @@ One domain in, a GTM dossier out. The user sees the price and says yes before an
 
 7. Tell the user what came back. Give the last line of the run (done or stopped at the cap, calls, spend), the summary lines and the path to `gtm/dossier.html`. Offer to open it with `npx looot-zeus open`.
 
+8. Offer the next steps. Read `gtm/next-steps.json`. Each entry has `title`, `why`, `price`, `job`, `command`, `schedule` and `prompt`. Offer the top three in one short line each: title, why, price. Never run one without the user's yes. See "Next steps and schedules" below.
+
+The free run includes the buying committee for the top 5 accounts: names and roles only. Emails and phones need a paid run with `--people` (phones also need `--phones`). Show these names only to the user who ran Zeus. Never paste them into a shared page, a public export or a message to someone else: `npx looot-zeus export --public` and `serve` already swap every person for a role and an invented name.
+
+## Next steps and schedules
+
+Zeus suggests, your agent schedules. Zeus has no scheduler and keeps no memory of its own.
+
+1. Offer a step only once per conversation. On a yes to a step with a `command`, run that command without `--yes`: it shows the price and asks again, like step 5.
+2. A step with a `schedule` (`weekly` or `monthly`): propose the schedule in your own scheduler (cron, Claude Code `/schedule` or your routines). Show the user the exact `prompt` you will schedule and its price per run. Create it only after a clear yes. A scheduled run still never adds `--yes` to a paid command: the scheduled prompt asks the user each time, or the user sets a cap they agreed to.
+3. A step with no `command` (send to CRM, weekly digest, memory, next best move) is your own work. Use the CRM tool or memory the user already has. Zeus does not store memory: keep what worked in your own memory or the memory provider the user uses.
+4. A scheduled run has no terminal, so a paid command stops at the quote (exit 4) and prints a command with `--yes`. Never run that printed line from a schedule. Send the user the quote and wait for their yes.
+5. Never schedule more than the user asked for. List what you scheduled at the end.
+
 ## Learn from replies
 
 Zeus never sends anything. Your outreach tool sends. Zeus reads what happened.

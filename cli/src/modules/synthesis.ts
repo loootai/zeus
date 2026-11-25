@@ -15,6 +15,7 @@ import { mentions } from "./mentions.js";
 import { reviews } from "./reviews.js";
 import { seo } from "./seo.js";
 import { signals } from "./signals.js";
+import { buildNextSteps, type NextStep, nextStepsFile } from "./nextSteps.js";
 import type { GtmModule } from "./types.js";
 
 export interface Play {
@@ -32,6 +33,8 @@ export interface SynthesisOut {
   lines: string[];
   plays: Play[];
   brief: { offer: string; icp: string; competitors: string };
+  /** Suggestions for the user's own agent (hooks): each priced, with the looot job and a ready prompt. Nothing runs from here. */
+  nextSteps?: NextStep[];
 }
 
 interface ScoredAccount { account: string; score: number; intent: string; reasons?: string }
@@ -237,7 +240,7 @@ export const synthesis: GtmModule = {
     };
     if (ctx.mode === "demo") {
       const f = loadFixture("plays");
-      return { status: "done", summary: "summary and 10 plays (placeholder)", out: { placeholder: f.placeholder, lines: f.summary, plays: f.plays, brief } satisfies SynthesisOut };
+      return { status: "done", summary: "summary and 10 plays (placeholder)", out: { placeholder: f.placeholder, lines: f.summary, plays: f.plays, brief, nextSteps: buildNextSteps(cfg, {}) } satisfies SynthesisOut };
     }
     // What the data points to comes first, so it is in the 10 lines printed at the end of the run.
     const lines: string[] = highlights(ctx.outputs);
@@ -249,7 +252,7 @@ export const synthesis: GtmModule = {
     return {
       status: "done",
       summary: plays.length > 0 ? `facts collected, ${plays.length} ${plays.length === 1 ? "play" : "plays"} from the data` : "facts collected, no play had enough data",
-      out: { lines, plays, brief } satisfies SynthesisOut,
+      out: { lines, plays, brief, nextSteps: buildNextSteps(cfg, ctx.outputs) } satisfies SynthesisOut,
     };
   },
   render(out): Section {
@@ -271,6 +274,9 @@ export const synthesis: GtmModule = {
           ? [{ kind: "table" as const, caption: `${o.plays.length} ${o.plays.length === 1 ? "play" : "plays"}${o.placeholder ? "" : ", each from the data above"}`, columns: [{ key: "n", label: "#" }, { key: "title", label: "Play" }, { key: "evidence", label: "Evidence" }, { key: "list", label: "Applies to" }, { key: "command", label: "Scale it" }, { key: "cost", label: "Expected cost" }], rows: o.plays.map((p, i) => ({ n: i + 1, ...p })) }]
           : [{ kind: "note" as const, text: "No play had enough data in this run. Your agent can read gtm/dossier.md and add plays to gtm/plays.md, each with evidence, the list it applies to, the command to scale it and the expected cost." }]),
         { kind: "table", caption: "Next actions, nothing runs without your yes", columns: [{ key: "action", label: "Action" }, { key: "cost", label: "Cost" }], rows: NEXT_ACTIONS },
+        ...(o.nextSteps?.length
+          ? [{ kind: "table" as const, caption: "Next steps your agent can offer you (gtm/next-steps.json). Schedules run in your own agent, nothing runs without your yes", columns: [{ key: "title", label: "Next step" }, { key: "why", label: "Why" }, { key: "price", label: "Price" }, { key: "when", label: "When" }], rows: o.nextSteps.map((n) => ({ title: n.title, why: n.why, price: n.price, when: n.schedule ?? "once" })) }]
+          : []),
       ],
     };
   },
@@ -281,6 +287,6 @@ export const synthesis: GtmModule = {
       ? o.plays.map((p, i) => `## ${i + 1}. ${p.title}\n\n- Evidence: ${p.evidence}\n- Applies to: ${p.list}\n- Scale it: \`${p.command}\`\n- Expected cost: ${p.cost}\n`).join("\n")
       : "No play had enough data in this run. Your agent can add plays here, each with evidence, the list it applies to, the command to scale it and the expected cost.\n";
     const tail = o.plays.length > 0 && !o.placeholder ? "\nThese come from fixed rules over the data in gtm/dossier.md. Your agent can add more below.\n" : "";
-    return { "plays.md": `# Plays\n\n${o.placeholder ? `> ${o.placeholder}\n\n` : ""}${body}${tail}` };
+    return { "plays.md": `# Plays\n\n${o.placeholder ? `> ${o.placeholder}\n\n` : ""}${body}${tail}`, ...(o.nextSteps?.length ? { "next-steps.json": nextStepsFile(o.nextSteps) } : {}) };
   },
 };

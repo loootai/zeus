@@ -42,6 +42,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .mem .acts{display:flex;gap:12px;flex-wrap:wrap;color:var(--ink2);font-size:13.5px}
 code,.cmd{font-family:var(--mono);background:#17181B;color:#fff;padding:4px 8px;border-radius:6px;font-size:13.5px}
 button.cp{font:inherit;font-size:12.5px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:2px 8px;cursor:pointer}
+.zacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 16px}.zacts .za{font:inherit;font-size:14px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none}.zacts .za:hover{border-color:var(--ink)}.zpow{font-size:13px;color:var(--ink2);margin-left:auto;text-decoration:none}.zpow:hover{text-decoration:underline}
 .ztoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1C1D1F;color:#F3F4F6;font-size:14px;padding:10px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}.ztoast.on{opacity:1}
 .menu{display:none}
 .isowrap{height:420px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(#EEF3FA,#F6F7F9);border:1px solid var(--line);border-radius:16px;margin-bottom:16px}

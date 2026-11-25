@@ -151,15 +151,17 @@ test("phones: people.csv gets phone and phone_type, filled from the committee, m
   assert.ok(!pub.includes("7700900123"), "public people.csv masks the phone");
 });
 
-test("free run is company-level: no people, enrich or committee calls, and phones need people and an opt-in", async () => {
+test("free run: no people or enrich calls, a names-and-roles committee for the top 5 accounts only, phones need people and an opt-in", async () => {
   const book = await loadPriceBook({ cacheDir: ".looot-zeus", offline: true });
   const free = normalizeConfig({ domain: "acme.example" });
   assert.equal(free.people, false);
   assert.equal(free.phones, false);
   assert.equal(free.committeePhones, false);
   const q = buildQuote(MODULES, free, book);
-  for (const id of ["people", "enrich", "committee"]) assert.match(q.rows.find((r) => r.module === id)!.skip ?? "", /company-level/);
-  assert.ok(!q.rows.flatMap((r) => r.lines).some((l) => l.job.startsWith("people.")), "no people job is quoted");
+  for (const id of ["people", "enrich"]) assert.match(q.rows.find((r) => r.module === id)!.skip ?? "", /company-level/);
+  // Luisa, looot-zeus#11 2026-11-25: "Free run includes top-5 committees". Names and roles: 5 people.search, nothing else.
+  const peopleJobs = q.rows.flatMap((r) => r.lines).filter((l) => l.job.startsWith("people."));
+  assert.deepEqual(peopleJobs.map((l) => `${l.job}x${l.calls}`), ["people.searchx5"]);
   // phones without people stay off
   assert.equal(normalizeConfig({ domain: "x.example" }, { phones: true }).committeePhones, false);
   // people on: emails yes, phones still off until asked

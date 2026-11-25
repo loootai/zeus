@@ -11,7 +11,7 @@ import type { GtmConfig } from "./config.js";
 import type { ModuleResult } from "./modules/types.js";
 import { SEARCH_ROWS } from "./modules/accounts.js";
 import { gaps as adGaps } from "./modules/ads.js";
-import { summarize as committeeSummary } from "./modules/committee.js";
+import { FREE_COMMITTEE_ACCOUNTS, summarize as committeeSummary } from "./modules/committee.js";
 import { summarize as socialSummary } from "./modules/social.js";
 import { buildQuote, type PriceBook, type Quote } from "./quote.js";
 import type { Receipt } from "./receipt.js";
@@ -92,6 +92,8 @@ export const SPECS: Record<MoreWhat, MoreSpec> = {
       const have = rowsOf(s, "committee", "accounts").map((a) => a.domain);
       const left = rowsOf(s, "accounts").filter((a) => (a.grade === "A" || a.grade === "B") && !have.includes(a.domain)).length;
       if (s && left === 0) throw new Error("Every A and B account already has a buying committee. Run looot-zeus more accounts first.");
+      // Without --people a committee is names and roles for at most 5 accounts (committeeCount).
+      if (!cfg.people && count > FREE_COMMITTEE_ACCOUNTS) process.stderr.write(`Without --people a pull gets names and roles for at most ${FREE_COMMITTEE_ACCOUNTS} accounts. Add --people for ${count}, with emails.\n`);
       return withMore(cfg, { skipDomains: have }, { limits: { ...cfg.limits, committeeAccounts: s ? Math.min(count, left) : count } });
     },
   },

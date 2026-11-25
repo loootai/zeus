@@ -83,8 +83,8 @@ Options
   --cap <usd>        Most the run may spend. Default 10 for run, the suggested cap for run <domain>, 5 for watch
   --count <n>        How many accounts, committees or keywords more fetches
   --depth <d>        sample (25 accounts) or full (100 accounts)
-  --people           Paid runs only. Add people data: names, work emails and buying committees.
-                     Off by default, so the free run is company-level only
+  --people           Paid runs only. Add people data: work emails, buyers per account and committees
+                     for 10 accounts. Off by default: the free run has names and roles for 5 committees
   --phones           Opt-in, needs --people. Phone numbers for the buying committees and every
                      enriched person, plus the deepest phone step (Limadata, $0.20 only on a hit)
   --max-runs <n>     Stop the whole run after n paid calls. Per-section limits go in gtm/config.yaml

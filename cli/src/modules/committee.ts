@@ -15,7 +15,7 @@ import type { EnrichOut } from "./enrich.js";
 import { readEmail } from "./enrich.js";
 import { findCompanyLine, findPersonPhone, LATER_STEP_PEOPLE, normalizePhone, PERSON_STEPS } from "./phone.js";
 import type { PeopleOut } from "./people.js";
-import { normalizePerson, PEOPLE_OFF } from "./people.js";
+import { normalizePerson } from "./people.js";
 import { answered, type CallTrail, costNote, payloads, pool, rowsOf, shell, today, trailLine } from "./icp.js";
 import type { GtmModule, ModuleContext } from "./types.js";
 
@@ -201,8 +201,14 @@ export function committeeTargets(cfg: GtmConfig, acc: AccountsOut | null | undef
   const ab = rows.filter((a) => a.grade === "A" || a.grade === "B");
   return [...(ab.length > 0 ? ab : rows.filter((a) => a.grade === "C"))]
     .sort((a, b) => (order[a.grade] ?? 9) - (order[b.grade] ?? 9) || b.score - a.score)
-    .slice(0, cfg.limits.committeeAccounts);
+    .slice(0, committeeCount(cfg));
 }
+
+/** Accounts that get a names-and-roles committee in the free (company-level) run. Luisa, looot-zeus#11, 2026-11-25: "Free run includes top-5 committees". */
+export const FREE_COMMITTEE_ACCOUNTS = 5;
+
+/** How many accounts get a committee: all of limits.committeeAccounts on a paid run with people data, the top 5 otherwise. */
+export const committeeCount = (cfg: GtmConfig) => (cfg.people ? cfg.limits.committeeAccounts : Math.min(FREE_COMMITTEE_ACCOUNTS, cfg.limits.committeeAccounts));
 
 /** Email lookups quoted per account: the committee minus the people the run already found. */
 export const newPerAccount = (cfg: GtmConfig) => Math.max(1, cfg.limits.committeeSize - cfg.limits.peoplePerAccount);
@@ -252,9 +258,10 @@ export const committee: GtmModule = {
   label: "Buying committee",
   needs: ["accounts", "people", "enrich"],
   quote: (cfg) => {
-    if (!cfg.people) return { lines: [], skip: PEOPLE_OFF };
-    const n = cfg.limits.committeeAccounts;
+    const n = committeeCount(cfg);
     if (n === 0 || cfg.limits.committeeSize === 0) return { lines: [], skip: "limits.committeeAccounts is 0" };
+    // Free run: names and roles for the top 5 accounts, one people.search each. Emails and phones stay paid.
+    if (!cfg.people) return { lines: [{ job: "people.search", calls: n, rows: 10, note: "top 5 accounts, names and roles only (emails and phones on a paid run with --people)" }] };
     return {
       lines: [
         { job: "people.search", calls: n, rows: 10, note: "A and B accounts, every role" },
@@ -282,7 +289,7 @@ export const committee: GtmModule = {
     const known: any[] = [...((ctx.outputs.enrich as EnrichOut | null | undefined)?.rows ?? []), ...((ctx.outputs.people as PeopleOut | null | undefined)?.rows ?? [])];
     const calls: CallTrail[] = [];
     const done: CommitteeAccount[] = [];
-    let emailBudget = targets.length * newPerAccount(cfg);
+    let emailBudget = cfg.people ? targets.length * newPerAccount(cfg) : 0;
     const build = (): CommitteeOut => {
       const used = [...new Set(done.map((a) => a.provider).filter(Boolean))].slice(0, 3);
       return { summary: summarize(done), provider: used.join(", ") || undefined, date, accounts: [...done], calls };
@@ -309,13 +316,14 @@ export const committee: GtmModule = {
           const raw = payloads(res).map((p) => rowsOf(p)).find((r) => r.length > 0) ?? [];
           for (const r of raw) {
             const p = normalizePerson(r);
-            if (p) add({ ...p, emailStatus: p.email ? "found" : "", phone: "" });
+            // Free run: names and roles only. An email a search hands back is dropped, never shown or saved.
+            if (p) add(cfg.people ? { ...p, emailStatus: p.email ? "found" : "", phone: "" } : { ...p, email: "", emailStatus: "", phone: "" });
           }
         }
         const picked = pickCommittee(cands, cfg.limits.committeeSize, cfg.icp.titles);
         const members: Member[] = [];
         for (const { role, c } of picked) {
-          const m: Member = { role, name: c.name, title: c.title, email: c.email, emailStatus: c.email ? c.emailStatus || "found" : "not looked up", linkedin: c.linkedin, phone: c.phone, phoneStatus: c.phone ? "found" : "not looked up" };
+          const m: Member = { role, name: c.name, title: c.title, email: c.email, emailStatus: c.email ? c.emailStatus || "found" : cfg.people ? "not looked up" : "paid run", linkedin: c.linkedin, phone: c.phone, phoneStatus: c.phone ? "found" : "not looked up" };
           if (!m.email && emailBudget > 0 && (c.linkedin || (c.firstName && c.lastName))) {
             emailBudget--;
             const input: Record<string, unknown> = { domain: a.domain, first_name: c.firstName, last_name: c.lastName, name: c.name };

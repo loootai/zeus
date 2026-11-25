@@ -31,3 +31,14 @@ test("a section name that is not a module is reported", () => {
   assert.deepEqual(unknownCapSections(resolveCaps({ caps: { sections: { seo: { runs: 3 }, seoo: { runs: 1 } } } }), ids), ["seoo"]);
   assert.deepEqual(unknownCapSections(DEFAULT_CAPS, ids), []);
 });
+
+test("the free run (no --people) with its top-5 committees has a worst case under 2.00 USD", async () => {
+  for (const depth of ["sample", "full"] as const) {
+    const cfg = normalizeConfig({ ...loadFixture<{ config: Record<string, unknown> }>("config").config, people: false, phones: false, committeePhones: false }, { depth });
+    assert.equal(cfg.people, false);
+    const q = buildQuote(MODULES, cfg, await loadPriceBook({ cacheDir: ".looot-zeus-test", offline: true }));
+    assert.ok(q.worstCapped < 2, `free worst under caps ${q.worstCapped}`);
+    const c = q.rows.find((r) => r.module === "committee")!;
+    assert.deepEqual(c.lines.map((l) => [l.job, l.calls]), [["people.search", 5]]);
+  }
+});

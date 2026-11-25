@@ -60,3 +60,18 @@ test("renderCity masks people when the dossier is public", () => {
   assert.match(html, /p\*\*\*@acme\.test/);
   assert.match(renderCity({ ...d, public: false }), /pat@acme\.test/);
 });
+
+test("city page: fork it, tell your agent and powered by looot on every page; share only on the public (safe) page", async () => {
+  const { renderCity, ZEUS_REPO_URL } = await import("../src/city/index.js");
+  const base = { domain: "acme.example", brand: "Acme", generatedAt: "2026-11-25T09:00:00.000Z", sections: [] };
+  const priv = renderCity({ ...base, public: false } as never);
+  const pub = renderCity({ ...base, public: true } as never);
+  for (const h of [priv, pub]) {
+    assert.ok(h.includes(`href="${ZEUS_REPO_URL}"`) && h.includes(">Fork it<"));
+    assert.ok(h.includes(">Tell your agent<") && h.includes("npx looot-zeus skill"));
+    assert.ok(h.includes('href="https://looot.ai"') && h.includes("Powered by looot"));
+    assert.ok(!h.includes(", and ") && !h.includes("—"));
+  }
+  assert.ok(pub.includes('class="za zshare"'));
+  assert.ok(!priv.includes('class="za zshare"'), "a private page is never offered for sharing");
+});

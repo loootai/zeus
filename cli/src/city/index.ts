@@ -38,7 +38,7 @@ export const CITY_VIEWS: CityView[] = [
 /** What more credit buys, each one a command Zeus has today. Nothing here is a feature Zeus lacks. */
 export const PAID_ADDS: { what: string; command: string }[] = [
   { what: "100 target accounts instead of 25", command: "looot-zeus run --depth full --cap 10" },
-  { what: "People data: names, work emails and buying committees", command: "looot-zeus run --people --cap 10" },
+  { what: "People data: work emails, buyers per account and buying committees for 10 accounts (the free run has names and roles for 5)", command: "looot-zeus run --people --cap 10" },
   { what: "Phone numbers for the buying committees, on top of people data", command: "looot-zeus run --people --phones --cap 10" },
   { what: "More accounts, buying committees, ads, social posts or keyword rankings in this folder", command: "looot-zeus more accounts --count 25 --cap 2" },
   { what: "The run again later, for example each week, with what changed written to changes.md", command: "looot-zeus watch --cap 5" },
@@ -78,6 +78,17 @@ function viewHtml(d: Dossier, v: CityView): string {
   return `<section class="view" data-view="${v.id}"><div class="kicker">${e(v.group)}</div><h1>${e(v.label)}</h1>${body}${extra}</section>`;
 }
 
+/** Where "Fork it" points: the public Zeus repo. */
+export const ZEUS_REPO_URL = "https://github.com/loootai/zeus";
+/** What "Tell your agent" copies: install the /gtm skill, then run it on a domain. */
+export const TELL_YOUR_AGENT = "Install the /gtm skill with `npx looot-zeus skill > ~/.claude/skills/gtm/SKILL.md`, then run /gtm <my domain>. Show me the price first and spend nothing without my yes.";
+
+/** Share, fork it, tell your agent and powered by looot. Share shows on public (safe) pages only: a private page stays on your machine. */
+export function actionsHtml(d: Pick<Dossier, "public">): string {
+  const share = d.public ? `<button type="button" class="za zshare">Share</button>` : "";
+  return `<div class="zacts">${share}<a class="za" href="${ZEUS_REPO_URL}" target="_blank" rel="noopener noreferrer">Fork it</a><button type="button" class="za cp" data-copy="${e(TELL_YOUR_AGENT)}">Tell your agent</button><a class="zpow" href="https://looot.ai" target="_blank" rel="noopener noreferrer">Powered by looot</a></div>`;
+}
+
 /** Builds the whole city page from an assembled dossier. Pure, no file or network access. */
 export function renderCity(d: Dossier): string {
   const brand = d.public ? "your brand" : d.brand || d.domain;
@@ -88,7 +99,7 @@ export function renderCity(d: Dossier): string {
   let last = "";
   const nav = [`<a href="#overview">City map</a>`, ...CITY_VIEWS.map((v) => { const h = v.group !== last ? `<div class="zgh">${e(v.group)}</div>` : ""; last = v.group; return `${h}<a href="#${v.id}">${e(v.label)}</a>`; })].join("") +
     `<div class="zgh">More credit</div><a href="#paid">What a paid run adds</a>`;
-  const overview = `<section class="view on" data-view="overview"><h1>${e(brand)} City</h1>${d.placeholder ? `<div class="note">${e(d.placeholder)}</div>` : ""}<p class="run"><span>Made by one command</span><code>npx looot-zeus run ${e(domain)}</code></p><div class="isowrap"><div class="iso">${tiles}</div></div><div class="legend">${legend}</div></section>`;
+  const overview = `<section class="view on" data-view="overview"><h1>${e(brand)} City</h1>${d.placeholder ? `<div class="note">${e(d.placeholder)}</div>` : ""}<p class="run"><span>Made by one command</span><code>npx looot-zeus run ${e(domain)}</code></p>${actionsHtml(d)}<div class="isowrap"><div class="iso">${tiles}</div></div><div class="legend">${legend}</div></section>`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(brand)} City</title><style>${CITY_CSS}</style></head>
 <body><aside class="side" id="side" aria-label="Sections"><div class="brand">${e(brand)} City<small>${e(domain)}</small></div><nav class="nav">${nav}</nav></aside>

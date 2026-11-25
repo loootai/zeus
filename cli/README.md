@@ -74,7 +74,7 @@ To see it first, run `looot-zeus demo`. It writes a full dossier from made up da
 | `--cap <usd>` | The most the run may spend. Default 10 for `run`. For `run yourdomain.com` the default is the suggested cap. |
 | `--yes` | Skips the `[y/N]` question before a paid call in `init`, `run` and `run yourdomain.com`. Needed when there is no terminal to answer in. |
 | `--depth sample` or `full` | 25 accounts (default) or 100 accounts. |
-| `--people` | Paid runs only. Adds people data: names, work emails and buying committees (sections 03 and 03B). Off by default, so the free run is company-level only. |
+| `--people` | Paid runs only. Adds people data: buyers per account, work emails and buying committees with emails for the top 10 accounts (sections 03 and 03B). Off by default: the free run is company-level except the buying committee for the top 5 accounts, names and roles only, shown only to you (never on a shared or served page). |
 | `--phones` | Opt-in, needs `--people`. Phone numbers for the buying committees and every enriched person, plus the deepest phone step (Limadata, $0.20 only when it finds one). Costs more. |
 | `--no-phones` | Skip every phone lookup, even when `gtm/config.yaml` asks for phones. |
 | `--public` | Safe demo output (see Safe demo mode below), skips the outreach CSVs and writes the public copy to `gtm/public/`. |
@@ -93,7 +93,7 @@ The core modules.
 | 01 | icp | Your ideal customer profile and 25 lookalike companies from your seed customers | company.enrich, company.similar, company.technographics |
 | 02 | accounts | Companies that fit, scored A to D, each with its reasons | company.search, company.enrich |
 | 03 | people and enrich (`--people` only) | 2 buyers per account and their work emails, checked by a verifier | people.search, people.email.find, people.email.verify, people.phone.find with `--phones` |
-| 03B | committee (`--people` only) | A buying committee for the top 10 A and B accounts. Up to 4 people each (economic buyer, champion, technical or ops lead, user lead) with email and LinkedIn (phone with `--phones`), each marked found or not found. Phones run cheapest first and stop at the first hit, each labelled Mobile, Direct or Company line. Each account also gets its main line from a tel: link on its site. People found before are reused | people.search, people.email.find, people.phone.find, people.phone.find.mobile (first two people), web.scrape.markdown |
+| 03B | committee | Free run: names and roles for the top 5 accounts, one people.search each, no emails or phones. With `--people`: a buying committee for the top 10 A and B accounts. Up to 4 people each (economic buyer, champion, technical or ops lead, user lead) with email and LinkedIn (phone with `--phones`), each marked found or not found. Phones run cheapest first and stop at the first hit, each labelled Mobile, Direct or Company line. Each account also gets its main line from a tel: link on its site. People found before are reused | people.search, people.email.find, people.phone.find, people.phone.find.mobile (first two people), web.scrape.markdown |
 | 04 | signals | Hiring, funding and news per account, with dates and a hot, warm or cold score | jobs.search, company.funding, news.search |
 | 05 | competitors | A rival card per competitor. Every claim has its source and date | web.scrape.markdown, company.technographics, news.search, linkedin.company.posts |
 | 06 | ads | The ads you and your competitors run, their angles and offers | ads.meta.search, ads.linkedin.search, ads.google.search |
@@ -304,7 +304,7 @@ A miss is a normal answer and stays in the dossier as a row. A miss can still be
 
 ## Example figures
 
-Real run for higgsfield.ai on 23 Nov 2026, from its run log (not in this repo).
+Real run for higgsfield.ai on 23 Nov 2026, from the Zeus v1 page in this repo (`../city/data/runlog.json`).
 
 | | Real run value |
 |---|---|
