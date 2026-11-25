@@ -68,6 +68,15 @@ const PHRASE_OK = new Set(["api", "apis", "ai", "integration", "integrations", "
 /** Words that never start or end a category phrase. */
 const PHRASE_EDGE = new Set(["google", "maps", "claude", "code", "cursor", "codex", "chatgpt", "openai", "linkedin", "tiktok", "instagram", "youtube", "facebook", "twitter", "reddit", "amazon", "shopify", "slack", "notion", "hubspot", "salesforce", "now", "can", "lowest", "every", "needs", "across", "only", "own", "pay", "paying", "find", "send", "call", "calls", "pick", "choose", "order", "name", "key", "keys", "get", "done", "connect", "connects", "need", "needs", "checked", "help", "helps", "go", "let"]);
 
+/** Words that say "software" without saying which: a phrase made only of these ("ai agent", "agent skill") names no category. */
+const GENERIC_PHRASE_WORDS = new Set(["ai", "agent", "agents", "agentic", "tool", "tools", "platform", "platforms", "app", "apps", "software", "solution", "solutions", "assistant", "assistants", "skill", "skills", "workflow", "workflows", "automation", "service", "services", "product", "products", "system", "systems", "suite", "hub", "engine", "online", "digital", "smart", "new", "next", "modern", "powerful", "simple", "best", "free", "way", "work", "team", "teams", "business", "company", "companies", "model", "models", "llm", "llms", "gpt", "chat", "chatbot", "bot", "bots", "copilot", "intelligence", "power", "powered"]);
+
+/** True when a phrase names a specific category: at least one word that is not a generic software word. */
+export function isSpecificPhrase(p: string): boolean {
+  const ws = p.split(/\s+/).filter(Boolean);
+  return ws.length >= 2 && ws.some((w) => !GENERIC_PHRASE_WORDS.has(w));
+}
+
 /** A singular noun form so "data APIs" and "data API" count as one phrase. */
 const phraseWord = (w: string) => (w === "apis" ? "api" : stemWord(w));
 
@@ -105,7 +114,7 @@ export function categoryPhrases(pages: SitePage[], brand: string, domain: string
     add(p.markdown.replace(/^Title:.*$/m, ""), 0.25);
   }
   const out: string[] = [];
-  for (const [k] of [...score.entries()].filter(([, v]) => v >= 1.5).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+  for (const [k] of [...score.entries()].filter(([k0, v]) => v >= 1.5 && isSpecificPhrase(k0)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
     // Skip a phrase that only repeats one already picked ("data api" then "every data api").
     if (out.some((o) => o.includes(k) || k.includes(o))) continue;
     out.push(k);
@@ -242,7 +251,16 @@ export function extractTarget(pages: SitePage[], brand: string): Target {
   const text = ok.map((p) => p.markdown).join("\n");
   const roles = counted(text, ROLES).filter((r) => r.n >= 2).slice(0, 6);
   const sizes = counted(text, SIZES).filter((s) => s.n >= 2).map((s) => s.label).slice(0, 4);
-  const industries = [...new Set(roles.flatMap((r) => ROLE_INDUSTRIES[r.label] ?? []))].slice(0, 5);
+  // Industries only from what the site leads with: titles, headings, meta lines, the pricing page and
+  // real customer pages. A role named in passing in body text ("creators" in a list of examples) is not
+  // who the product is for, so it never sets the industries of the ideal customer.
+  const prominent = ok.map((p) => {
+    const custUrl = !p.url || /customer|case-stud|testimonial|success|clients/i.test(p.url);
+    if (p.kind === "pricing" || ((p.kind === "customers" || p.kind === "casestudies") && custUrl)) return p.markdown;
+    return p.markdown.split("\n").filter((l) => /^(Title:|Description:|#{1,2}\s)/.test(l.trim()) || /\b(built|made|designed) for\b/i.test(l)).join("\n");
+  }).join("\n");
+  const leading = counted(prominent, ROLES).filter((r) => r.n >= 2);
+  const industries = [...new Set(leading.flatMap((r) => ROLE_INDUSTRIES[r.label] ?? []))].slice(0, 5);
   const custPages = ok.filter((p) => ["customers", "casestudies", "home"].includes(p.kind));
   const customers = [...new Set(custPages.flatMap((p) => customersFrom(p.markdown, brand)))].slice(0, 20);
   return {

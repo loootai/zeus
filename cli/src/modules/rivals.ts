@@ -58,23 +58,72 @@ const GENERIC = new Set(
   (
     "competitors.com competitor.com alternatives.com alternative.com example.com yourdomain.com vs.com compare.com " +
     "google.com youtube.com facebook.com instagram.com linkedin.com twitter.com x.com tiktok.com reddit.com quora.com pinterest.com wikipedia.org medium.com substack.com " +
-    "apple.com microsoft.com amazon.com aws.amazon.com meta.com openai.com chatgpt.com anthropic.com claude.ai gemini.google.com bing.com yahoo.com " +
+    "apple.com microsoft.com amazon.com aws.amazon.com meta.com gemini.google.com bing.com yahoo.com " +
     "g2.com capterra.com getapp.com softwareadvice.com trustradius.com trustpilot.com producthunt.com alternativeto.net saasworthy.com sourceforge.net slashdot.org " +
-    "crunchbase.com similarweb.com builtwith.com zoominfo.com apollo.io owler.com cbinsights.com glassdoor.com indeed.com " +
+    "crunchbase.com similarweb.com builtwith.com owler.com cbinsights.com glassdoor.com indeed.com " +
     "futurepedia.io theresanaiforthat.com toolify.ai aitoolsdirectory.com topai.tools insidr.ai saasgenius.com saashub.com stackshare.io " +
-    "forbes.com techcrunch.com businessinsider.com hubspot.com blog.hubspot.com zapier.com notion.so canva.com github.com gitlab.com " +
+    "forbes.com techcrunch.com businessinsider.com blog.hubspot.com github.com gitlab.com " +
     "wordpress.com wix.com squarespace.com shopify.com webflow.com bit.ly t.co lnkd.in apps.apple.com play.google.com chrome.google.com"
   ).split(/\s+/),
 );
 
+/**
+ * Hosts a page loads or links for tracking, ads, analytics, consent, chat, CDNs and fonts. They show up
+ * in every page's links and are never a customer, a rival or an account. Keep this list maintained:
+ * add a host here when a run picks one up as a seed or a rival.
+ */
+export const TRACKING_HOSTS = new Set(
+  (
+    "bing.com bat.bing.com clarity.ms googleadservices.com googlesyndication.com doubleclick.net google-analytics.com googletagmanager.com googletagservices.com " +
+    "analytics.google.com ads.google.com adservice.google.com gstatic.com googleapis.com fonts.googleapis.com fonts.gstatic.com recaptcha.net " +
+    "facebook.net connect.facebook.net fbcdn.net fb.com fb.me instagram.com whatsapp.com wa.me messenger.com " +
+    " hotjar.io  segment.io cdn.segment.com    heapanalytics.com   " +
+    " i.posthog.com    matomo.cloud simpleanalytics.com    " +
+    "hubspot.net hs-scripts.com hs-analytics.net hsforms.com hsforms.net hscollectedforms.net hubspotusercontent.com  marketo.net mktoresp.com  " +
+    "linkedin.com licdn.com snap.licdn.com ads.linkedin.com px.ads.linkedin.com twitter.com t.co ads-twitter.com analytics.twitter.com tiktok.com analytics.tiktok.com " +
+    "reddit.com redditstatic.com quora.com pinterest.com pinimg.com snapchat.com sc-static.net  criteo.net    " +
+    " cookielaw.org       consentmanager.net " +
+    " intercomcdn.com     zdassets.com livechatinc.com tidio.co  " +
+    "cloudfront.net akamaihd.net akamaized.net   cdnjs.cloudflare.com jsdelivr.net unpkg.com jquery.com bootstrapcdn.com " +
+    " js.stripe.com   sentry-cdn.com   nr-data.net  " +
+    " player.vimeo.com youtube-nocookie.com ytimg.com  wistia.net  typekit.net use.typekit.net  gravatar.com " +
+    "w3.org schema.org ogp.me apple.com apps.apple.com play.google.com   chatgpt.com"
+  ).split(/\s+/),
+);
+
+/**
+ * Product companies whose scripts, widgets or links sit on most sites (payments, analytics, chat,
+ * consent, video, AI search). Linked from a page, they are a vendor of that site, never its customer,
+ * so they are never a seed. They can still be a rival: they are real products.
+ */
+export const VENDOR_HOSTS = new Set(("stripe.com paypal.com sentry.io bugsnag.com newrelic.com datadoghq.com mixpanel.com amplitude.com heap.io fullstory.com posthog.com plausible.io usefathom.com pendo.io logrocket.com smartlook.com mouseflow.com hotjar.com segment.com intercom.io drift.com zendesk.com tawk.to crisp.chat hubspot.com marketo.com pardot.com loom.com vimeo.com wistia.com onetrust.com cookiebot.com usercentrics.eu osano.com termly.io iubenda.com trustarc.com criteo.com taboola.com outbrain.com adroll.com perplexity.ai openai.com chatgpt.com cloudflare.com fastly.net fontawesome.com matomo.org").split(" "));
+
+/** A tracking, ads, analytics, consent or CDN host, or a subdomain of one. Pure infrastructure, never a company to list. */
+export function isTrackingHost(domain: string): boolean {
+  const d = cleanDomain(domain);
+  if (TRACKING_HOSTS.has(d)) return true;
+  for (const t of TRACKING_HOSTS) if (d.endsWith(`.${t}`)) return true;
+  // ads.example.com, cdn.example.net: an infrastructure subdomain. A company's own apex (events.com) is not.
+  return d.split(".").length > 2 && /^(ads?|adservice|analytics|tracking|tracker|pixel|tags?|metrics|stats|telemetry|collect|beacon|cdn|static|assets)\./.test(d);
+}
+
+/** Products on so many sites that only a category match on their own home page makes them a rival. */
+export const SOFT_GENERIC = new Set("stripe.com zendesk.com intercom.com intercom.io loom.com openai.com anthropic.com chatgpt.com claude.ai hubspot.com zapier.com notion.so canva.com apollo.io zoominfo.com".split(" "));
+
 /** A domain that can never be a rival. */
 export function isGeneric(domain: string): boolean {
   const d = cleanDomain(domain);
-  if (GENERIC.has(d)) return true;
+  if (SOFT_GENERIC.has(d)) return false;
+  // Their subdomains are widgets and scripts (js.stripe.com, acme.zendesk.com), never a company.
+  for (const g of SOFT_GENERIC) if (d.endsWith(`.${g}`)) return true;
+  if (/(^|\.)intercomcdn\.com$|(^|\.)zdassets\.com$/.test(d)) return true;
+  if (GENERIC.has(d) || isTrackingHost(d)) return true;
   // subdomains of the big ones (blog.hubspot.com, support.google.com)
   for (const g of ["google.com", "microsoft.com", "amazon.com", "apple.com", "facebook.com", "linkedin.com", "medium.com", "substack.com", "wordpress.com", "hubspot.com", "notion.site", "github.io"]) if (d.endsWith(`.${g}`)) return true;
   // Image hosts, CDNs and site builders' asset domains are never a company.
-  if (/(^|[.-])(cdn|static|assets?|img|images|media|files|usercontent|cloudfront|akamai|fastly|imgix|cloudinary|gravatar|wp|s3)([.-]|$)/.test(d) || /usercontent|cloudfront|amazonaws|googleapis|gstatic|framer\.(website|app)|webflow\.io|wixstatic|squarespace-cdn|hubspotusercontent|ctfassets|sanity\.io|prismic\.io|vercel\.app|netlify\.app|calendly\.com|typeform\.com|youtu\.be|loom\.com|stripe\.com|intercom|crisp\.chat|zendesk/.test(d)) return true;
+  if (/(^|[.-])(cdn|static|assets?|img|images|media|files|usercontent|cloudfront|akamai|fastly|imgix|cloudinary|gravatar|wp|s3)([.-]|$)/.test(d) || /usercontent|cloudfront|amazonaws|googleapis|gstatic|framer\.(website|app)|webflow\.io|wixstatic|squarespace-cdn|hubspotusercontent|ctfassets|sanity\.io|prismic\.io|vercel\.app|netlify\.app|calendly\.com|typeform\.com|youtu\.be|crisp\.chat/.test(d)) return true;
+  // Widely embedded products (payments, support, scheduling, AI) are rivals only when the run's category
+  // is theirs: they pass isGeneric, then must say the category phrase on their home page (see SOFT_GENERIC).
   return /\.(gov|mil|edu)(\.[a-z]{2})?$/.test(d);
 }
 
@@ -93,7 +142,11 @@ const APP_HOSTS = /\.(supabase\.(co|in)|firebaseapp\.com|web\.app|herokuapp\.com
 /** A domain that can be a seed customer: a company's own site, not a platform, an app host or a random project id. */
 export function isSeedDomain(domain: string): boolean {
   const d = cleanDomain(domain);
-  if (!d.includes(".") || isGeneric(d) || APP_HOSTS.test(d)) return false;
+  if (!d.includes(".") || isGeneric(d) || SOFT_GENERIC.has(d) || APP_HOSTS.test(d) || VENDOR_HOSTS.has(d) || [...VENDOR_HOSTS].some((v) => d.endsWith(`.${v}`))) return false;
+  // A real company site is its own registered domain, not a subdomain (bat.bing.com, app.x.com).
+  const labels = d.split(".");
+  const ccSecond = labels.length === 3 && /^(co|com|org|net|ac|gov|ltd|plc|or|ne|gob|edu|nom|gen|biz|info|me)$/.test(labels[1]) && labels[2].length === 2;
+  if (labels.length > 2 && !ccSecond) return false;
   const label = d.split(".")[0];
   // qwtacnykulkgtsveodvs.supabase.co: a long label with almost no vowels is a generated id.
   if (label.length >= 14 && (label.match(/[aeiou]/g) ?? []).length / label.length < 0.25) return false;
@@ -383,7 +436,7 @@ export function rivalsModule(need: Need): GtmModule {
         for (const d of cfg.competitors) add(d, "the brief");
         // The domain is searched, not only the brand: a short brand ("looot") alone finds board games.
         const cat = category[0] ?? categoryPhrase(terms);
-        const queries = [`${cfg.domain} alternatives`, `${cfg.brand} vs`, `best ${cat}`, `${cat} alternatives`, ...(category[1] ? [`best ${category[1]}`] : [`${cat} platform`])].slice(0, SERP_QUERIES);
+        const queries = [`alternatives to ${cfg.brand}`, `${cfg.domain} alternatives`, `best ${cat}`, `${cat} alternatives`, `${cfg.brand} vs`].slice(0, SERP_QUERIES);
         const listicles: string[] = [];
         const vsNames = new Map<string, number>();
         for (const q of queries) {
@@ -393,7 +446,7 @@ export function rivalsModule(need: Need): GtmModule {
           for (const r of serpRows(res.data)) {
             const h = domainOf(r.link);
             // A "best X" or "X alternatives" list names the products of the category: read it, it is not a rival.
-            if (h && isListSource(h) && /\b(best|top \d+|\d+ best|alternatives|competitors|vs\.?)\b/i.test(r.title) && /^(best|.* alternatives)/.test(q) && !listicles.includes(r.link)) listicles.push(r.link);
+            if (h && isListSource(h) && /\b(best|top \d+|\d+ best|alternatives|competitors|vs\.?)\b/i.test(r.title) && /^(best|alternatives to|.* alternatives)/.test(q) && !listicles.includes(r.link)) listicles.push(r.link);
             if (h) add(h, `Google search "${q}"`);
             for (const n of namesNearVs(`${r.title}. ${r.snippet}`, cfg.brand)) vsNames.set(n, (vsNames.get(n) ?? 0) + 1);
           }
@@ -450,11 +503,12 @@ export function rivalsModule(need: Need): GtmModule {
           c.product = looksLikeProduct(md);
           const t = md.match(/^Title:\s*(.+)$/m)?.[1];
           if (t) c.name = t.split(/[|:–—]| - /)[0].trim().slice(0, 40) || c.name;
-          const phrase = saysPhrase(md, category);
+          // The category match: the most telling phrase, or two of the others ("data api", or "ecommerce automation" and a second).
+          const phrase = saysPhrase(md, category.slice(0, 1)) ?? (category.slice(1).filter((p) => saysPhrase(md, [p])).length >= 2 ? saysPhrase(md, category.slice(1)) : null);
           if (!c.product) c.reason = "no pricing, sign up or trial on the home page, so not a product page";
-          else if (category.length > 0 && !phrase && (c.named ?? 0) < 2) {
+          else if (category.length > 0 && !phrase && ((c.named ?? 0) < 2 || SOFT_GENERIC.has(c.domain))) {
             // Sharing common words ("agent", "data") is not a category match: the page must say what you are.
-            c.reason = `never says "${category.join('" or "')}", your category, so another market`;
+            c.reason = `never says "${category[0]}", your category, so another market`;
             c.overlap = Math.min(o.score, OVERLAP_MIN - 0.01);
           } else if (category.length === 0 && terms[0] && !o.shared.includes(terms[0])) {
             c.reason = `never says "${terms[0]}", your main category word`;
@@ -470,10 +524,30 @@ export function rivalsModule(need: Need): GtmModule {
         }
         // Rank: how much of your category it shares, plus how often Google names it next to you or "alternatives".
         const ok = [...byStem.values()].sort((a, b) => (b.overlap ?? 0) + Math.min(5, b.named ?? 0) * 0.08 + b.sources.length * 0.03 - ((a.overlap ?? 0) + Math.min(5, a.named ?? 0) * 0.08 + a.sources.length * 0.03));
-        const kept = ok.slice(0, RIVALS_MAX);
+        let kept = ok.slice(0, RIVALS_MAX);
+        // Nothing passed the strict check: keep the products Google names next to you or "vs" at least
+        // twice. Co-mentions are what buyers see, so they beat an empty rival list.
+        if (kept.length === 0) {
+          const own = cfg.domain.split(".")[0].toLowerCase();
+          const ownBrand = cfg.brand.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const best = new Map<string, RivalCandidate>();
+          // One per name (taplio.com, taplio.ai, taplio.io are guesses of one rival), read and a product page, never you.
+          for (const c of order.filter((x) => (x.named ?? 0) >= 2 && x.product && x.overlap !== null && !SOFT_GENERIC.has(x.domain))) {
+            const st = c.domain.split(".")[0];
+            if (st === own || st.replace(/[^a-z0-9]/g, "") === ownBrand) continue;
+            const cur = best.get(st);
+            if (!cur || (c.overlap ?? 0) > (cur.overlap ?? 0)) best.set(st, c);
+          }
+          kept = [...best.values()].sort((a, b) => (b.named ?? 0) - (a.named ?? 0) || (b.overlap ?? 0) - (a.overlap ?? 0)).slice(0, RIVALS_WANTED);
+        }
         for (const c of kept) {
           c.kept = true;
           const ph = saysPhrase(homes.get(c.domain) ?? "", category);
+          if (!ph && (c.overlap ?? 0) < OVERLAP_MIN) {
+            c.reason = `Named next to "vs" or "alternatives" ${c.named} times in Google results; no candidate passed the category check, so the most co-mentioned are kept. Found in ${c.sources.join("; ")}.`;
+            reasons[c.domain] = c.reason;
+            continue;
+          }
           c.reason = `${ph ? `Its home page says "${ph}", your category, and shares` : "Its home page shares"} ${c.shared.length} of ${terms.length} category words (${c.shared.slice(0, 5).join(", ")}). Found in ${c.sources.join("; ")}.`;
           reasons[c.domain] = c.reason;
         }

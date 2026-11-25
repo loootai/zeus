@@ -336,12 +336,21 @@ test("market miss and fail cells", async () => {
   assert.equal(parseTraffic({ a: { b: [{ visits: "1200" }] } }), 1200);
 });
 
-test("market cap stop before the first call: section says capped", async () => {
+test("market under a small cap: cheap lookups for every company first, the costly ones say not checked", async () => {
   const { runner, seen } = mockRunner(() => ({ outcome: "hit" }));
   const { r, text } = await runOne(market, cfgOf(), runner, { cap: 0.05 });
   assert.equal(r.status, "capped");
-  assert.equal(seen.length, 0);
+  assert.ok(seen.every((x) => x.job === "jobs.search" || x.job === "news.search"), seen.map((x) => x.job).join(","));
+  // every company, rivals included, is in the table
+  const rows = (r.out as any).rows;
+  assert.equal(rows.length, 1 + cfgOf().competitors.length);
+  assert.ok(rows.every((x: any) => x.traffic === "not checked, section cap"));
   assert.match(text, /cap/);
+});
+
+test("market reads DataForSEO's estimated organic visits (metrics.organic.etv)", async () => {
+  const { parseTraffic } = await import("../src/modules/market.js");
+  assert.equal(parseTraffic({ items: [{ target: "looot.ai", metrics: { organic: { etv: 81.467, count: 68 } } }] }), 81.467);
 });
 
 // ---------- the four modules in the demo dossier ----------

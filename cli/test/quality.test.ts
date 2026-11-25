@@ -6,7 +6,7 @@ import { normalizeConfig } from "../src/config.js";
 import { accounts } from "../src/modules/accounts.js";
 import { isSeedDomain, rivalsModule } from "../src/modules/rivals.js";
 import { seo } from "../src/modules/seo.js";
-import { categoryPhrases, saysPhrase } from "../src/modules/target.js";
+import { categoryPhrases, extractTarget, saysPhrase } from "../src/modules/target.js";
 import type { ModuleContext } from "../src/modules/types.js";
 import type { CallResult } from "../src/client.js";
 
@@ -78,4 +78,99 @@ test("accounts: 0 accounts says why and gives the next step, not an empty grid",
   assert.match(s, /No account fits yet/);
   assert.match(s, /seeds: in gtm\/config.yaml/);
   assert.match(s, /looot-zeus more accounts/);
+});
+
+test("generic phrases never make the category: 'ai agent' and 'agent skill' are dropped, 'data api' stays", async () => {
+  const { isSpecificPhrase } = await import("../src/modules/target.js");
+  assert.equal(isSpecificPhrase("ai agent"), false);
+  assert.equal(isSpecificPhrase("agent skill"), false);
+  assert.equal(isSpecificPhrase("data api"), true);
+  const p = categoryPhrases([{ kind: "home", url: "https://looot.ai/", markdown: "Title: looot: one key for every data API your AI agent needs\n# Agent skills for AI agents\nAI agent. AI agent. Agent skill. Data API." }], "looot", "looot.ai");
+  assert.deepEqual(p.slice(0, 1), ["data api"]);
+  assert.ok(!p.includes("ai agent") && !p.includes("agent skill"), p.join(","));
+});
+
+test("seeds: tracking, ads, analytics, consent and CDN hosts are never a seed, and a seed is a registered domain", async () => {
+  const { isTrackingHost } = await import("../src/modules/rivals.js");
+  for (const d of ["bat.bing.com", "googleadservices.com", "stats.g.doubleclick.net", "www.google-analytics.com", "connect.facebook.net", "static.hotjar.com", "cdn.segment.com", "d1abc.cloudfront.net", "cdn.cookielaw.org", "onetrust.com"]) {
+    assert.equal(isTrackingHost(d) || !isSeedDomain(d), true, d);
+    assert.equal(isSeedDomain(d), false, d);
+  }
+  assert.equal(isSeedDomain("app.acme.com"), false);
+  assert.equal(isSeedDomain("acme.co.uk"), true);
+});
+
+test("masking matches whole names only: the word Search in a heading stays when an account is search.com", async () => {
+  const { thirdPartySwaps, applyThirdParties } = await import("../src/thirdParties.js");
+  const swaps = thirdPartySwaps({ domain: "looot.ai", accounts: [{ domain: "search.com", name: "Search.com" }, { domain: "veed.io", name: "VEED" }, { domain: "metro.co.uk", name: "Metro.co.uk" }] as any, competitors: [] });
+  const out = applyThirdParties("<h3>Search + AI</h3> Google Search results. VEED and veed.io. Metro.co.uk ran a story. Search.com is an account.", swaps);
+  assert.match(out, /<h3>Search \+ AI<\/h3>/);
+  assert.match(out, /Google Search results/);
+  assert.match(out, /a story/);
+  assert.ok(!/VEED|veed\.io|Metro\.co\.uk|Search\.com/.test(out), out);
+});
+
+test("review fixes: any-casing leaks are still caught; real companies stay possible rivals; country domains are seeds", async () => {
+  const { thirdPartySwaps, thirdPartyLeaks } = await import("../src/thirdParties.js");
+  const swaps = thirdPartySwaps({ domain: "looot.ai", accounts: [{ domain: "acmecorp.com", name: "Acme Corp" }] as any, competitors: [] });
+  assert.ok(thirdPartyLeaks("we met ACME CORP and acme corp", swaps).length > 0);
+  const { isGeneric, isTrackingHost } = await import("../src/modules/rivals.js");
+  // stripe.com and intercom were never-rivals before this PR (isGeneric site-widget rule); these are not added.
+  for (const d of ["mixpanel.com", "posthog.com", "perplexity.ai", "events.com", "stats.com"]) assert.equal(isGeneric(d), false, d);
+  for (const d of ["stripe.com", "posthog.com", "onetrust.com"]) assert.equal(isSeedDomain(d), false, d);
+  assert.equal(isTrackingHost("ads.example.com"), true);
+  assert.equal(isSeedDomain("acme.ltd.uk"), true);
+});
+
+test("round 3: when no candidate passes the category check, products named next to vs at least twice are kept", async () => {
+  const cfg = normalizeConfig({ domain: "looot.ai", brand: "looot", category: ["data api"], categoryTerms: ["agent", "data"] });
+  const home = (n: string) => `Title: ${n}\nWorkflow automation for teams. Pricing. Sign up. ` + "More words about the product. ".repeat(20);
+  const ctx = ctxWith(cfg, (job, input) => {
+    if (job === "google.serp.organic") return { results: [{ link: "https://x.example/a", title: "looot vs Apify", snippet: "Apify vs looot, Apify alternatives" }, { link: "https://y.example/b", title: "Zapier vs Make", snippet: "" }] };
+    if (job === "web.scrape.markdown") { const h = String(input.url).replace(/^https:\/\//, "").replace(/\/.*$/, ""); return h === "apify.com" ? { markdown: home("Apify") } : null; }
+    return null;
+  });
+  const out = (await rivalsModule({ competitors: true, seeds: false, profiles: false }).run(ctx)).out as any;
+  assert.deepEqual(out.competitors, ["apify.com"]);
+  assert.match(out.reasons["apify.com"], /Named next to "vs"/);
+});
+
+test("round 3: Stripe, Zendesk, OpenAI and Loom can be rivals when their home page says the category, never as seeds", async () => {
+  const { isGeneric } = await import("../src/modules/rivals.js");
+  for (const d of ["stripe.com", "zendesk.com", "openai.com", "loom.com"]) { assert.equal(isGeneric(d), false, d); assert.equal(isSeedDomain(d), false, d); }
+  const cfg = normalizeConfig({ domain: "paycorp.example", brand: "PayCorp", category: ["payment processing"], categoryTerms: ["payment", "processing", "internet"] });
+  const ctx = ctxWith(cfg, (job, input) => {
+    if (job === "google.serp.organic") return { results: [{ link: "https://stripe.com/", title: "Stripe", snippet: "" }, { link: "https://loom.com/", title: "Loom", snippet: "" }] };
+    if (job === "web.scrape.markdown") {
+      const h = String(input.url).replace(/^https:\/\//, "").replace(/\/.*$/, "");
+      if (h === "stripe.com") return { markdown: "Title: Stripe\nPayment processing for the internet. Pricing. Sign up. " + "Payments and payment processing. ".repeat(15) };
+      if (h === "loom.com") return { markdown: "Title: Loom\nVideo messages for work. Pricing. Sign up. " + "Record your screen and payment. ".repeat(15) };
+    }
+    return null;
+  });
+  const out = (await rivalsModule({ competitors: true, seeds: false, profiles: false }).run(ctx)).out as any;
+  assert.ok(out.competitors.includes("stripe.com"));
+  assert.ok(!out.competitors.includes("loom.com"));
+});
+
+test("round 3: ICP industries come from what the site leads with, not roles named in passing", () => {
+  const body = "Examples: creators, creators and writers use it. Creators love it. ".repeat(3);
+  const t = extractTarget([{ kind: "home", url: "https://acme.example/", markdown: `Title: Acme: the data API for developers\n# Built for developers and engineering teams\n${body}` + "x ".repeat(120) }, { kind: "pricing", url: "https://acme.example/pricing", markdown: "Plans for developers and engineering teams. Developers pay per call. " + "y ".repeat(120) }], "Acme");
+  assert.ok(!t.industries.includes("online audio and video media"), t.industries.join(","));
+});
+
+test("round 3 review: the fallback keeps one per name and never you; widget subdomains of embedded products stay generic", async () => {
+  const { isGeneric, SOFT_GENERIC } = await import("../src/modules/rivals.js");
+  for (const d of ["js.stripe.com", "acme.zendesk.com", "widget.intercom.io", "js.intercomcdn.com"]) assert.equal(isGeneric(d), true, d);
+  assert.ok(SOFT_GENERIC.has("hubspot.com"));
+  const cfg = normalizeConfig({ domain: "looot.ai", brand: "looot", category: ["data api"], categoryTerms: ["agent", "data"] });
+  const home = (n: string) => `Title: ${n}\nWorkflow automation. Pricing. Sign up. ` + "More words about the product. ".repeat(20);
+  const ctx = ctxWith(cfg, (job, input) => {
+    if (job === "google.serp.organic") return { results: [{ link: "https://x.example/a", title: "Looot vs Apify", snippet: "Apify vs Looot.ai, Apify alternatives, Looot alternatives" }] };
+    if (job === "web.scrape.markdown") { const h = String(input.url).replace(/^https:\/\//, "").replace(/\/.*$/, ""); return /^apify\.|^looot\./.test(h) ? { markdown: home(h) } : null; }
+    return null;
+  });
+  const out = (await rivalsModule({ competitors: true, seeds: false, profiles: false }).run(ctx)).out as any;
+  assert.equal(out.competitors.filter((d: string) => d.startsWith("apify.")).length, 1, out.competitors.join(","));
+  assert.ok(!out.competitors.some((d: string) => d.startsWith("looot.")));
 });

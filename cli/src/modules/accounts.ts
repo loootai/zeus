@@ -8,7 +8,7 @@ import type { GtmConfig } from "../config.js";
 import type { Block } from "../dossier/blocks.js";
 import { keyOf, sizeBandOf } from "../learn/schema.js";
 import { loadFixture } from "./fixture.js";
-import { isGeneric, OVERLAP_MIN } from "./rivals.js";
+import { isGeneric, OVERLAP_MIN, SOFT_GENERIC } from "./rivals.js";
 import { markdownOf } from "./intake.js";
 import { overlap } from "./target.js";
 import type { GtmModule, ModuleContext, RenderOptions } from "./types.js";
@@ -434,7 +434,8 @@ export const accounts: GtmModule = {
     // `looot-zeus more accounts` skips the accounts the folder already has and reads later pages.
     const more = (cfg as { more?: { skipDomains?: string[]; pageOffset?: number } }).more;
     const exclude = new Set([cfg.domain, ...cfg.seeds, ...cfg.competitors, ...(cfg.excluded ?? []), ...(more?.skipDomains ?? [])]);
-    const skip = (d: string) => exclude.has(d) || isGeneric(d);
+    // Widely embedded products (Stripe, HubSpot, OpenAI...) may be rivals on a category match, never target accounts.
+    const skip = (d: string) => exclude.has(d) || isGeneric(d) || SOFT_GENERIC.has(d);
     const cands = new Map<string, Cand>();
     for (const l of icpOut?.lookalikes ?? []) {
       if (skip(l.domain)) continue;

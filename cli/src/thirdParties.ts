@@ -25,17 +25,25 @@ export function accountLetter(i: number): string {
 /** Words too common to stand for one company on their own: a leading "Digital" or "Global" is not swapped alone. */
 const GENERIC = new Set(["the", "global", "digital", "group", "studio", "studios", "agency", "media", "labs", "lab", "tech", "data", "cloud", "smart", "first", "new", "best", "open", "good", "great", "united", "north", "south", "east", "west", "rival", "account", "company", "your", "brand", "home", "real", "world", "creative", "health", "capital", "partners", "solutions", "systems", "software", "services", "consulting", "marketing", "design", "video", "social", "online", "app", "apps", "web", "net", "code", "work", "team", "build"]);
 
+/** Plain English words that are also a company's domain label (search.com, metro.co.uk). Masking one of them would rewrite headings. */
+const PLAIN_WORDS = new Set(("search find data news jobs job metro legacy platform complex total real deal tab onion and post posts money market markets " +
+  "people person mail email home page pages link links field fields guide guides review reviews answer answers rank ranks share shares signal signals " +
+  "content local social ads ad brand brands growth sales price prices pricing trade trust clear bright light spark pulse focus scale point points level " +
+  "simple direct prime core base edge front next shift stack loop wave flow path bridge range river ocean forest stone story stories report reports " +
+  "insight insights index track tracker hub view views check checks match lead leads target targets").split(" "));
+
 /** The short forms a page or a provider uses for a company: the leading word of a multi-word name
  * ("Northwind" for "Northwind Logistics") and the main label of its domain ("northwind-logistics",
  * "acme" for acme.io), unless that word is too common to name one company. */
 function shortForms(name: string, domain: string): string[] {
   const out = new Set<string>();
   const lead = name.trim().split(/[\s,]+/)[0] ?? "";
-  if (name.trim().includes(" ") && lead.length >= 4 && !GENERIC.has(lead.toLowerCase())) out.add(lead);
+  const plain = (w: string) => GENERIC.has(w.toLowerCase()) || PLAIN_WORDS.has(w.toLowerCase());
+  if (name.trim().includes(" ") && lead.length >= 4 && !plain(lead)) out.add(lead);
   const label = bare(domain).split(".")[0] ?? "";
-  if (label.length >= 4 && !GENERIC.has(label.toLowerCase())) out.add(label);
+  if (label.length >= 4 && !plain(label)) out.add(label);
   const first = label.split("-")[0] ?? "";
-  if (label.includes("-") && first.length >= 4 && !GENERIC.has(first.toLowerCase())) out.add(first);
+  if (label.includes("-") && first.length >= 4 && !plain(first)) out.add(first);
   return [...out];
 }
 
@@ -76,6 +84,8 @@ export function thirdPartySwaps(snap: Pick<Snapshot, "domain" | "accounts" | "co
   return withHtml.sort((a, b) => b.from.length - a.from.length);
 }
 
+// Whole names only, any casing (a leak in any casing must be caught). A plain English word is never a
+// swap on its own (PLAIN_WORDS), so "Search" in a heading is never taken for search.com.
 const pattern = (s: ThirdParty) => (s.word ? `(?<![\\p{L}\\p{N}])${esc(s.from)}(?![\\p{L}\\p{N}])` : `(?<![\\p{L}\\p{N}.-])(?:www\\.)?${esc(s.from)}(?![\\p{L}\\p{N}-])`);
 
 /** Replaces every third-party name and domain in one pass, so a label is never swapped again. */

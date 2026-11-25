@@ -24,7 +24,8 @@ export function parseTraffic(raw: unknown, depth = 0): number | null {
   }
   if (!isObj(raw)) return null;
   const o = raw as Obj;
-  for (const k of ["monthlyVisits", "monthly_visits", "estimatedMonthlyVisits", "estimated_monthly_visits", "visits", "totalVisits", "total_visits", "traffic", "monthly_traffic"]) {
+  // DataForSEO bulk traffic estimation answers items[].metrics.organic.etv (estimated monthly organic visits).
+  for (const k of ["monthlyVisits", "monthly_visits", "estimatedMonthlyVisits", "estimated_monthly_visits", "visits", "totalVisits", "total_visits", "traffic", "monthly_traffic", "etv"]) {
     const v = o[k];
     const n = typeof v === "number" ? v : typeof v === "string" && /^\d+(\.\d+)?$/.test(v.trim()) ? Number(v) : NaN;
     if (Number.isFinite(n) && n >= 0) return n;
@@ -60,39 +61,47 @@ export interface MarketRow {
   lookups: string;
 }
 
-async function snapshot(ctx: ModuleContext, who: { name: string; domain: string; you: boolean }, now: Date, tally: CallTally): Promise<MarketRow> {
+type Who = { name: string; domain: string; you: boolean };
+type Look = { t?: CallResult; f?: CallResult; j?: CallResult; n?: CallResult };
+
+/** One lookup for one company. Kinds: traffic, funding, jobs, news. */
+async function lookup(ctx: ModuleContext, who: Who, kind: keyof Look, tally: CallTally): Promise<CallResult> {
+  if (kind === "t") return count(tally, await ctx.call("company.traffic", { domain: who.domain }, `traffic:${who.domain}`));
+  if (kind === "f") return count(tally, await ctx.call("company.funding", { domain: who.domain }, `funding:${who.domain}`));
+  if (kind === "j") return count(tally, await ctx.call("jobs.search", { query: who.name, company: who.name, limit: JOBS_LIMIT }, `jobs:${who.domain}`));
+  return count(tally, await ctx.call("news.search", { query: `"${who.name}"`, limit: NEWS_LIMIT }, `news:${who.domain}`));
+}
+
+/** The row for one company from the lookups made so far. A lookup the cap stopped says "not checked". */
+function rowOf(who: Who, l: Look, now: Date): MarketRow {
   const day = (r: CallResult) => r.record.ts.slice(0, 10);
   const src: string[] = [];
   const looks: string[] = [];
-
-  const t = count(tally, await ctx.call("company.traffic", { domain: who.domain }, `traffic:${who.domain}`));
-  looks.push(`traffic ${outcomeText(t)}`);
-  const visits = answered(t) ? parseTraffic(t.data) : null;
-  if (visits !== null) src.push(`traffic ${t.record.provider} ${day(t)}`);
-
-  const f = count(tally, await ctx.call("company.funding", { domain: who.domain }, `funding:${who.domain}`));
-  looks.push(`funding ${outcomeText(f)}`);
-  const rounds = answered(f) ? parseFundingRounds(f.data, now) : [];
+  const NOT = "not checked, section cap";
+  const t = l.t;
+  if (t) looks.push(`traffic ${outcomeText(t)}`);
+  const visits = t && answered(t) ? parseTraffic(t.data) : null;
+  if (t && visits !== null) src.push(`traffic ${t.record.provider} ${day(t)}`);
+  const f = l.f;
+  if (f) looks.push(`funding ${outcomeText(f)}`);
+  const rounds = f && answered(f) ? parseFundingRounds(f.data, now) : [];
   const last = rounds[0];
-  if (last) src.push(`funding ${f.record.provider} ${day(f)}`);
-
-  const j = count(tally, await ctx.call("jobs.search", { query: who.name, company: who.name, limit: JOBS_LIMIT }, `jobs:${who.domain}`));
-  looks.push(`jobs ${outcomeText(j)}`);
-  const roles = answered(j) ? parseJobPosts(j.data, now, who.name, who.domain).length : null;
-  if (roles !== null) src.push(`jobs ${j.record.provider} ${day(j)}`);
-
-  const n = count(tally, await ctx.call("news.search", { query: `"${who.name}"`, limit: NEWS_LIMIT }, `news:${who.domain}`));
-  looks.push(`news ${outcomeText(n)}`);
-  const recent = answered(n) ? parseNewsItems(n.data, now).filter((x) => mentions(x.title, who.name, who.domain) && x.date && now.getTime() - Date.parse(x.date) <= 30 * 86_400_000).length : null;
-  if (recent !== null) src.push(`news ${n.record.provider} ${day(n)}`);
-
+  if (f && last) src.push(`funding ${f.record.provider} ${day(f)}`);
+  const j = l.j;
+  if (j) looks.push(`jobs ${outcomeText(j)}`);
+  const roles = j && answered(j) ? parseJobPosts(j.data, now, who.name, who.domain).length : null;
+  if (j && roles !== null) src.push(`jobs ${j.record.provider} ${day(j)}`);
+  const n = l.n;
+  if (n) looks.push(`news ${outcomeText(n)}`);
+  const recent = n && answered(n) ? parseNewsItems(n.data, now).filter((x) => mentions(x.title, who.name, who.domain) && x.date && now.getTime() - Date.parse(x.date) <= 30 * 86_400_000).length : null;
+  if (n && recent !== null) src.push(`news ${n.record.provider} ${day(n)}`);
   return {
     ...who,
-    traffic: visits !== null ? visitsText(visits) : noAnswer(t),
+    traffic: !t ? NOT : visits !== null ? visitsText(visits) : noAnswer(t),
     visits,
-    funding: last ? `${[last.round, last.amount].filter(Boolean).join(" ")}${last.date ? `, ${last.date}` : ""}` : answered(f) || f.record.outcome === "miss" ? "none found" : "fail",
-    openRoles: roles === null ? noAnswer(j) : roles >= JOBS_LIMIT ? `${JOBS_LIMIT}+` : roles,
-    news30d: recent === null ? noAnswer(n) : recent >= NEWS_LIMIT ? `${NEWS_LIMIT}+` : recent,
+    funding: !f ? NOT : last ? `${[last.round, last.amount].filter(Boolean).join(" ")}${last.date ? `, ${last.date}` : ""}` : answered(f) || f.record.outcome === "miss" ? "none found" : "fail",
+    openRoles: !j ? NOT : roles === null ? noAnswer(j) : roles >= JOBS_LIMIT ? `${JOBS_LIMIT}+` : roles,
+    news30d: !n ? NOT : recent === null ? noAnswer(n) : recent >= NEWS_LIMIT ? `${NEWS_LIMIT}+` : recent,
     sources: src.join("; "),
     lookups: looks.join(", "),
   };
@@ -142,12 +151,22 @@ export const market: GtmModule = {
     const now = new Date();
     const who = [{ name: ctx.cfg.brand, domain: ctx.cfg.domain, you: true }, ...ctx.cfg.competitors.map((d) => ({ name: nameOf(d), domain: d, you: false }))];
     const tally = newTally();
-    const rows: MarketRow[] = [];
-    for (const w of who) {
-      rows.push(await snapshot(ctx, w, now, tally));
-      ctx.partial(out(rows, tally, now));
+    // Every company gets the cheap lookups first (jobs, news), then traffic, then funding. Before, one
+    // company took all four in a row and the section cap stopped before any rival was looked at.
+    const looks: Look[] = who.map(() => ({}));
+    const rows = () => who.map((w, i) => rowOf(w, looks[i], now));
+    try {
+      for (const kind of ["j", "n", "t", "f"] as (keyof Look)[]) {
+        for (let i = 0; i < who.length; i++) {
+          looks[i][kind] = await lookup(ctx, who[i], kind, tally);
+          ctx.partial(out(rows(), tally, now));
+        }
+      }
+    } catch (e) {
+      ctx.partial(out(rows(), tally, now));
+      throw e;
     }
-    const o = out(rows, tally, now);
+    const o = out(rows(), tally, now);
     return { status: "done", summary: o.summary, out: o };
   },
   render: (o, status) =>
