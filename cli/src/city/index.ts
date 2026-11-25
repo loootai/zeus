@@ -26,7 +26,7 @@ export interface PaidFeature { key: string; label: string; state: "off" | "comin
 /** One item of the "Your looot GTM OS" preview. what names run counts as {viewId}; whatEmpty is shown when one is 0. */
 export interface OsItem { key: string; label: string; state: "coming-soon"; what: string; whatEmpty: string; prompt: string }
 /** "Take it to the next step": host it on the user's own Vercel and Supabase accounts. No secret in any link. */
-export interface OsNext { key: string; label: string; stack: string; copy: string; deploy: { label: string; url: string }; supabase: { label: string; url: string }; prompt: string }
+export interface OsNext { key: string; label: string; /** "live" shows Deploy to Vercel; "coming-soon" shows only the copied agent prompt. */ state: "live" | "coming-soon"; comingSoon: { tag: string; copy: string; button: string }; stack: string; copy: string; deploy: { label: string; url: string }; supabase: { label: string; url: string }; prompt: string }
 const PAID: { adds: { what: string; command: string }[]; features: PaidFeature[]; locked: string; os: { title: string; note: string; button: string; items: OsItem[]; next: OsNext } } = readJson("./paid.json");
 /** The "Your looot GTM OS" preview section, all coming soon, from paid.json. */
 export const GTM_OS = PAID.os;
@@ -177,7 +177,10 @@ function osHtml(brand: string, domain: string, counts: Map<string, number>): str
     return `<article class="card zg-card" id="os-${e(i.key)}"><div class="zg-card-h"><div><h4>${e(i.label)}</h4></div><span class="chip zg-tag">Coming soon</span></div><p>${e(osText(i, brand, counts))}</p><div><button type="button" class="za cp" data-copy="${e(prompt)}">${e(GTM_OS.button)}</button></div></article>`;
   }).join("");
   const n = GTM_OS.next;
-  const next = `<div class="sec" id="os-${e(n.key)}"><div class="sech"><h3>${e(n.label)}</h3><span class="k">${e(n.stack)}</span></div><p>${e(n.copy)}</p><div class="zacts"><a class="za" href="${e(n.deploy.url)}" target="_blank" rel="noopener noreferrer">${e(n.deploy.label)}</a><a class="za" href="${e(n.supabase.url)}" target="_blank" rel="noopener noreferrer">${e(n.supabase.label)}</a><button type="button" class="za cp" data-copy="${e(n.prompt.split("{domain}").join(domain))}">Tell your agent</button></div></div>`;
+  const copyPrompt = e(n.prompt.split("{domain}").join(domain));
+  const next = n.state === "coming-soon"
+    ? `<div class="sec" id="os-${e(n.key)}"><div class="sech"><h3>${e(n.label)}</h3><span class="k">${e(n.comingSoon.tag)}</span></div><p>${e(n.comingSoon.copy)}</p><div class="zacts"><button type="button" class="za cp" data-copy="${copyPrompt}">${e(n.comingSoon.button)}</button></div></div>`
+    : `<div class="sec" id="os-${e(n.key)}"><div class="sech"><h3>${e(n.label)}</h3><span class="k">${e(n.stack)}</span></div><p>${e(n.copy)}</p><div class="zacts"><a class="za" href="${e(n.deploy.url)}" target="_blank" rel="noopener noreferrer">${e(n.deploy.label)}</a><a class="za" href="${e(n.supabase.url)}" target="_blank" rel="noopener noreferrer">${e(n.supabase.label)}</a><button type="button" class="za cp" data-copy="${copyPrompt}">Tell your agent</button></div></div>`;
   return `${vhead({ id: "os", label: GTM_OS.title, group: GTM_OS.title })}<div class="sec"><p class="src">${e(GTM_OS.note.split("{company}").join(brand))}</p><div class="zg-cards">${cards}</div></div>${next}</section>`;
 }
 

@@ -129,7 +129,10 @@ test("Take it to the next step: Deploy to Vercel clones the public zeus web-star
   assert.match(n.copy, /free tiers/);
   assert.match(n.copy, /never sees your database credentials/);
   for (const w of [/Deploy/, /web-starter/, /Supabase/, /ZEUS_OWNER_EMAIL/, /auth\/callback/, /accounts, committees, plays/, /never print their values/, /never needs my looot key/]) assert.match(n.prompt, w);
+  const saved = GTM_OS.next.state;
+  GTM_OS.next.state = "live";
   const html = renderCity(bare);
+  GTM_OS.next.state = saved;
   assert.match(html, />Take it to the next step</);
   assert.match(html, />Deploy to Vercel</);
   assert.ok(html.includes('data-copy="Help me host my looot Zeus results for example.com'));
@@ -146,4 +149,25 @@ test("web-starter: a Next app the button can build, with the same migration as t
   const env = readFileSync(join(ws, "lib", "env.ts"), "utf8");
   assert.match(env, /ZEUS_OWNER_EMAIL/);
   assert.doesNotMatch(readFileSync(join(ws, ".env.example"), "utf8"), /=\S/, "names only, no values");
+});
+
+test("Take it to the next step: state flag, live by default, coming-soon shows only the copied prompt", () => {
+  // paid.json ships "live"; the morning flip sets "coming-soon" and the suite stays green in both.
+  assert.ok(["live", "coming-soon"].includes(GTM_OS.next.state), GTM_OS.next.state);
+  const saved = GTM_OS.next.state;
+  try {
+    GTM_OS.next.state = "live";
+    assert.match(renderCity(bare), />Deploy to Vercel</);
+    GTM_OS.next.state = "coming-soon";
+    const html = renderCity(bare);
+    const card = html.slice(html.indexOf('id="os-next-step"'), html.indexOf("</div></div>", html.indexOf('id="os-next-step"')));
+    assert.match(card, />Take it to the next step</);
+    assert.match(card, />Coming soon</);
+    assert.match(card, />Copy the agent prompt</);
+    assert.ok(card.includes('data-copy="Help me host my looot Zeus results for example.com'));
+    assert.doesNotMatch(html, /vercel\.com\/new\/clone|>Deploy to Vercel<|>Create a Supabase project</, "no live button anywhere");
+    assert.ok(!card.includes(", and ") && !card.includes("—"));
+  } finally {
+    GTM_OS.next.state = saved;
+  }
 });

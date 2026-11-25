@@ -163,6 +163,7 @@
     "next": {
       "key": "next-step",
       "label": "Take it to the next step",
+      "state": "live",
       "stack": "AI-native business stack: looot + Vercel + Supabase",
       "copy": "Host your Zeus GTM OS (accounts, committees, people, plays and rivals) on your own Vercel and Supabase accounts, private to your email. Both have free tiers and you own both accounts. looot never sees your database credentials.",
       "deploy": {
@@ -173,7 +174,12 @@
         "label": "Create a Supabase project",
         "url": "https://supabase.com/dashboard/new"
       },
-      "prompt": "Help me host my looot Zeus results for {domain} on my own AI-native business stack (looot + Vercel + Supabase). 1. Deploy https://github.com/loootai/zeus/tree/main/web-starter to my Vercel account with the Supabase integration from the Vercel Marketplace, so Vercel creates the Supabase project and its env vars. Set ZEUS_OWNER_EMAIL to my email. 2. Check the Supabase env vars are set in Vercel, never print their values. In Supabase Authentication, URL Configuration, set the Site URL to my Vercel URL and add <my Vercel URL>/auth/callback to Redirect URLs. 3. Load my Zeus results (accounts, committees, plays, people and rivals from gtm/state.json) into my Supabase project: apply supabase/migrations/20261125120000_zeus.sql from the repo (RLS on, no public access), then run `npx looot-zeus import-supabase --dry-run`, show me the counts. After my yes, run it without --dry-run with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env. It upserts by company domain. 4. Open my Vercel URL and sign in with my email. The app is read only and never needs my looot key. Free tiers are fine. Ask me before any paid plan. Spend nothing on looot without my yes."
+      "prompt": "Help me host my looot Zeus results for {domain} on my own AI-native business stack (looot + Vercel + Supabase). 1. Deploy https://github.com/loootai/zeus/tree/main/web-starter to my Vercel account with the Supabase integration from the Vercel Marketplace, so Vercel creates the Supabase project and its env vars. Set ZEUS_OWNER_EMAIL to my email. 2. Check the Supabase env vars are set in Vercel, never print their values. In Supabase Authentication, URL Configuration, set the Site URL to my Vercel URL and add <my Vercel URL>/auth/callback to Redirect URLs. 3. Load my Zeus results (accounts, committees, plays, people and rivals from gtm/state.json) into my Supabase project: apply supabase/migrations/20261125120000_zeus.sql from the repo (RLS on, no public access), then run `npx looot-zeus import-supabase --dry-run`, show me the counts. After my yes, run it without --dry-run with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env. It upserts by company domain. 4. Open my Vercel URL and sign in with my email. The app is read only and never needs my looot key. Free tiers are fine. Ask me before any paid plan. Spend nothing on looot without my yes.",
+      "comingSoon": {
+        "tag": "Coming soon",
+        "copy": "One-click hosting on your own Vercel and Supabase accounts is coming soon. Your agent can set it up today: copy the prompt below and paste it to your agent.",
+        "button": "Copy the agent prompt"
+      }
     }
   }
 }
