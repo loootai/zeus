@@ -28,8 +28,8 @@ export interface ModuleResult {
   /** One line, printed in the run and kept in the receipt. */
   summary: string;
   out: unknown;
-  /** "section" when the module stopped at its own hard cap (the run went on). */
-  capScope?: "section";
+  /** "section" when the module stopped at its own hard cap (the run went on); "limit" when the workspace spend limit stopped the run. */
+  capScope?: "section" | "limit";
 }
 
 export interface ModuleContext {

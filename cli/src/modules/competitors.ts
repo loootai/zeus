@@ -218,6 +218,8 @@ async function card(ctx: ModuleContext, domain: string, now: Date, tally: CallTa
 }
 
 export interface CompetitorsOut {
+  /** Rivals in the list before the cards were capped. */
+  of?: number;
   summary: string;
   cards: Card[];
   tally: CallTally;
@@ -229,7 +231,7 @@ export interface CompetitorsOut {
 
 function out(cards: Card[], tally: CallTally, of: number, now: Date): CompetitorsOut {
   const claims = cards.reduce((n, c) => n + c.claims.length, 0);
-  return { summary: `${cards.length} of ${of} rival cards, ${claims} claims, each with its source and date`, cards, tally, provider: tally.providers.join(", "), date: now.toISOString().slice(0, 10) };
+  return { of, summary: `${cards.length} of ${of} rival cards, ${claims} claims, each with its source and date`, cards, tally, provider: tally.providers.join(", "), date: now.toISOString().slice(0, 10) };
 }
 
 export const competitors: GtmModule = {
@@ -267,7 +269,7 @@ export const competitors: GtmModule = {
   },
   render: (o, status) =>
     baseSection({ num: "05", id: "competitors", title: "Rival cards", status, out: o, deeper: "github.com/loootai/looot-battlecards, npm run cards -- --config battlecards.yaml --max-spend 0.25", activate: "Share gtm/competitors.json with sales" }, (f: CompetitorsOut) =>
-      [{ kind: "cards", caption: "Your rivals and why each one is in the list", items: f.cards.map((c) => ({ title: c.name, logo: c.domain, text: c.reason ? c.reason.charAt(0).toUpperCase() + c.reason.slice(1) : "Named in the brief.", chips: c.pricing.slice(0, 3).map((p) => `${p.plan} ${p.price}`) })) } as Block, ...f.cards.flatMap((c): Block[] => {
+      [{ kind: "cards", caption: "Your rivals and why each one is in the list", items: f.cards.map((c) => ({ title: c.name, logo: c.domain, text: c.reason ? c.reason.charAt(0).toUpperCase() + c.reason.slice(1) : "Named in the brief.", chips: c.pricing.slice(0, 3).map((p) => `${p.plan} ${p.price}`) })), ...(f.of && f.of > f.cards.length ? { total: f.of } : {}) } as Block, ...f.cards.flatMap((c): Block[] => {
         const blocks: Block[] = [
           { kind: "kv", items: [
             { label: "Competitor", value: `${c.name} (${c.domain})` },

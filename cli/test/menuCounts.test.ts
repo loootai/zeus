@@ -34,7 +34,7 @@ function viewHtml(html: string, view: string): string {
 for (const mode of [[], ["--public"]]) {
   test(`every menu count equals the items its view shows${mode.length ? " (public)" : ""}`, () => {
     const html = cityHtml(mode);
-    const badges = [...html.matchAll(/<a href="#(\w+)">(?:(?!<\/a>).)*?<span class="n">(\d+)<\/span><\/a>/g)].map((m) => ({ view: m[1], n: Number(m[2]) }));
+    const badges = [...html.matchAll(/<a href="#(\w+)">(?:(?!<\/a>).)*?<span class="n">(\d+)(?:\/(\d+))?<\/span><\/a>/g)].map((m) => ({ view: m[1], n: Number(m[2]), total: m[3] ? Number(m[3]) : undefined }));
     assert.ok(badges.length >= 8, `only ${badges.length} menu counts`);
     for (const { view, n } of badges) {
       let part: string;
@@ -53,3 +53,26 @@ for (const mode of [[], ["--public"]]) {
     }
   });
 }
+
+test("a list that shows only some of what the run found reads shown/total, like David's menu", () => {
+  const html = cityHtml();
+  // The demo accounts fixture found 25 and shows 12.
+  assert.match(html, /<a href="#targets">(?:(?!<\/a>).)*?<span class="n">12\/25<\/span><\/a>/);
+});
+
+test("the One looot key callout counts providers and runs from the run's ledger", async () => {
+  const { ledgerOf } = await import("../src/dossier/index.js");
+  const r = JSON.parse(readFileSync(join(PKG_ROOT, "fixtures", "placeholder-receipt.json"), "utf8"));
+  const L = ledgerOf(r);
+  const paid = r.calls.filter((c: { replayed?: boolean }) => !c.replayed);
+  assert.equal(L.runs, paid.length);
+  assert.equal(L.providers, new Set(paid.map((c: { provider: string }) => c.provider)).size);
+  const html = cityHtml();
+  const [, mo, dd] = L.day.split("-").map(Number);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  assert.match(html, new RegExp(`class="islt">One looot key</text><text[^>]*class="isls">${L.providers} providers, ${L.runs} runs on ${dd} ${months[mo - 1]}<`));
+});
+
+test("the map's accounts found says every account the run found, the menu says shown/total", () => {
+  assert.match(cityHtml(), />25<\/text>[\s\S]{0,200}accounts found/);
+});

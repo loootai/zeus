@@ -332,3 +332,32 @@ The quote for `examples/yourdomain.yaml` with the dated price table is real. It 
 ## Licence
 
 MIT
+
+## Export to your CRM
+
+`Export to CRM` on your private city page (and on your private hosted page) copies a prompt for your agent: fetch the Zeus results. If a CRM is connected to the agent (HubSpot, Salesforce, Attio or another MCP), dedupe by company domain, show a dry run, write only after your yes. With no CRM connected, the agent falls back to:
+
+```
+npx looot-zeus export --crm --format hubspot   # or salesforce, generic, or the third CRM format in src/crm.ts
+```
+
+It writes `gtm/crm/<format>/companies.csv` (one row per target account), plus `contacts.csv` (only for a paid `--people` run, never with `--public` or `--safe-demo`) with `receipt.txt` with the looot jobs behind the files. UTF-8 with BOM, formula cells start with `'`. Emails and phones only with `--contact-details`. Fit score, why it fits, source and LinkedIn URL are custom fields in each CRM: create them or skip those columns on import. Shared and public pages never have the button. A direct "Push to my CRM" through looot connections is coming soon (`src/city/paid.json`).
+
+## Host it on your own Vercel and Supabase
+
+The `Take it to the next step` card on your private page has a Deploy to Vercel button. It clones the public [loootai/zeus](https://github.com/loootai/zeus) repo into your Git account and asks you to add the Supabase integration from the Vercel Marketplace, which creates a Supabase project and sets its env vars on the Vercel project (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and the public anon key). The form asks for `LOOOT_TOKEN`: you paste it there. No value is in the link, only env names.
+
+1. Apply the tables: `supabase/migrations/20261125120000_zeus.sql` (with `supabase db push` from the cloned repo, or paste it in the Supabase SQL editor). It creates `runs`, `accounts`, `committees`, `people` (email and phone nullable), `plays` and `rivals`. RLS is on for every table with no policy. Anon and authenticated get no grants: nothing is readable with the public key until you add a policy.
+2. See what would be written, with no key needed:
+
+   ```bash
+   npx looot-zeus import-supabase --dry-run
+   ```
+
+3. Import, with the two env vars from your Supabase project (Settings, API) in your shell:
+
+   ```bash
+   SUPABASE_URL=https://<project>.supabase.co SUPABASE_SERVICE_ROLE_KEY=... npx looot-zeus import-supabase
+   ```
+
+It reads `gtm/state.json` and `gtm/receipt.json` (`--out` for another folder), adds one `runs` row, then upserts accounts and rivals by domain, committees by account domain, people by account domain and LinkedIn URL (else name), plays by title. Running it again updates rows, it does not duplicate them. A re-import overwrites each row it writes, so emails and phones go back to null without `--contact-details`. The key is read from env only and never printed, logged or written. Emails and phones are written only with `--contact-details` on a paid, non-safe run; otherwise they stay null. Keep the service role key server side: never put it in a page or a `NEXT_PUBLIC_` var. `scripts/test-supabase-migration.sh` applies the migration to a throwaway Postgres and checks RLS and the upsert keys.

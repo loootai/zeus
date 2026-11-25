@@ -4,7 +4,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { CallRecord } from "./client.js";
+import { limitName, SPEND_LIMIT_URL, type CallRecord } from "./client.js";
 import type { ModuleTiming } from "./modules/index.js";
 import type { ModuleResult } from "./modules/types.js";
 import type { Quote } from "./quote.js";
@@ -14,8 +14,8 @@ export interface ReceiptModule {
   id: string;
   label: string;
   status: "done" | "skipped" | "capped";
-  /** "section" when the section stopped at its own hard cap. */
-  capScope?: "section";
+  /** "section" when the section stopped at its own hard cap; "limit" when the workspace spend limit stopped it. */
+  capScope?: "section" | "limit";
   calls: number;
   quoted: number;
   /** Quoted worst case in USD: every call of the module at its own ceiling. */
@@ -51,6 +51,8 @@ export interface Receipt {
     calls: number;
     durationMs: number;
     capStopped: boolean;
+    /** Set when the workspace spend limit (looot budget_exceeded) stopped the run: no paid call was made after it. */
+    stoppedBy?: { reason: "spend_limit"; period?: string; text: string };
     priceSource: string;
     /** Calls answered from an earlier run at no new charge, with what they cost the first time. */
     replayedCalls?: number;
@@ -72,7 +74,15 @@ export interface ReceiptInput {
   startedAt: Date;
   finishedAt: Date;
   capStopped: boolean;
+  /** The pipeline's limitStopped: the workspace spend limit stopped the run. */
+  limitStopped?: { period?: string };
   placeholder?: string;
+}
+
+/** One sentence for the page and the receipt: the run stopped at the spend limit, and which sections are empty or partial because of it. */
+export function limitStopText(period: string | undefined, labels: string[]): string {
+  const list = labels.length <= 1 ? labels.join("") : `${labels.slice(0, -1).join(", ")} and ${labels.at(-1)}`;
+  return `This run stopped at your ${limitName(period)}: looot refused the next call, so no more calls were made and nothing more was charged.${labels.length ? ` ${list} ${labels.length === 1 ? "is" : "are"} empty or partial because of the limit, not because looot found nothing.` : ""} Raise the limit at ${SPEND_LIMIT_URL} (Budgets) or wait for it to reset, then run again: calls already made replay free.`;
 }
 
 export function buildReceipt(i: ReceiptInput): Receipt {
@@ -115,6 +125,7 @@ export function buildReceipt(i: ReceiptInput): Receipt {
       calls: i.calls.length,
       durationMs: Math.max(0, i.finishedAt.getTime() - i.startedAt.getTime()),
       capStopped: i.capStopped,
+      ...(i.limitStopped ? { stoppedBy: { reason: "spend_limit" as const, ...(i.limitStopped.period ? { period: i.limitStopped.period } : {}), text: limitStopText(i.limitStopped.period, modules.filter((m) => m.capScope === "limit").map((m) => m.label)) } } : {}),
       priceSource: i.quote.priceSource,
       ...(i.calls.some((c) => c.replayed) ? { replayedCalls: i.calls.filter((c) => c.replayed).length, replayedValue: round6(i.calls.reduce((n, c) => n + (c.replayed ? (c.firstCharged ?? 0) : 0), 0)) } : {}),
     },
@@ -159,13 +170,16 @@ export function receiptMarkdown(r: Receipt): string {
   out.push(`${r.run.domain}, ${r.run.mode} run, ${r.run.startedAt.slice(0, 16).replace("T", " ")} UTC`, "");
   out.push(`| | |`, `|---|---|`);
   out.push(`| Cap | ${usd(r.run.cap)} |`, `| Quoted, expected | ${usd(r.run.expected)} |`, `| Quoted, worst case | ${usd(r.run.worst)} |`, `| New spend | ${usd(r.run.charged)} |`, `| Paid calls | ${r.run.calls - (r.run.replayedCalls ?? 0)} |`, ...(r.run.replayedCalls ? [`| Replayed free | ${r.run.replayedCalls} calls, ${usd(r.run.replayedValue ?? 0)} when they first ran, not charged again |`] : []), `| Time | ${Math.round(r.run.durationMs / 1000)}s |`);
+  if (r.run.stoppedBy) out.push(`| Stopped at your ${limitName(r.run.stoppedBy.period)} | ${r.run.stoppedBy.text} |`);
   if (r.run.capStopped) out.push(`| Stopped at the cap | yes, the dossier is partial |`);
   else {
-    const short = r.modules.filter((m) => m.status === "capped" && m.capScope !== "section").map((m) => m.label);
+    const short = r.modules.filter((m) => m.status === "capped" && m.capScope === undefined).map((m) => m.label);
     if (short.length > 0) out.push(`| Used up their share of the cap | ${short.join(", ")}, those sections are partial |`);
     const sec = r.modules.filter((m) => m.capScope === "section").map((m) => m.label);
     if (sec.length > 0) out.push(`| Stopped at its cap | ${sec.join(", ")}, those sections are partial. The other sections went on |`);
   }
+  const unknownCost = r.calls.filter((c) => c.costUnknown);
+  if (unknownCost.length > 0) out.push(`| Cost unknown, counted at its limit | ${unknownCost.length} calls, ${usd(unknownCost.reduce((n, c) => n + c.charged, 0))} |`);
   out.push("", "## By outcome", "", "| Outcome | Calls | Charged |", "|---|---:|---:|");
   out.push(`| hit | ${b.hit.calls} | ${usd(b.hit.charged)} |`, `| fallback (a later provider answered) | ${b.fallback.calls} | ${usd(b.fallback.charged)} |`, `| miss | ${b.miss.calls} | ${usd(b.miss.charged)} |`, `| fail | ${b.fail.calls} | ${usd(b.fail.charged)} |`);
   if (b.overQuote.calls > 0) out.push("", `${b.overQuote.calls} calls were charged above their quote, ${usd(b.overQuote.extra)} in total. They are listed below.`);

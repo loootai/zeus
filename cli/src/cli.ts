@@ -7,6 +7,7 @@
 //   looot-zeus demo [--public]
 //   looot-zeus watch --cap 5 [--yes] [--demo]
 //   looot-zeus export --public
+//   looot-zeus export --crm [--format <crm>] [--contact-details]
 //   looot-zeus learn [--results file.csv] [--demo]
 //   looot-zeus log --campaign <name> --angle <text> --file gtm/exports/instantly.csv
 //   looot-zeus more <accounts|committee|ads|social|seo> [--count N] [--cap N] [--yes]
@@ -18,8 +19,9 @@
 
 import { parseArgs } from "node:util";
 import { join } from "node:path";
-import { CliExit, type Args, cmdDelete, cmdDemo, cmdExport, cmdFixtures, cmdInit, cmdPrepare, cmdLearn, cmdLog, cmdMore, cmdOpen, cmdQuote, cmdRun, cmdRunDomain, cmdServe, cmdPending, cmdSetStatus, cmdSkill, cmdWatch } from "./commands.js";
+import { CliExit, type Args, cmdDelete, cmdDemo, cmdExport, cmdFixtures, cmdImportSupabase, cmdInit, cmdPrepare, cmdLearn, cmdLog, cmdMore, cmdOpen, cmdQuote, cmdRun, cmdRunDomain, cmdServe, cmdPending, cmdSetStatus, cmdSkill, cmdWatch } from "./commands.js";
 import { ConfigError } from "./config.js";
+import { CRM_FORMATS } from "./crm.js";
 
 const HELP = `looot-zeus, one domain in, a GTM dossier out.
 
@@ -60,6 +62,16 @@ Step by step
                      rivals and people are swapped for yourdomain.com, Rival A and Person 1.
                      --mask-accounts also turns target accounts into Account 1 on account-1.example.
                      The copy has the dossier and the city page, company-level data only.
+  export --crm       CSV files your CRM imports, in gtm/crm/<format>/: companies.csv (target
+                     accounts), contacts.csv (only when the run had people, a paid --people run;
+                     never with --public or --safe-demo) and receipt.txt (the looot jobs behind it).
+                     --format ${CRM_FORMATS.join(", ")} (default generic). Emails and phones
+                     only with --contact-details. UTF-8 with BOM, formula cells escaped.
+  import-supabase    Upsert the run's accounts, committees, people, plays and rivals into your own
+                     Supabase project, deduped by domain (tables: supabase/migrations in the repo).
+                     Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env (never printed).
+                     --dry-run prints the counts and writes nothing. Emails and phones only with
+                     --contact-details on a paid, non-safe run.
   open               Open gtm/dossier.html.
   serve              Serve the page (city/ when there is one, else the output folder) on
                      http://127.0.0.1:4317. Buttons on the page add requests to
@@ -140,6 +152,10 @@ async function main(): Promise<void> {
         "no-open": { type: "boolean" },
         demo: { type: "boolean" },
         "mask-accounts": { type: "boolean" },
+        crm: { type: "boolean" },
+        "dry-run": { type: "boolean" },
+        format: { type: "string" },
+        "contact-details": { type: "boolean" },
         "keep-public": { type: "boolean" },
         "apply-learnings": { type: "boolean" },
         results: { type: "string" },
@@ -195,6 +211,9 @@ async function main(): Promise<void> {
         return;
       case "export":
         return cmdExport(a, outDir);
+      case "import-supabase":
+        await cmdImportSupabase(a, outDir);
+        return;
       case "serve":
         await cmdServe(a, outDir);
         return;

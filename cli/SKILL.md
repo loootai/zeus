@@ -51,7 +51,7 @@ One domain in, a GTM dossier out. The user sees the price and says yes before an
    npx looot-zeus run <domain> --cap <X> --yes
    ```
 
-7. Tell the user what came back. Give the last line of the run (done or stopped at the cap, calls, spend), the summary lines and the path to `gtm/dossier.html`. Offer to open it with `npx looot-zeus open`.
+7. Tell the user what came back. Give the last line of the run (done or stopped at the cap, calls, spend), the summary lines and the path to `gtm/dossier.html`. Offer to open it with `npx looot-zeus open`. If the last line starts with "stopped: your daily spend limit" (or monthly), say so first. The run stopped at the workspace spend limit. Name the sections it says are empty because of it and give the user the raise link (looot.ai/usage, Budgets). Never call that run done. If the quote is refused because the spend limit has too little left, tell the user the amount left and the two ways on: raise the limit or use the smaller `--cap` it offers.
 
 8. Offer the next steps. Read `gtm/next-steps.json`. Each entry has `title`, `why`, `price`, `job`, `command`, `schedule` and `prompt`. Offer the top three in one short line each: title, why, price. Never run one without the user's yes. See "Next steps and schedules" below.
 
@@ -109,7 +109,7 @@ At the start of each turn and whenever the user says "zeus", run `npx looot-zeus
 - Never add `--apply-learnings` before the user said yes to the learnings.
 - Never send email, connect a mailbox or start a campaign. Zeus reads results only.
 - Stop after two failures. If a command fails twice, stop and show the user the error. Do not try other flags, other domains or other tools.
-- `LOOOT_TOKEN` not set means exit code 2. Tell the user to create an agent token at looot.ai (Settings, Agent tokens) and set it. Do not ask them to paste it in the chat.
+- Exit code 2 means no looot sign-in. Zeus reads `LOOOT_TOKEN`, else the login `looot login` saved (`~/.config/looot/config.json`). No account yet: the user signs up at https://looot.ai/auth/sign-up ($2 free credit, once, after the email is confirmed). Then run `npx -y looot@latest login` in the background: it prints a URL and a code. Give both to the user, ask them to open the URL, check the code and approve. Wait until the command ends. Or the user creates an agent token at looot.ai (Settings, Agent tokens) and sets `LOOOT_TOKEN` in their own shell. Never ask them to paste a token in the chat.
 - Exit code 3 means the expected cost is above the cap. Show the message and ask for a higher cap or a smaller run (`--depth sample` or `--only <modules>`).
 - To see the layout first with no key and no charge, run `npx looot-zeus demo`.
 - To share the dossier, run `npx looot-zeus export --public`. It writes `gtm/public/` with your domain, rivals and people swapped out.

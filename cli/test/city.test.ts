@@ -29,7 +29,7 @@ test("the city page has every section heading, works from disk and names no loca
   for (const h of HEADINGS) assert.match(html, new RegExp(`<h1>${h}</h1>`), h);
   assert.doesNotMatch(html, /~\/Desktop|\/Users\/|\/home\/|C:\\\\|\/tmp\//);
   assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href=|@import|url\(http/i);
-  assert.doesNotMatch(html, /Not in the free run|zlk|Available after top up|Morning brief|Battlecards/);
+  assert.doesNotMatch(html, /zlk|Available after top up|Morning brief|Battlecards/);
   assert.match(html, /<h1>What a paid run adds<\/h1>/);
 });
 
@@ -87,16 +87,29 @@ test("the city page is David's shell filled from the run: isometric city, every 
   for (const v of ["pages", "reddit", "mmap", "paid"]) assert.match(html, new RegExp(`data-view="${v}"`), v);
 });
 
-test("not-yet features come from paid.json: off is never named, coming-soon is named as coming soon", async () => {
-  const { PAID_FEATURES } = await import("../src/city/index.js");
+test("not-yet features come from paid.json: off shows only its district, locked; coming-soon is named as coming soon", async () => {
+  const { PAID_FEATURES, LOCKED_LINE } = await import("../src/city/index.js");
   const html = renderCity(bare);
-  for (const f of PAID_FEATURES.filter((x) => x.state === "off")) assert.ok(!html.includes(`>${f.label}<`) && !html.includes(`"${f.label}"`), f.label);
-  assert.match(html, /class="isa[^"]* zoff" href="#paid"[^>]*data-t="Room to grow"/);
-  const saved = PAID_FEATURES.map((f) => f.state);
-  PAID_FEATURES.find((f) => f.key === "crm")!.state = "coming-soon";
+  const districts = new Set(PAID_FEATURES.map((f) => f.district).filter(Boolean));
+  for (const f of PAID_FEATURES.filter((x) => x.state === "off" && !districts.has(x.label))) assert.ok(!html.includes(`>${f.label}<`) && !html.includes(`"${f.label}"`), f.label);
+  assert.equal(LOCKED_LINE, "Not in the free run");
+  // Each district callout, as on David's page, greyed and opening the paid list with the locked line.
+  for (const d of ["Signal engine", "Guardrails", "Daily rhythm", "Campaign lanes"]) assert.match(html, new RegExp(`<a class="isl zoff" href="#paid" aria-label="${d}">[\\s\\S]*?class="islt">${d}</text><text[^>]*class="isls">Not in the free run<`), d);
+  assert.match(html, /class="isa[^"]* zoff" href="#paid"[^>]*data-t="Signal engine" data-s="Not in the free run"/);
+  // Push to my CRM (key crm) is coming soon since David's Export to CRM ask (2026-11-25).
+  assert.match(html, /data-t="Push to my CRM" data-s="Coming soon"/);
+  assert.match(html, /<h3>Coming soon<\/h3>[\s\S]*<li>Push to my CRM<\/li>/);
+});
+
+test("the sidebar shows the company logo the run fetched, never on a public page and never an SVG", async () => {
+  const { setLogos } = await import("../src/assets.js");
+  const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   try {
-    const soon = renderCity(bare);
-    assert.match(soon, /data-t="CRM sync" data-s="Coming soon"/);
-    assert.match(soon, /<h3>Coming soon<\/h3>[\s\S]*<li>CRM sync<\/li>/);
-  } finally { PAID_FEATURES.forEach((f, i) => (f.state = saved[i] as never)); }
+    setLogos(new Map([[bare.domain, png]]));
+    assert.ok(renderCity(bare).includes(`<span class="logo"><img src="${png}"`));
+    assert.ok(!renderCity({ ...bare, public: true }).includes(png));
+    setLogos(new Map([[bare.domain, "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="]]));
+    assert.ok(!renderCity(bare).includes("svg+xml"));
+    assert.match(renderCity(bare), /<span class="logo"><span class="lgt"/);
+  } finally { setLogos(new Map()); }
 });

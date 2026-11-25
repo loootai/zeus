@@ -20,6 +20,18 @@ export interface Dossier {
   plays?: Section;
   /** What to copy to run the same sweep every week. */
   weekly?: Weekly;
+  /** The run's ledger in one line for the city: paid calls, distinct providers and the day, from receipt.json. */
+  ledger?: Ledger;
+}
+
+/** Paid calls, distinct providers and the day of the run, counted from the receipt's call rows. */
+export interface Ledger { runs: number; providers: number; day: string; charged: number }
+
+/** Counts the ledger line from a receipt: calls answered from an earlier run are not counted as runs. */
+export function ledgerOf(r: Receipt): Ledger {
+  const paid = r.calls.filter((c) => !c.replayed);
+  const providers = new Set(paid.map((c) => c.provider).filter((p) => p && p !== "-"));
+  return { runs: paid.length, providers: providers.size, day: r.run.finishedAt.slice(0, 10), charged: round6(paid.reduce((n, c) => n + c.charged, 0)) };
 }
 
 export interface Weekly {
@@ -97,13 +109,16 @@ export function receiptSection(r: Receipt): Section {
   }
   if (r.run.replayedCalls) blocks.push({ kind: "note", text: `${r.run.replayedCalls} calls asked exactly what an earlier run asked, so looot answered from that run at no new charge. They first cost ${usd(r.run.replayedValue ?? 0)}. New spend counts only the calls paid in this run.` });
   if (b.overQuote.calls > 0) blocks.push({ kind: "note", text: `${b.overQuote.calls} calls were charged above their quote, ${usd(b.overQuote.extra)} in total. Every one is in receipt.md.` });
+  if (r.run.stoppedBy) blocks.push({ kind: "note", text: r.run.stoppedBy.text });
   if (r.run.capStopped) blocks.push({ kind: "note", text: "The run stopped at the cap. Sections marked capped are partial." });
   else {
     const sec = r.modules.filter((m) => m.capScope === "section").map((m) => m.label);
     if (sec.length > 0) blocks.push({ kind: "note", text: `${sec.join(", ")} stopped at ${sec.length === 1 ? "its" : "their"} cap (the limit set for ${sec.length === 1 ? "that section" : "those sections"}). ${sec.length === 1 ? "That section is" : "Those sections are"} partial. The other sections went on.` });
-    const short = r.modules.filter((m) => m.status === "capped" && m.capScope !== "section").map((m) => m.label);
+    const short = r.modules.filter((m) => m.status === "capped" && m.capScope === undefined).map((m) => m.label);
     if (short.length > 0) blocks.push({ kind: "note", text: `${short.join(", ")} used up ${short.length === 1 ? "its share of the cap and stopped early. That section is" : "their share of the cap and stopped early. Those sections are"} partial. The rest of the run went on.` });
   }
+  const unknownCost = r.calls.filter((c) => c.costUnknown);
+  if (unknownCost.length > 0) blocks.push({ kind: "note", text: `${unknownCost.length} ${unknownCost.length === 1 ? "call's" : "calls'"} cost could not be read back from looot (a timeout or a lost answer), so ${unknownCost.length === 1 ? "it is" : "they are"} counted at ${unknownCost.length === 1 ? "its" : "their"} limit, ${usd(unknownCost.reduce((n, c) => n + c.charged, 0))} in total. looot may have charged less. Marked "cost unknown, counted at its limit" in receipt.md.` });
   blocks.push({ kind: "note", text: `Every call with its provider, outcome and charge is in receipt.json and receipt.md. Prices quoted from ${r.run.priceSource}.` });
   return { num: "11", id: "receipt", title: COST_TITLE, status: "done", source: r.placeholder ? "PLACEHOLDER cost lines, invented from the quote. No looot call was made." : `looot ledger, ${r.run.finishedAt.slice(0, 10)}`, blocks };
 }
@@ -135,6 +150,7 @@ function quiet(results: Map<string, ModuleResult>, id: string): string {
   const s = statusOf(results, id);
   if (!s) return "not in this run";
   if (s === "skipped") return "skipped in this run";
+  if (s === "capped" && results.get(id)?.capScope === "limit") return "stopped: your spend limit was reached";
   if (s === "capped") return "stopped at the cap";
   return "nothing found";
 }
@@ -244,6 +260,8 @@ export function overviewSection(results: Map<string, ModuleResult>, receipt: Rec
   stats.push({ label: "Spend vs cap", value: usd(receipt.run.charged), hint: `of ${usd(receipt.run.cap)} cap, ${plural(receipt.run.calls - (receipt.run.replayedCalls ?? 0), "paid call")}${receipt.run.replayedCalls ? `, ${receipt.run.replayedCalls} replayed free` : ""}`, meter: ratio(receipt.run.charged, receipt.run.cap), tone: "go", view: "receipt" });
 
   const blocks: Block[] = [{ kind: "stat", items: stats }];
+  // The spend limit stopped the run: say so first, with the sections it left empty, so an empty page is never read as "nothing found".
+  if (receipt.run.stoppedBy) blocks.unshift({ kind: "note", text: receipt.run.stoppedBy.text });
 
   if (accounts.length > 0) {
     blocks.push({ kind: "bars", caption: "Accounts by grade", items: ["A", "B", "C", "D"].map((g) => ({ label: `Grade ${g}`, value: gradeOf(g), tone: g === "A" ? "go" : g === "B" ? "warm" : g === "D" ? "cold" : "plain" })) });
@@ -392,6 +410,10 @@ export function assemble(o: { domain: string; brand: string; mods: GtmModule[]; 
   const cost = receiptSection(o.receipt);
   if (o.pulls?.length) cost.blocks.splice(1, 0, { kind: "table", caption: "Pulled later with looot-zeus more", columns: [{ key: "what", label: "Pull" }, { key: "at", label: "Date" }, { key: "added", label: "Added" }, { key: "calls", label: "Calls", num: true }, { key: "charged", label: "Charged", num: true }], rows: o.pulls.map((p) => ({ ...p, at: p.at.slice(0, 10), charged: money(p.charged) })) });
   if (o.cfg?.linkedin === false) cost.blocks.push({ kind: "note", text: "LinkedIn steps off. The run made no LinkedIn call: no LinkedIn ads, no LinkedIn company posts and no LinkedIn page search. Turn them on by removing linkedin: false from gtm/config.yaml." });
+  const ruled = o.receipt.modules.filter((m) => /skipped by your workspace rule/.test(m.summary)).map((m) => m.label);
+  if (ruled.length > 0) cost.blocks.push({ kind: "note", text: `${ruled.join(", ")}: some steps were skipped by your workspace rule (Settings, Guardrails at looot.ai/settings/guardrails). Those steps were not run and not charged.` });
+  const broke = o.receipt.modules.filter((m) => /balance too low/.test(m.summary));
+  if (broke.length > 0) cost.blocks.push({ kind: "note", text: `looot refused a call because the balance was too low, so no further paid call was made. ${broke.map((m) => m.label).join(", ")}: ${broke[0]!.summary.replace(/^partial, /, "")}. The sections above it are complete.` });
   sections.push(cost);
   return {
     domain: o.domain,
@@ -402,6 +424,7 @@ export function assemble(o: { domain: string; brand: string; mods: GtmModule[]; 
     sections,
     overview: overviewSection(o.results, o.receipt, o.placeholder),
     plays: playsSection(o.results, o.placeholder),
+    ledger: ledgerOf(o.receipt),
     ...(o.cfg ? { weekly: weeklyOf(o.cfg, o.receipt.run.expected, o.receipt.run.cap) } : {}),
   };
 }

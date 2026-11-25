@@ -1,25 +1,179 @@
 {
-  "about": "What the city page says more credit buys. adds: commands Zeus has today, shown under 'What a paid run adds'. features: the buildings of the city that Zeus does not do yet. state off = not named anywhere on the page (the building reads 'Room to grow' and opens this list); state coming-soon = named with 'Coming soon'. Luisa and David decide which ones say coming soon. Never mark a feature available here: only adds are things Zeus does.",
+  "about": "What the city page says more credit buys. adds: commands Zeus has today, shown under 'What a paid run adds'. features: the buildings of the city that Zeus does not do yet. state off = not named anywhere on the page (the building reads 'Room to grow' and opens this list); state coming-soon = named with 'Coming soon'. Luisa and David decide which ones say coming soon. district = the name of the city district the building sits in; a district with state off reads the locked line (\"Not in the free run\"), never a promise that a paid run has it. Never mark a feature available here: only adds are things Zeus does. os: the 'Your looot GTM OS' preview menu section. Every item is coming-soon. what uses {targets}, {committees}, {influencers}, {seo}, {competitive}, {company}: counts from this run's sections; when a count it names is 0 or missing, whatEmpty is shown instead, so no number is ever invented.",
+  "locked": "Not in the free run",
   "adds": [
-    { "what": "100 target accounts instead of 25", "command": "looot-zeus run --depth full --cap 10" },
-    { "what": "People data: work emails, buyers per account and buying committees for 10 accounts (the free run has names and roles for 5)", "command": "looot-zeus run --people --cap 10" },
-    { "what": "Phone numbers for the buying committees, on top of people data", "command": "looot-zeus run --people --phones --cap 10" },
-    { "what": "More accounts, buying committees, ads, social posts or keyword rankings in this folder", "command": "looot-zeus more accounts --count 25 --cap 2" },
-    { "what": "The run again later, for example each week, with what changed written to changes.md", "command": "looot-zeus watch --cap 5" }
+    {
+      "what": "100 target accounts instead of 25",
+      "command": "looot-zeus run --depth full --cap 10"
+    },
+    {
+      "what": "People data: work emails, buyers per account and buying committees for 10 accounts (the free run has names and roles for 5)",
+      "command": "looot-zeus run --people --cap 10"
+    },
+    {
+      "what": "Phone numbers for the buying committees, on top of people data",
+      "command": "looot-zeus run --people --phones --cap 10"
+    },
+    {
+      "what": "More accounts, buying committees, ads, social posts or keyword rankings in this folder",
+      "command": "looot-zeus more accounts --count 25 --cap 2"
+    },
+    {
+      "what": "The run again later, for example each week, with what changed written to changes.md",
+      "command": "looot-zeus watch --cap 5"
+    }
   ],
   "features": [
-    { "key": "brief", "label": "Morning brief", "state": "off" },
-    { "key": "alerts", "label": "Slack alerts", "state": "off" },
-    { "key": "crm", "label": "CRM sync", "state": "off" },
-    { "key": "campaign", "label": "LinkedIn campaign", "state": "off" },
-    { "key": "signals", "label": "Signal engine", "state": "off" },
-    { "key": "abm", "label": "ABM", "state": "off" },
-    { "key": "guard", "label": "Guardrails", "state": "off" },
-    { "key": "hood", "label": "Data providers", "state": "off" },
-    { "key": "reply", "label": "Reply inbox", "state": "off" },
-    { "key": "weekly", "label": "Weekly report", "state": "off" },
-    { "key": "demand", "label": "Demand sensing", "state": "off" },
-    { "key": "battlecards", "label": "Battlecards", "state": "off" },
-    { "key": "plugins", "label": "Next to plug in", "state": "off" }
-  ]
+    {
+      "key": "brief",
+      "label": "Morning brief",
+      "state": "off",
+      "district": "Daily rhythm"
+    },
+    {
+      "key": "alerts",
+      "label": "Slack alerts",
+      "state": "off"
+    },
+    {
+      "key": "crm",
+      "label": "Push to my CRM",
+      "state": "coming-soon",
+      "district": "CRM HQ",
+      "via": "looot connections",
+      "note": "Direct push of accounts and committees to a CRM connected on looot. Until it ships, Export to CRM copies a prompt for your agent and export --crm writes the CSVs."
+    },
+    {
+      "key": "campaign",
+      "label": "LinkedIn campaign",
+      "state": "off",
+      "district": "Campaign lanes"
+    },
+    {
+      "key": "signals",
+      "label": "Signal engine",
+      "state": "off",
+      "district": "Signal engine"
+    },
+    {
+      "key": "abm",
+      "label": "ABM",
+      "state": "off",
+      "district": "ABM"
+    },
+    {
+      "key": "guard",
+      "label": "Guardrails",
+      "state": "off",
+      "district": "Guardrails"
+    },
+    {
+      "key": "hood",
+      "label": "Data providers",
+      "state": "off"
+    },
+    {
+      "key": "reply",
+      "label": "Reply inbox",
+      "state": "off"
+    },
+    {
+      "key": "weekly",
+      "label": "Weekly report",
+      "state": "off"
+    },
+    {
+      "key": "demand",
+      "label": "Demand sensing",
+      "state": "off"
+    },
+    {
+      "key": "battlecards",
+      "label": "Battlecards",
+      "state": "off"
+    },
+    {
+      "key": "plugins",
+      "label": "Next to plug in",
+      "state": "off"
+    }
+  ],
+  "os": {
+    "title": "Your looot GTM OS",
+    "note": "Preview: what a full looot GTM OS built for {company} would do. None of it is in Zeus yet.",
+    "button": "Get it built",
+    "items": [
+      {
+        "key": "custom-crm",
+        "label": "Custom CRM",
+        "state": "coming-soon",
+        "what": "{targets} target accounts and {committees} buying committees from this run, loaded into a CRM built around {company}'s pipeline.",
+        "whatEmpty": "A CRM built around {company}'s pipeline, filled with the accounts and committees a run finds.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "signal-engine",
+        "label": "Signal engine",
+        "state": "coming-soon",
+        "what": "Watches the {targets} target accounts for hiring, funding and news and flags the ones ready to talk.",
+        "whatEmpty": "Watches your target accounts for hiring, funding and news and flags the ones ready to talk.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "daily-brief",
+        "label": "Daily brief",
+        "state": "coming-soon",
+        "what": "One morning note for {company}: what changed at the {targets} target accounts and at your rivals.",
+        "whatEmpty": "One morning note for {company}: what changed at your accounts and rivals.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "sequences",
+        "label": "Outreach sequences",
+        "state": "coming-soon",
+        "what": "Draft sequences for the people in the {committees} buying committees, sent only after your yes.",
+        "whatEmpty": "Draft sequences for the people in your buying committees, sent only after your yes.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "campaign-lanes",
+        "label": "Campaign lanes",
+        "state": "coming-soon",
+        "what": "Splits the {targets} target accounts into lanes by fit and runs one campaign per lane.",
+        "whatEmpty": "Splits your target accounts into lanes by fit and runs one campaign per lane.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "content-engine",
+        "label": "Content engine",
+        "state": "coming-soon",
+        "what": "Pages and posts from the {seo} search rows this run found.",
+        "whatEmpty": "Pages and posts for the keywords and AI answers a run finds.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      },
+      {
+        "key": "guardrails",
+        "label": "Budget and guardrails",
+        "state": "coming-soon",
+        "what": "One spend cap and per-job limits for everything above, on {company}'s looot balance.",
+        "whatEmpty": "One spend cap and per-job limits for everything above, on your looot balance.",
+        "prompt": "Build my looot GTM OS for {domain}: {label}. Use my Zeus results (gtm/state.json, or my private page on zeus.looot.ai). Tell me what you would set up, what it costs on looot. Spend nothing without my yes. If you cannot build it, tell me to contact looot at looot.ai."
+      }
+    ],
+    "next": {
+      "key": "next-step",
+      "label": "Take it to the next step",
+      "stack": "AI-native business stack: looot + Vercel + Supabase",
+      "copy": "Host your Zeus page and GTM OS on your own Vercel and Supabase accounts. Both have free tiers and you own both accounts. looot never sees your database credentials.",
+      "deploy": {
+        "label": "Deploy to Vercel",
+        "url": "https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Floootai%2Fzeus&project-name=zeus&repository-name=zeus&integration-ids=oac_VqOgBHqhEoFTPzGkPd7L0iH6&env=LOOOT_TOKEN&envDescription=Your%20looot%20API%20key%20from%20looot.ai.%20You%20paste%20it%20here%3B%20it%20is%20never%20in%20this%20link.&envLink=https%3A%2F%2Flooot.ai%2Fskill.md"
+      },
+      "supabase": {
+        "label": "Create a Supabase project",
+        "url": "https://supabase.com/dashboard/new"
+      },
+      "prompt": "Help me host my looot Zeus results for {domain} on my own AI-native business stack (looot + Vercel + Supabase). 1. Deploy https://github.com/loootai/zeus to my Vercel account with the Supabase integration from the Vercel Marketplace, so Vercel creates the Supabase project and its env vars. 2. Check the Supabase env vars are set in Vercel, never print their values. 3. Load my Zeus results (accounts, committees, plays, people and rivals from gtm/state.json) into my Supabase project: apply supabase/migrations/20261125120000_zeus.sql from the repo (RLS on, no public access), then run `npx looot-zeus import-supabase --dry-run`, show me the counts. After my yes, run it without --dry-run with SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env. It upserts by company domain. 4. Add my looot key as the LOOOT_TOKEN env var in Vercel; I paste it myself. Free tiers are fine. Ask me before any paid plan. Spend nothing on looot without my yes."
+    }
+  }
 }

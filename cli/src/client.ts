@@ -4,8 +4,12 @@
 // Idempotency key = sha256(module, step, input): a re-run of the same step with the same input
 // replays the stored run and is never charged twice.
 
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { JOBS } from "./modules/jobs.js";
 import { sha256, stableStringify } from "./util.js";
+import { ruleFromEffective, type GuardrailRead } from "./guardrails.js";
 
 export const DEFAULT_BASE_URL = "https://api.looot.ai";
 export const TERMINAL = new Set(["completed", "failed", "blocked", "stopped"]);
@@ -17,6 +21,8 @@ export class LoootError extends Error {
     message: string,
     readonly status: number,
     readonly code?: string,
+    /** The top-up link a 402 insufficient_balance answer carries, when it has one. */
+    readonly topUpUrl?: string,
   ) {
     super(message);
     this.name = "LoootError";
@@ -65,8 +71,13 @@ export interface CallRecord {
   /** looot answered from a run with the same key, so nothing new was charged. charged is 0, firstCharged is what the first run cost. */
   replayed?: boolean;
   firstCharged?: number;
+  /** looot may have charged this call but its cost could not be read back (timeout, disconnect, 5xx). charged is the call's ceiling. */
+  costUnknown?: boolean;
   note?: string;
 }
+
+/** The note on a call whose cost could not be read back. */
+export const COST_UNKNOWN = "cost unknown, counted at its limit";
 
 export interface CallResult {
   record: CallRecord;
@@ -168,6 +179,8 @@ export interface LoootClientOptions {
   pollIntervalMs?: number;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
+  /** How long to keep reading a run whose cost is not known yet, after the poll timeout or a lost answer. Default 60 s. */
+  readBackMs?: number;
 }
 
 export class LoootClient implements JobRunner {
@@ -178,6 +191,7 @@ export class LoootClient implements JobRunner {
   readonly #pollIntervalMs: number;
   readonly #sleep: (ms: number) => Promise<void>;
   readonly #now: () => number;
+  readonly #readBackMs: number;
 
   constructor(o: LoootClientOptions) {
     this.#token = o.token;
@@ -187,6 +201,7 @@ export class LoootClient implements JobRunner {
     this.#pollIntervalMs = o.pollIntervalMs ?? 2_000;
     this.#sleep = o.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
     this.#now = o.now ?? Date.now;
+    this.#readBackMs = o.readBackMs ?? 60_000;
   }
 
   async #request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -207,8 +222,10 @@ export class LoootClient implements JobRunner {
       json = null;
     }
     if (!res.ok) {
-      const err = (json as { error?: { message?: string; code?: string } } | null)?.error;
-      throw new LoootError(err?.message ?? `looot answered HTTP ${res.status}`, res.status, err?.code);
+      const j = json as { error?: { message?: string; code?: string }; topUpUrl?: unknown; topUp?: { url?: unknown; checkoutUrl?: unknown } } | null;
+      const err = j?.error;
+      const link = [j?.topUpUrl, j?.topUp?.checkoutUrl, j?.topUp?.url].find((x): x is string => typeof x === "string" && x !== "");
+      throw new LoootError(err?.message ?? `looot answered HTTP ${res.status}`, res.status, err?.code, link);
     }
     return json as T;
   }
@@ -233,15 +250,32 @@ export class LoootClient implements JobRunner {
     return Math.max(this.#pollTimeoutMs, JOBS[job]?.pollTimeoutMs ?? 0);
   }
 
-  /** Runs and polls until the run settles or the poll timeout passes. */
-  async runAndWait(job: string, input: Record<string, unknown>, key: string, maxCostUsd: number): Promise<LoootRun> {
+  /** Runs and polls until the run settles or the poll timeout passes. `seen` gets the run id as soon as looot gives one. */
+  async runAndWait(job: string, input: Record<string, unknown>, key: string, maxCostUsd: number, seen?: (run: LoootRun) => void): Promise<LoootRun> {
     let run = await this.run(job, input, key, maxCostUsd);
+    seen?.(run);
     const deadline = this.#now() + this.pollTimeoutFor(job);
     while (!TERMINAL.has(run.status) && this.#now() < deadline) {
       await this.#sleep(this.#pollIntervalMs);
       run = await this.getRun(run.runId);
+      seen?.(run);
     }
     return run;
+  }
+
+  /** Reads a run again until it settles or readBackMs passes. Null when it cannot be read or is still not settled. */
+  async #readBack(runId: string): Promise<LoootRun | null> {
+    const deadline = this.#now() + this.#readBackMs;
+    for (;;) {
+      try {
+        const run = await this.getRun(runId);
+        if (TERMINAL.has(run.status)) return run;
+      } catch {
+        // A lost answer while reading back: try again until the deadline.
+      }
+      if (this.#now() >= deadline) return null;
+      await this.#sleep(this.#pollIntervalMs);
+    }
   }
 
   async call(job: string, input: Record<string, unknown>, opts: CallOptions): Promise<CallResult> {
@@ -249,14 +283,34 @@ export class LoootClient implements JobRunner {
     const ts = new Date(started).toISOString();
     const key = idempotencyKey(opts.module, opts.step, input);
     let run: LoootRun;
+    // True when looot may have admitted the run (and may charge up to its ceiling) but its cost is not known.
+    let unknown = false;
     const attempt = async (k: string): Promise<LoootRun> => {
+      let last: LoootRun | undefined;
+      unknown = false;
       try {
-        return await this.runAndWait(job, input, k, opts.maxCostUsd);
+        const r = await this.runAndWait(job, input, k, opts.maxCostUsd, (x) => (last = x));
+        if (TERMINAL.has(r.status)) return r;
+        // Still running when the poll timeout passed: looot may still charge it. Read it back.
+        const back = await this.#readBack(r.runId);
+        if (back) return back;
+        unknown = true;
+        return r;
       } catch (e) {
         // Out of credits, bad token and other refusals before admission hold nothing and charge nothing.
         const err = e as LoootError;
-        if (err.code === "insufficient_balance" || err.status === 401 || err.status === 403) throw e;
-        return { runId: "", status: "blocked", error: { code: err.code ?? `http_${err.status ?? "error"}`, message: err.message } };
+        // A workspace guardrail refusal is an answer for this one call: the step is skipped, the run goes on.
+        if (isGuardrailCode(err.code)) return { runId: "", status: "blocked", error: { code: err.code, message: err.message, whoseError: "customer" } };
+        if (isBalanceStop(e) || err.status === 401 || err.status === 403) throw e;
+        // A lost answer (disconnect) or a 5xx: the run may exist and be charged. Read it back when its id is known.
+        const lost = !(e instanceof LoootError) || err.status >= 500;
+        if (lost && last?.runId) {
+          const back = await this.#readBack(last.runId);
+          if (back) return back;
+        }
+        if (lost) unknown = true;
+        const code = e instanceof LoootError ? (err.code ?? `http_${err.status}`) : "connection_lost";
+        return { runId: last?.runId ?? "", status: last?.status ?? "blocked", error: { code, message: (e as Error).message } };
       }
     };
     run = await attempt(key);
@@ -264,8 +318,30 @@ export class LoootClient implements JobRunner {
     // under the same step name), so looot refuses the old key. One retry with a key that also carries the
     // endpoint and ceiling: a run with exactly this request still replays for free next time.
     if (run.error?.code === "idempotency_conflict") run = await attempt(conflictKey(opts.module, opts.step, input, job, opts.maxCostUsd));
-    const record = toRecord(run, job, opts, this.#now() - started, ts);
+    let record = toRecord(run, job, opts, this.#now() - started, ts);
+    // The cap must hold: a call that may have been charged counts at its ceiling until looot says otherwise.
+    if (unknown) record = { ...record, outcome: "fail", charged: opts.maxCostUsd, costUnknown: true, note: `${COST_UNKNOWN}${record.note ? `; ${record.note}` : ""}` };
     return { record, run, data: run.normalized ?? run.result ?? null };
+  }
+
+  /** Free. The workspace guardrails that apply to this key (GET /v1/guardrails/effective). Throws when the gateway cannot answer. */
+  async effectiveGuardrails(): Promise<unknown> {
+    return this.#request("GET", "/v1/guardrails/effective");
+  }
+
+  /** Free. Asks the workspace budgets whether amountUsd still fits (POST /v1/budgets/preview). Needs budgets:read. */
+  async budgetPreview(amountUsd: number): Promise<unknown> {
+    return this.#request("POST", "/v1/budgets/preview", { dimensions: {}, amountMicros: Math.max(1, Math.ceil(amountUsd * 1_000_000)), currency: "USD" });
+  }
+
+  /** Free. The workspace budget policies with their period (GET /v1/budgets). Needs budgets:read. */
+  async budgets(): Promise<unknown> {
+    return this.#request("GET", "/v1/budgets");
+  }
+
+  /** Free. What the workspace spend limits leave for a run whose worst case is worstUsd. Never throws. */
+  spendLimit(worstUsd: number): Promise<SpendLimitRead> {
+    return readSpendLimit(this, worstUsd);
   }
 
   /** Free. Prepaid balance in USD, or null when the answer has no number. */
@@ -275,9 +351,121 @@ export class LoootClient implements JobRunner {
   }
 }
 
-/** Builds a client from LOOOT_TOKEN. The token value never leaves this function. */
+/** Path of the token `looot login` saves: `$XDG_CONFIG_HOME/looot/config.json`, else `$HOME/.config/looot/config.json`. */
+export function savedLoginPath(env: Record<string, string | undefined> = process.env): string {
+  const xdg = env.XDG_CONFIG_HOME?.trim();
+  const home = env.HOME?.trim() || homedir();
+  return join(xdg || join(home, ".config"), "looot", "config.json");
+}
+
+/** Reads the token and API address `looot login` saved, or null. Never throws and never prints the token. */
+export function readSavedLogin(env: Record<string, string | undefined> = process.env): { token: string; apiUrl?: string } | null {
+  if (env.LOOOT_ZEUS_NO_SAVED_LOGIN === "1") return null;
+  try {
+    const v = JSON.parse(readFileSync(savedLoginPath(env), "utf8")) as Record<string, unknown>;
+    const token = typeof v?.token === "string" ? v.token.trim() : "";
+    if (!token) return null;
+    return { token, apiUrl: typeof v.apiUrl === "string" && /^https:\/\//.test(v.apiUrl) ? v.apiUrl : undefined };
+  } catch {
+    return null;
+  }
+}
+
+/** Builds a client from LOOOT_TOKEN, else from the login `looot login` saved. The token value never leaves this function. */
 export function clientFromEnv(env: Record<string, string | undefined> = process.env): LoootClient | null {
   const token = env.LOOOT_TOKEN?.trim();
-  if (!token) return null;
-  return new LoootClient({ token, baseUrl: env.LOOOT_API_URL });
+  if (token) return new LoootClient({ token, baseUrl: env.LOOOT_API_URL });
+  const saved = readSavedLogin(env);
+  if (!saved) return null;
+  return new LoootClient({ token: saved.token, baseUrl: env.LOOOT_API_URL || saved.apiUrl });
+}
+
+/** The gateway's guardrail refusal codes (docs/engineering/CLI-MCP-CONTRACT.md). */
+export function isGuardrailCode(code: string | undefined): boolean {
+  return code === "guardrail_blocked" || code === "guardrail_unavailable";
+}
+
+/** A 402 refusal: the wallet (insufficient_balance) or the key's own monthly limit (key_spend_limit_reached). No further paid call can pass. */
+export function isBalanceStop(e: unknown): e is LoootError {
+  return e instanceof LoootError && (e.status === 402 || e.code === "insufficient_balance" || e.code === "key_spend_limit_reached");
+}
+
+/**
+ * Reads the workspace guardrails before the quote. Never throws: no client, an older gateway, offline or any
+ * error gives no rule and a one-line note saying so.
+ */
+export async function readWorkspaceRule(client: { effectiveGuardrails(): Promise<unknown> } | null, offline = false): Promise<GuardrailRead> {
+  const none = "Workspace guardrails not read";
+  if (offline) return { rule: null, note: `${none} (offline), the quote assumes none. looot still applies them on every run.` };
+  if (!client) return { rule: null, note: `${none} (no LOOOT_TOKEN), the quote assumes none. looot still applies them on every run.` };
+  try {
+    const rule = ruleFromEffective(await client.effectiveGuardrails());
+    return rule ? { rule, note: `Workspace guardrails read: blockedPlatforms ${rule.blockedPlatforms.join(", ")}.` } : { rule: null, note: "Workspace guardrails read: none block a Zeus step." };
+  } catch (e) {
+    const why = e instanceof LoootError ? `looot answered ${e.code ?? `HTTP ${e.status}`}` : "the gateway could not be reached";
+    return { rule: null, note: `${none} (${why}), the quote assumes none. looot still applies them on every run.` };
+  }
+}
+
+/** The run was refused by a workspace spend limit (a looot budget, daily or monthly). No further paid call can pass. */
+export function isSpendLimitCode(code: string | undefined | null): boolean {
+  return code === "budget_exceeded";
+}
+
+/** Where a customer raises a workspace spend limit. */
+export const SPEND_LIMIT_URL = "https://looot.ai/usage";
+
+/**
+ * What the workspace spend limits leave for this run, read before the quote is accepted.
+ * none     no limit applies
+ * ok       every limit has room for the worst case
+ * below    a limit has less left than the worst case (availableUsd is the smallest room)
+ * unknown  the key cannot read the limits (no budgets:read) or looot did not answer: the run goes on and stops at the first refusal
+ */
+export interface SpendLimitRead {
+  state: "none" | "ok" | "below" | "unknown";
+  availableUsd?: number;
+  /** daily, monthly or lifetime, when the tightest limit's period is known. */
+  period?: string;
+  note: string;
+}
+
+/** "daily spend limit", or "spend limit" when the period is not known. */
+export function limitName(period?: string): string {
+  return `${period && period !== "lifetime" ? `${period} ` : ""}spend limit`;
+}
+
+function usd4(n: number): string {
+  return n >= 0.01 ? `$${n.toFixed(2)}` : `$${n.toFixed(4)}`;
+}
+
+/** Reads the workspace spend limits for a run whose worst case is worstUsd. Never throws. */
+export async function readSpendLimit(client: { budgetPreview(amountUsd: number): Promise<unknown>; budgets?(): Promise<unknown> } | null, worstUsd: number): Promise<SpendLimitRead> {
+  const goOn = "the run goes on and stops at the first spend-limit refusal, keeping what it found.";
+  if (!client) return { state: "unknown", note: `Workspace spend limits not read (no LOOOT_TOKEN), ${goOn}` };
+  let body: { allowed?: unknown; checks?: { policyId?: unknown; availableMicros?: unknown }[] };
+  try {
+    body = ((await client.budgetPreview(worstUsd)) ?? {}) as typeof body;
+  } catch (e) {
+    if (e instanceof LoootError && (e.status === 403 || e.status === 401)) return { state: "unknown", note: `This key cannot read the workspace spend limits (budgets:read), so the quote cannot check them; ${goOn}` };
+    const why = e instanceof LoootError ? `looot answered ${e.code ?? `HTTP ${e.status}`}` : "the gateway could not be reached";
+    return { state: "unknown", note: `Workspace spend limits not read (${why}), ${goOn}` };
+  }
+  const checks = (Array.isArray(body.checks) ? body.checks : []).map((c) => ({ policyId: typeof c?.policyId === "string" ? c.policyId : "", available: num(c?.availableMicros) })).filter((c): c is { policyId: string; available: number } => c.available !== undefined);
+  if (checks.length === 0) return { state: "none", note: "Workspace spend limits read: none apply." };
+  const tight = checks.reduce((a, b) => (b.available < a.available ? b : a));
+  const availableUsd = tight.available / 1_000_000;
+  let period: string | undefined;
+  try {
+    const list = ((await client.budgets?.()) ?? {}) as { budgets?: { policyId?: unknown; period?: unknown }[] };
+    const p = (Array.isArray(list.budgets) ? list.budgets : []).find((b) => b?.policyId === tight.policyId)?.period;
+    if (typeof p === "string") period = p;
+  } catch {
+    // The period only names the limit. The preview already gave the room.
+  }
+  const name = limitName(period);
+  const below = body.allowed === false || availableUsd < worstUsd;
+  return below
+    ? { state: "below", availableUsd, ...(period ? { period } : {}), note: `Your ${name} has ${usd4(availableUsd)} left, below this run's worst case of ${usd4(worstUsd)}.` }
+    : { state: "ok", availableUsd, ...(period ? { period } : {}), note: `Workspace spend limits read: your ${name} has ${usd4(availableUsd)} left, room for the worst case.` };
 }

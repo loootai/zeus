@@ -10,6 +10,8 @@ import { emptyState, renderBlock } from "./blocks.js";
 import { CITY_CSS } from "./style.js";
 import { CITY_JS } from "./script.js";
 import { readFileSync } from "node:fs";
+import { logoData } from "../assets.js";
+import { crmPrompt } from "../crm.js";
 
 const readJson = (f: string) => JSON.parse(readFileSync(new URL(f, import.meta.url), "utf8"));
 
@@ -20,8 +22,16 @@ export interface MenuCategory { name: string; items: MenuItem[] }
 export const MENU: MenuCategory[] = readJson("./menu.json").categories;
 
 /** What more credit buys (commands Zeus has today) and the city's not-yet features, from paid.json. */
-export interface PaidFeature { key: string; label: string; state: "off" | "coming-soon" }
-const PAID: { adds: { what: string; command: string }[]; features: PaidFeature[] } = readJson("./paid.json");
+export interface PaidFeature { key: string; label: string; state: "off" | "coming-soon"; /** The city district this feature would live in, named on its callout. */ district?: string; /** How it will work when it ships (the Push to my CRM hook: looot connections). */ via?: string; note?: string }
+/** One item of the "Your looot GTM OS" preview. what names run counts as {viewId}; whatEmpty is shown when one is 0. */
+export interface OsItem { key: string; label: string; state: "coming-soon"; what: string; whatEmpty: string; prompt: string }
+/** "Take it to the next step": host it on the user's own Vercel and Supabase accounts. No secret in any link. */
+export interface OsNext { key: string; label: string; stack: string; copy: string; deploy: { label: string; url: string }; supabase: { label: string; url: string }; prompt: string }
+const PAID: { adds: { what: string; command: string }[]; features: PaidFeature[]; locked: string; os: { title: string; note: string; button: string; items: OsItem[]; next: OsNext } } = readJson("./paid.json");
+/** The "Your looot GTM OS" preview section, all coming soon, from paid.json. */
+export const GTM_OS = PAID.os;
+/** The line under a district the free run does not build ("Not in the free run"). */
+export const LOCKED_LINE = PAID.locked;
 /** What more credit buys, each one a command Zeus has today. Nothing here is a feature Zeus lacks. */
 export const PAID_ADDS = PAID.adds;
 /** Buildings for features Zeus does not have yet. Only "coming-soon" ones are named on the page. */
@@ -80,14 +90,14 @@ export const AGENT_ONE_LINER = "run zeus.looot.ai for mycompany.com";
 export const DEV_COMMAND = "npx looot-zeus run yourdomain.com";
 
 /** The "tell your agent" pill with a copy button, and the small developer note under it. */
-export function agentPill(): string {
-  return `<div class="obar"><span class="tryl zcmd"><span>Make yours, tell your agent</span><code>${e(AGENT_ONE_LINER)}</code></span><button type="button" class="cp xexp-b" data-copy="${e(AGENT_ONE_LINER)}">Copy</button></div><p class="zdev src">For developers: <code>${e(DEV_COMMAND)}</code></p>`;
+export function agentPill(acts = ""): string {
+  return `<div class="obar"><span class="tryl zcmd"><span>Make yours, tell your agent</span><code>${e(AGENT_ONE_LINER)}</code></span><button type="button" class="cp xexp-b" data-copy="${e(AGENT_ONE_LINER)}">Copy</button>${acts}</div><p class="zdev src">For developers: <code>${e(DEV_COMMAND)}</code></p>`;
 }
 
 /** Share, fork it, tell your agent and powered by looot. Share shows on public (safe) pages only: a private page stays on your machine. */
 export function actionsHtml(d: Pick<Dossier, "public">): string {
   const share = d.public ? `<button type="button" class="za zshare">Share</button>` : "";
-  return `<div class="zacts">${share}<a class="za" href="${ZEUS_REPO_URL}" target="_blank" rel="noopener noreferrer">Fork it</a><button type="button" class="za cp" data-copy="${e(TELL_YOUR_AGENT)}">Tell your agent</button><div class="zpow"><a class="zplk" href="https://looot.ai" target="_blank" rel="noopener noreferrer" aria-label="Powered by looot"><span class="zlp">powered by</span><svg class="zlm" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true"><circle cx="5.6" cy="16" r="4.1" fill="none" stroke="rgb(0,147,98)" stroke-width="2.6"/><defs><pattern id="zlbars" patternUnits="userSpaceOnUse" x="0" y="9" width="32" height="3.027"><rect width="32" height="1.892" fill="rgb(0,147,98)"/></pattern></defs><circle cx="16" cy="16" r="5.4" fill="none" stroke="url(#zlbars)" stroke-width="3.2"/><circle cx="26.4" cy="16" r="4.1" fill="none" stroke="rgb(0,147,98)" stroke-width="2.6"/></svg><span class="zlw">looot</span></a><a class="zpb" href="https://looot.ai" target="_blank" rel="noopener noreferrer">Build your own</a></div></div>`;
+  return `<div class="zacts zacts-c">${share}<a class="za" href="${ZEUS_REPO_URL}" target="_blank" rel="noopener noreferrer">Fork it</a><button type="button" class="za cp" data-copy="${e(TELL_YOUR_AGENT)}">Tell your agent</button><div class="zpow"><a class="zplk" href="https://looot.ai" target="_blank" rel="noopener noreferrer" aria-label="Powered by looot"><span class="zlp">powered by</span><svg class="zlm" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true"><circle cx="5.6" cy="16" r="4.1" fill="none" stroke="rgb(0,147,98)" stroke-width="2.6"/><defs><pattern id="zlbars" patternUnits="userSpaceOnUse" x="0" y="9" width="32" height="3.027"><rect width="32" height="1.892" fill="rgb(0,147,98)"/></pattern></defs><circle cx="16" cy="16" r="5.4" fill="none" stroke="url(#zlbars)" stroke-width="3.2"/><circle cx="26.4" cy="16" r="4.1" fill="none" stroke="rgb(0,147,98)" stroke-width="2.6"/></svg><span class="zlw">looot</span></a><a class="zpb" href="https://looot.ai" target="_blank" rel="noopener noreferrer">Build your own</a></div></div>`;
 }
 
 function viewBlocks(d: Dossier, v: CityView): { section: Section; blocks: Block[] }[] {
@@ -118,6 +128,18 @@ function countOf(blocks: Block[]): number {
   return first ? itemsOf(first) : 0;
 }
 
+/** How many the run found for that same first list, when the list shows only some (accounts, rivals). */
+function totalOf(blocks: Block[]): number | undefined {
+  const first = blocks.find((b) => itemsOf(b) > 0);
+  const t = first && (first.kind === "table" || first.kind === "cards") ? first.total : undefined;
+  return t !== undefined && t > itemsOf(first!) ? t : undefined;
+}
+
+/** The menu badge: "shown/total" when the run found more than the list shows, else the count. */
+export function badgeText(shown: number, total?: number): string {
+  return total !== undefined && total > shown ? `${shown}/${total}` : String(shown);
+}
+
 const secHtml = (title: string, k: string, body: string, id = "") => `<div class="sec"${id ? ` id="${id}"` : ""}><div class="sech"><h3>${e(title)}</h3>${k ? `<span class="k">${e(k)}</span>` : ""}</div>${body}</div>`;
 const vhead = (v: { id: string; label: string; group: string }) => `<section class="view" data-view="${v.id}" data-title="${e(v.label)}" data-group="${e(v.group)}"><div class="vhead"><div><div class="kicker">${e(v.group)}</div><h1>${e(v.label)}</h1></div></div>`;
 
@@ -136,6 +158,34 @@ function viewHtml(d: Dossier, v: CityView): string {
   return `${vhead(v)}${link}${body}${extra}</section>`;
 }
 
+/** Fills {company} and {viewId} counts. Any count that is 0 or missing gives the item's whatEmpty, never a made-up number. */
+export function osText(i: OsItem, company: string, counts: Map<string, number>): string {
+  let missing = false;
+  const t = i.what.replace(/\{(\w+)\}/g, (_, k: string) => {
+    if (k === "company") return company;
+    const n = counts.get(k);
+    if (!n) missing = true;
+    return String(n ?? 0);
+  });
+  return (missing ? i.whatEmpty : t).split("{company}").join(company);
+}
+
+/** The "Your looot GTM OS" view: one card per item with what it would do for this company and a Get it built prompt. */
+function osHtml(brand: string, domain: string, counts: Map<string, number>): string {
+  const cards = GTM_OS.items.map((i) => {
+    const prompt = i.prompt.split("{domain}").join(domain).split("{label}").join(i.label);
+    return `<article class="card zg-card" id="os-${e(i.key)}"><div class="zg-card-h"><div><h4>${e(i.label)}</h4></div><span class="chip zg-tag">Coming soon</span></div><p>${e(osText(i, brand, counts))}</p><div><button type="button" class="za cp" data-copy="${e(prompt)}">${e(GTM_OS.button)}</button></div></article>`;
+  }).join("");
+  const n = GTM_OS.next;
+  const next = `<div class="sec" id="os-${e(n.key)}"><div class="sech"><h3>${e(n.label)}</h3><span class="k">${e(n.stack)}</span></div><p>${e(n.copy)}</p><div class="zacts"><a class="za" href="${e(n.deploy.url)}" target="_blank" rel="noopener noreferrer">${e(n.deploy.label)}</a><a class="za" href="${e(n.supabase.url)}" target="_blank" rel="noopener noreferrer">${e(n.supabase.label)}</a><button type="button" class="za cp" data-copy="${e(n.prompt.split("{domain}").join(domain))}">Tell your agent</button></div></div>`;
+  return `${vhead({ id: "os", label: GTM_OS.title, group: GTM_OS.title })}<div class="sec"><p class="src">${e(GTM_OS.note.split("{company}").join(brand))}</p><div class="zg-cards">${cards}</div></div>${next}</section>`;
+}
+
+/** Export to CRM: copies the prompt for the user's agent. Private page only: a shared or public page never has it. */
+export function crmButton(d: Pick<Dossier, "public" | "domain">): string {
+  return d.public ? "" : `<button type="button" class="za cp zcrm" data-copy="${e(crmPrompt(d.domain))}">Export to CRM</button>`;
+}
+
 function paidHtml(): string {
   const items = PAID_ADDS.map((p) => `<li>${e(p.what)}<br><code>${e(p.command)}</code> <button type="button" class="cp xexp-b" data-copy="${e(p.command)}">Copy</button></li>`).join("");
   const soon = PAID_FEATURES.filter((f) => f.state === "coming-soon");
@@ -144,7 +194,7 @@ function paidHtml(): string {
 }
 
 /** A menu entry: a view link with its count, a greyed unlock item that copies its prompt, or a share or copy action. */
-function menuEntry(i: MenuItem, domain: string, isPublic: boolean, counts: Map<string, number>): string {
+function menuEntry(i: MenuItem, domain: string, isPublic: boolean, counts: Map<string, number>, totals: Map<string, number | undefined>): string {
   const icon = ICONS[i.key] ?? ICONS[i.view ?? ""] ?? "";
   const prompt = i.prompt.split("{domain}").join(domain);
   if (i.state === "unlock") return `<button type="button" class="zun cp" data-copy="${e(prompt)}" data-tip="Greyed in the free run. Click to copy the request for your agent">${icon}<span class="mt">${e(i.label)}</span>${ICONS._lock ?? ""}</button>`;
@@ -152,7 +202,7 @@ function menuEntry(i: MenuItem, domain: string, isPublic: boolean, counts: Map<s
   if (i.action === "share") return isPublic ? `<button type="button" class="znb zshare">${icon}<span class="mt">${e(i.label)}</span></button>` : "";
   if (!i.view) return "";
   const n = counts.get(i.view);
-  return `<a href="#${i.view}">${icon}<span class="mt">${e(i.label)}${i.sub ? `<small class="zsub">${e(i.sub)}</small>` : ""}</span>${n ? `<span class="n">${n}</span>` : ""}</a>`;
+  return `<a href="#${i.view}">${icon}<span class="mt">${e(i.label)}${i.sub ? `<small class="zsub">${e(i.sub)}</small>` : ""}</span>${n ? `<span class="n">${badgeText(n, totals.get(i.view))}</span>` : ""}</a>`;
 }
 
 /** Fills the {{key}} slots of the extracted city. Every value is escaped; a missing one is empty. */
@@ -162,9 +212,12 @@ function fill(tpl: string, m: Record<string, string>): string {
 
 const tableOf = (d: Dossier, sid: string, cap?: RegExp) => d.sections.find((s) => s.id === sid)?.blocks.find((b): b is Extract<Block, { kind: "table" }> => b.kind === "table" && (!cap || cap.test(b.caption ?? "")));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-11-23" as "23 Nov", as on David's page. */
+const dayLabel = (iso: string) => { const [, mo, dd] = iso.split("-").map(Number); return mo && dd ? `${dd} ${MONTHS[mo - 1]}` : iso; };
 
 /** The city's labels from this run: account and rival names, counts and the not-yet buildings. */
-function cityValues(d: Dossier, brand: string, domain: string, counts: Map<string, number>): Record<string, string> {
+function cityValues(d: Dossier, brand: string, domain: string, counts: Map<string, number>, foundAccounts?: number): Record<string, string> {
   const m: Record<string, string> = {};
   const pub = d.public;
   const b = (k: string, h: string, t: string, s: string) => { m[`b.${k}.h`] = `#${h}`; m[`b.${k}.t`] = t; m[`b.${k}.s`] = s; m[`b.${k}.i`] = t === "Open lot" ? "+" : pub && /^(acct|rv|home)/.test(k) ? (k.startsWith("acct") ? "A" : "R") : (t.trim()[0] ?? "").toUpperCase(); };
@@ -200,7 +253,8 @@ function cityValues(d: Dossier, brand: string, domain: string, counts: Map<strin
   b("runlog", "runlog", "Run log and cost", spend ? `${spend} spent${calls ? ` on ${calls} paid calls` : ""}.` : "What the run cost.");
   b("sources", "runlog", "Sources", calls ? `${calls} paid looot calls behind the map.` : "The looot calls behind the map.");
   c("sources", "runlog", "Sources", calls ? `${calls} looot calls` : "The run log");
-  c("key", "runlog", "One looot key", r ? `${plural(r.rows.length, "section")} on one key${spend ? `, ${spend}` : ""}` : "Every call on one key");
+  const L = d.ledger;
+  c("key", "runlog", "One looot key", L && L.runs ? `${plural(L.providers, "provider")}, ${plural(L.runs, "run")} on ${dayLabel(L.day)}` : r ? `${plural(r.rows.length, "section")} on one key${spend ? `, ${spend}` : ""}` : "Every call on one key");
   const seo = counts.get("seo") ?? 0;
   b("search", "seo", "Search plaza", seo ? `${plural(seo, "search row")} from Google.` : "No search data in this run.");
   c("search", "seo", "Search plaza", seo ? plural(seo, "search row") : "No search data");
@@ -222,8 +276,10 @@ function cityValues(d: Dossier, brand: string, domain: string, counts: Map<strin
   c("news", "influencers", "News", social ? "Posts from you and your rivals" : "No posts in this run");
   const nAcc = counts.get("targets") ?? accounts.length;
   c("buyers", "targets", "Buyers", nAcc ? `${plural(nAcc, "target account")}` : "No target accounts");
-  m["x.accounts"] = String(nAcc);
-  m["x.accountsCap"] = nAcc === 1 ? "account found" : "accounts found";
+  // "found" counts every account the run found (before the ICP filter), as on David's map (20 found, 5 shown in the menu as 5/20).
+  const found = foundAccounts ?? nAcc;
+  m["x.accounts"] = String(found);
+  m["x.accountsCap"] = found === 1 ? "account found" : "accounts found";
   const red = counts.get("reddit") ?? 0;
   b("reddit", "reddit", "Reddit", red ? `${plural(red, "mention")} read.` : "No mentions in this run.");
   c("reddit", "reddit", "Reddit", red ? plural(red, "mention") : "No mentions");
@@ -234,27 +290,33 @@ function cityValues(d: Dossier, brand: string, domain: string, counts: Map<strin
     const feat = PAID_FEATURES.find((x) => x.key === f);
     const soon = feat?.state === "coming-soon";
     m[`f.${f}.h`] = "#paid";
-    m[`f.${f}.t`] = soon ? feat!.label : "Room to grow";
-    m[`f.${f}.s`] = soon ? "Coming soon" : "See what a paid run adds";
+    m[`f.${f}.t`] = soon ? feat!.label : feat?.district ?? "Room to grow";
+    m[`f.${f}.s`] = soon ? "Coming soon" : feat?.district ? LOCKED_LINE : "See what a paid run adds";
   }
   m["x.aria"] = `Isometric city map of ${brand}. Each building opens a section.`;
   return m;
 }
 
 /** Builds the whole city page from an assembled dossier. Pure, no file or network access. */
-export function renderCity(d: Dossier): string {
-  const brand = d.public ? "Your brand" : d.brand || d.domain;
-  const domain = d.public ? "yourdomain.com" : d.domain;
+export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's own run: real brand and domain, people still masked. */ showBrand?: boolean } = {}): string {
+  const real = !d.public || o.showBrand === true;
+  const brand = real ? d.brand || d.domain : "Your brand";
+  const domain = real ? d.domain : "yourdomain.com";
   const counts = new Map(CITY_VIEWS.map((v) => [v.id, countOf(viewBlocks(d, v).flatMap((p) => p.blocks))]));
+  const totals = new Map(CITY_VIEWS.map((v) => [v.id, totalOf(viewBlocks(d, v).flatMap((p) => p.blocks))]));
   const committees = d.sections.find((x) => x.id === "committee");
   if (committees) counts.set("committees", countOf(committees.blocks));
   const nav = `<div class="ngroup solo"><div class="nav"><a href="#overview">${ICONS.overview ?? ""}<span class="mt">${e(brand)} City</span></a></div></div>` +
-    MENU.map((c) => `<div class="ngroup zcat"><h6>${e(c.name)}</h6><div class="nav">${c.items.map((i) => menuEntry(i, domain, d.public, counts)).join("")}</div></div>`).join("") +
+    MENU.map((c) => `<div class="ngroup zcat"><h6>${e(c.name)}</h6><div class="nav">${c.items.map((i) => menuEntry(i, domain, d.public, counts, totals)).join("")}</div></div>`).join("") +
+    `<div class="ngroup zcat"><h6>${e(GTM_OS.title)}</h6><div class="nav">${GTM_OS.items.map((i) => `<a href="#os">${ICONS._lock ?? ""}<span class="mt">${e(i.label)}<small class="zsub">Coming soon</small></span></a>`).join("")}<a href="#os">${ICONS.overview ?? ""}<span class="mt">${e(GTM_OS.next.label)}</span></a></div></div>` +
     `<div class="ngroup zcat"><h6>More credit</h6><div class="nav"><a href="#paid">${ICONS.runlog ?? ""}<span class="mt">What a paid run adds</span></a></div></div>`;
   const date = (d.generatedAt ?? "").slice(0, 10);
-  const side = `<aside class="side" aria-label="Sections"><div class="brand"><span class="logo"><span class="lgt" aria-hidden="true">${e((brand.trim()[0] ?? "Z").toUpperCase())}</span></span><b>${e(brand)}</b><small>looot Zeus, ${d.placeholder ? "example run" : "free run"}</small></div>${nav}<div class="sfoot">Built <b>${e(date)}</b><br>Data from looot runs. Each section says where it came from.</div></aside>`;
+  // The real logo, fetched by the run's safe asset fetch (assets.ts) and embedded as a data: URI. Never on a public page.
+  const logoSrc = d.public ? undefined : logoData(d.domain);
+  const logo = logoSrc && /^data:image\/(png|jpeg|gif|webp|x-icon|vnd\.microsoft\.icon);base64,[A-Za-z0-9+/=]+$/.test(logoSrc) ? logoSrc : undefined;
+  const side = `<aside class="side" aria-label="Sections"><div class="brand"><span class="logo">${logo ? `<img src="${e(logo)}" alt="" width="28" height="28">` : `<span class="lgt" aria-hidden="true">${e((brand.trim()[0] ?? "Z").toUpperCase())}</span>`}</span><b>${e(brand)}</b><small>looot Zeus, ${d.placeholder ? "example run" : "free run"}</small></div>${nav}<div class="sfoot">Built <b>${e(date)}</b><br>Data from looot runs. Each section says where it came from.</div></aside>`;
   // Buildings Zeus does not have yet are greyed and open the paid list, as David greys locked ones.
-  const iso = fill(ISO_SVG, cityValues(d, brand, domain, counts)).replace(/<a class="(is[al][^"]*)" href="#paid"/g, '<a class="$1 zoff" href="#paid"');
+  const iso = fill(ISO_SVG, cityValues(d, brand, domain, counts, totals.get("targets"))).replace(/<a class="(is[al][^"]*)" href="#paid"/g, '<a class="$1 zoff" href="#paid"');
   const overStats = (d.overview?.blocks.find((x): x is Extract<Block, { kind: "stat" }> => x.kind === "stat")?.items ?? []).slice(0, 8);
   const VIEW_OF: Record<string, string> = { buyers: "targets", signals: "targets", ads: "competitive", social: "influencers", seo: "seo", receipt: "runlog" };
   const kgrid = overStats.length ? secHtml("The run in numbers", "", `<div class="kgrid">${overStats.map((s) => `<a class="kc" href="#${VIEW_OF[(s as { view?: string }).view ?? ""] ?? "overview"}"><div class="kc-top"><span class="kc-l">${e(s.label)}</span></div><div class="kc-mid"><span class="kval">${e(s.value)}</span></div><div class="kc-viz"><div class="kfoot">${e(s.hint ?? "")}</div></div></a>`).join("")}</div>`) : "";
@@ -262,7 +324,7 @@ export function renderCity(d: Dossier): string {
   const next = tableOf(d, "summary", /^Next steps/);
   const nextHtml = next && next.rows.length ? secHtml("Next steps your agent can offer", "nothing runs without your yes", renderBlock({ ...next, caption: undefined }, d.public)) : "";
   const paidCard = `<div class="sec ztop"><div class="ztop-m"><h3>What a paid run adds</h3><p>More accounts, people data, phones and a weekly re-run. Every command prices its calls first and spends nothing without your yes.</p></div><a class="ztop-b" href="#paid">See the list</a></div>`;
-  const overview = `<section class="view" data-view="overview" data-title="${e(brand)} City" data-group="Overview"><div class="vhead"><div><h1>${e(brand)} City</h1></div></div>${d.placeholder ? `<div class="note">${e(d.placeholder)}</div>` : ""}${agentPill()}${actionsHtml(d)}<div class="sec iso-sec"><div class="sech"><h3>${e(brand)} City</h3><span class="k">hover a building, click to open it</span></div><div class="iso" data-iso data-roads="${e(JSON.stringify(ISO.roads))}">${iso}<div class="iso-tip" role="tooltip" hidden><div><b></b><span></span></div></div></div></div>${flow}${kgrid}${paidCard}${nextHtml}</section>`;
+  const overview = `<section class="view" data-view="overview" data-title="${e(brand)} City" data-group="Overview"><div class="vhead"><div><h1>${e(brand)} City</h1></div></div>${d.placeholder ? `<div class="note zslim" title="${e(d.placeholder)}">${e(d.placeholder)}</div>` : ""}${agentPill(actionsHtml(d) + crmButton(d))}<div class="sec iso-sec"><div class="sech"><h3>${e(brand)} City</h3><span class="k">hover a building, click to open it</span></div><div class="iso" data-iso data-roads="${e(JSON.stringify(ISO.roads))}">${iso}<div class="iso-tip" role="tooltip" hidden><div><b></b><span></span></div></div></div></div>${flow}${kgrid}${paidCard}${nextHtml}</section>`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${e(brand)} City</title><style>${CITY_CSS}</style></head>
 <body><div class="scrim"></div>
@@ -270,6 +332,7 @@ export function renderCity(d: Dossier): string {
 <main><div class="top"><div class="wrap"><button class="menu" type="button" aria-label="Open menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="tl"><div class="crumb" id="vtitle">${e(brand)} City</div><div class="hl" id="vgroup">Overview</div></div><span class="date">${e(domain)}${date ? `, ${e(date)}` : ""}</span></div></div><div class="wrap">
 ${overview}
 ${CITY_VIEWS.map((v) => viewHtml(d, v)).join("\n")}
+${osHtml(brand, domain, counts)}
 ${paidHtml()}
 </div></main></div><script>${CITY_JS}</script></body></html>
 `;

@@ -93,6 +93,17 @@
         "capStopped": {
           "type": "boolean"
         },
+        "stoppedBy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason", "text"],
+          "properties": {
+            "reason": { "type": "string", "enum": ["spend_limit"] },
+            "period": { "type": "string" },
+            "text": { "type": "string" }
+          },
+          "description": "Set when the workspace spend limit (looot budget_exceeded) stopped the run"
+        },
         "priceSource": {
           "type": "string"
         },
@@ -143,9 +154,10 @@
           "capScope": {
             "type": "string",
             "enum": [
-              "section"
+              "section",
+              "limit"
             ],
-            "description": "Set when the section stopped at its own hard cap (runs or USD) and the run went on"
+            "description": "section: the section stopped at its own hard cap (runs or USD) and the run went on. limit: the workspace spend limit stopped the run"
           },
           "calls": {
             "type": "integer",

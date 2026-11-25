@@ -26,6 +26,8 @@ export interface RunState {
   schemaVersion: "1";
   mode: "live" | "demo";
   placeholder?: string;
+  /** The run was --public or --safe-demo: export --crm never writes contacts for it. */
+  safe?: boolean;
   cfg: GtmConfig;
   /** Module ids in the order the run had them. */
   modules: string[];

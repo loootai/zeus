@@ -105,10 +105,10 @@ export type Block =
   | { kind: "text"; text: string }
   | { kind: "kv"; items: { label: string; value: string; pii?: Pii }[] }
   | { kind: "list"; items: string[] }
-  | { kind: "table"; columns: Column[]; rows: Record<string, unknown>[]; caption?: string }
+  | { kind: "table"; columns: Column[]; rows: Record<string, unknown>[]; caption?: string; /** How many the run found when the table shows only some of them (the menu reads shown/total). */ total?: number }
   | { kind: "stat"; items: StatItem[] }
   | { kind: "note"; text: string }
-  | { kind: "cards"; items: Card[]; caption?: string; empty?: string }
+  | { kind: "cards"; items: Card[]; caption?: string; empty?: string; /** How many the run found when the cards show only some of them (the menu reads shown/total). */ total?: number }
   | { kind: "bars"; items: Bar[]; caption?: string; max?: number }
   | { kind: "committee"; items: CommitteeCard[]; caption?: string }
   /** A button that copies a command which fetches more, with its quoted price. */

@@ -13,6 +13,7 @@ import { DEFAULT_BASE_URL } from "./client.js";
 import { resolveCaps } from "./capDefaults.js";
 import type { SectionLimit } from "./cap.js";
 import { round6, writeFile } from "./util.js";
+import { ruleFor, ruleMayBlockText, type WorkspaceRule } from "./guardrails.js";
 
 export interface PricedLine {
   module: string;
@@ -39,6 +40,8 @@ export interface ModuleQuoteRow {
   skip?: string;
   /** This section's hard cap, when it has one. */
   cap?: SectionLimit;
+  /** Steps an enforce workspace guardrail may refuse. Still priced; the gateway decides at run time. */
+  mayBlock?: { job: string; rule: string }[];
   /** Worst case with the section's cap applied: the lower of the worst case, its USD cap and runs times its dearest call. */
   worstCapped: number;
   /** Expected cost with the section's USD cap applied (a section never costs more than its cap). */
@@ -60,6 +63,8 @@ export interface Quote {
   priceSource: string;
   /** True when the brief turned LinkedIn steps off, so no LinkedIn call is quoted. */
   linkedinOff?: boolean;
+  /** The workspace guardrails read before the quote. The run skips every step they block. */
+  workspaceRule?: WorkspaceRule;
 }
 
 export interface LivePrice {
@@ -117,10 +122,16 @@ export function unitPrice(jobId: string, book: PriceBook): number {
   return typeof liveUnit === "number" && liveUnit > j.typicalUsd ? liveUnit : j.typicalUsd;
 }
 
-export function priceModule(m: GtmModule, cfg: GtmConfig, book: PriceBook): ModuleQuoteRow {
+export function priceModule(m: GtmModule, cfg: GtmConfig, book: PriceBook, rule?: WorkspaceRule | null): ModuleQuoteRow {
   const q = m.quote(cfg);
+  const mayBlock: { job: string; rule: string }[] = [];
   const lines: PricedLine[] = q.lines
     .filter((l) => l.calls > 0)
+    .filter((l) => {
+      const r = ruleFor(l.job, rule);
+      if (r) mayBlock.push({ job: l.job, rule: r });
+      return true;
+    })
     .map((l) => {
       const j = job(l.job);
       const unit = unitPrice(l.job, book);
@@ -151,13 +162,15 @@ export function priceModule(m: GtmModule, cfg: GtmConfig, book: PriceBook): Modu
     expectedCapped: round6(lines.reduce((n, l) => n + l.expected, 0)),
     lines,
     ...(q.skip ? { skip: q.skip } : {}),
+    ...(mayBlock.length > 0 ? { mayBlock } : {}),
   };
 }
 
-export function buildQuote(mods: GtmModule[], cfg: GtmConfig, book: PriceBook, opts: { skipDone?: Set<string> } = {}): Quote {
+export function buildQuote(mods: GtmModule[], cfg: GtmConfig, book: PriceBook, opts: { skipDone?: Set<string>; rule?: WorkspaceRule | null } = {}): Quote {
   const caps = resolveCaps(cfg);
+  const rule = opts.rule ?? null;
   const rows = mods.map((m) => {
-    let r = priceModule(m, cfg, book);
+    let r = priceModule(m, cfg, book, rule);
     if (opts.skipDone?.has(m.id)) r = { ...r, calls: 0, expected: 0, worst: 0, worstCapped: 0, expectedCapped: 0, lines: [], skip: "done at init" };
     const sec = caps.sections[m.id];
     if (!sec) return r;
@@ -178,6 +191,7 @@ export function buildQuote(mods: GtmModule[], cfg: GtmConfig, book: PriceBook, o
     worst: round6(rows.reduce((n, r) => n + r.worst, 0)),
     priceSource: book.source,
     ...(cfg.linkedin === false ? { linkedinOff: true } : {}),
+    ...(rule ? { workspaceRule: rule } : {}),
   };
 }
 
@@ -194,7 +208,8 @@ export function formatQuote(q: Quote, cap?: number): string {
       continue;
     }
     r.lines.forEach((l, i) => {
-      const tag = l.singleProvider ? "one provider, no fallback" : "";
+      const mb = r.mayBlock?.find((x) => x.job === l.job);
+      const tag = [l.singleProvider ? "one provider, no fallback" : "", mb ? ruleMayBlockText(mb.rule) : ""].filter(Boolean).join("; ");
       out.push(`${pad(i === 0 ? r.module : "", 13)}${pad(l.job, 52)}${lpad(String(l.calls), 6)}${lpad(`$${l.expected.toFixed(4)}`, 11)}${lpad(`$${l.worst.toFixed(4)}`, 12)}  ${tag}`.trimEnd());
     });
   }
@@ -210,6 +225,7 @@ export function formatQuote(q: Quote, cap?: number): string {
     out.push(`  ${pad("whole run", 13)}${pad(q.totalRuns !== undefined ? `${q.totalRuns} paid calls` : "no call limit", 18)}${pad(q.totalUsd !== undefined ? `$${q.totalUsd.toFixed(2)}` : "no USD limit", 14)}worst case under all caps $${q.worstCapped.toFixed(2)}`);
   }
   if (q.linkedinOff) out.push("", "LinkedIn steps off: no LinkedIn call is quoted or made.");
+  if (q.workspaceRule) out.push("", `Your workspace guardrails (enforce) name ${q.workspaceRule.blockedPlatforms.join(", ")}. Steps marked "may be blocked" are still quoted: looot decides per provider when the run starts, and a refused step is skipped at $0.`);
   out.push("");
   out.push(`Prices from ${q.priceSource}.`);
   out.push("Expected uses the typical price per job. Worst case is every call at its own ceiling, the most looot can hold for it.");

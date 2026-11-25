@@ -15,8 +15,8 @@ test("the city pill is the agent one-liner; npx is only the developer note", () 
 });
 
 test("no page or README says 'Made by one command' with the npx command any more", () => {
-  for (const f of ["README.md", "city/index.html", "build/make_hf.py", "cli/src/city/index.ts"]) {
-    if (!existsSync(join(repo, f))) continue; // the public repo has only cli/
+  // The public loootai/zeus repo has no city/ or build/ folder: check the files that exist.
+  for (const f of ["README.md", "city/index.html", "build/make_hf.py", "cli/src/city/index.ts"].filter((f) => existsSync(join(repo, f)))) {
     const t = readFileSync(join(repo, f), "utf8");
     assert.doesNotMatch(t, /Made by one command/, f);
     assert.match(t, /run zeus\.looot\.ai for mycompany\.com/, f);

@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { resolveCaps, unknownCapSections } from "./capDefaults.js";
 import { CapLedger, CapReached, checkQuoteAgainstCap, suggestCap } from "./cap.js";
-import { clientFromEnv, LoootError, type CallRecord, type JobRunner } from "./client.js";
+import { clientFromEnv, readWorkspaceRule, LoootError, SPEND_LIMIT_URL, limitName, type CallRecord, type JobRunner, type SpendLimitRead } from "./client.js";
 import { configToYaml, loadConfig, normalizeConfig, type Depth, type GtmConfig } from "./config.js";
 import { placeholderReceipt } from "./demo.js";
 import { DirectRunner } from "./direct.js";
@@ -14,11 +14,13 @@ import { assemble } from "./dossier/index.js";
 import { renderHtml } from "./dossier/html.js";
 import { renderCity } from "./city/index.js";
 import { renderMarkdown } from "./dossier/md.js";
-import { writeArtifacts } from "./exports.js";
+import { withCommitteePhones, writeArtifacts } from "./exports.js";
+import { CRM_FORMATS, IMPORT_HOW, writeCrm, type CrmFormat } from "./crm.js";
 import { MODULES, runPipeline, stopLine, type GtmModule, type ModuleResult } from "./modules/index.js";
 import { PAGE_KINDS, type IntakeOut } from "./modules/intake.js";
 import { collectAssets, loadLogos } from "./assets.js";
 import { loadFixture } from "./modules/fixture.js";
+import type { WorkspaceRule } from "./guardrails.js";
 import { buildQuote, formatQuote, loadPriceBook, type Quote } from "./quote.js";
 import { buildReceipt, receiptMarkdown, validateReceipt, type Receipt } from "./receipt.js";
 import { PKG_ROOT, usd, writeFile } from "./util.js";
@@ -38,6 +40,7 @@ import { addedLine, MORE_WHAT, mergeOut, mergeReceipt, moreQuote, readState, SPE
 import { rulePlays } from "./modules/synthesis.js";
 import { privatePaths, removePaths, UnsafeDeleteError } from "./deleteLocal.js";
 import { commandFor, costText, DEFAULT_PORT, pendingRequests, readRequests, REQUESTS_FILE, setStatus, startServer, writeAgentHints } from "./requests.js";
+import { importToSupabase, redact, supabaseFromEnv, supabaseRowsOf } from "./supabase.js";
 import { applyRivals, assumeRivals, needsAny, rivalsModule, rivalsNeeded, type RivalsOut } from "./modules/rivals.js";
 
 /** Thrown instead of process.exit. cli.ts prints the message and exits with the code. */
@@ -116,7 +119,7 @@ export function writeAll(outDir: string, o: { cfg: GtmConfig; mods: GtmModule[];
   const d = safe ? safeDossier(built) : built;
   // What `looot-zeus more` reads to fetch more into this folder.
   const { more: _hints, ...cleanCfg } = o.cfg as GtmConfig & { more?: unknown };
-  writeState(outDir, { schemaVersion: "1", mode: o.receipt.run.mode, ...(o.placeholder ? { placeholder: o.placeholder } : {}), cfg: cleanCfg as GtmConfig, modules: o.mods.map((m) => m.id), results: Object.fromEntries([...o.results].map(([id, r]) => [id, { status: r.status, summary: r.summary, out: r.out }])), ...(o.pages ? { pages: o.pages } : {}), ...(o.pulls ? { pulls: o.pulls } : {}) });
+  writeState(outDir, { schemaVersion: "1", mode: o.receipt.run.mode, ...(o.placeholder ? { placeholder: o.placeholder } : {}), ...(safe ? { safe: true } : {}), cfg: cleanCfg as GtmConfig, modules: o.mods.map((m) => m.id), results: Object.fromEntries([...o.results].map(([id, r]) => [id, { status: r.status, summary: r.summary, out: r.out }])), ...(o.pages ? { pages: o.pages } : {}), ...(o.pulls ? { pulls: o.pulls } : {}) });
   // A safe page names no target account or rival: Account A, B, C and Rival 1, 2, 3, checked before writing.
   const tp = safe ? thirdPartySwaps(buildSnapshot(o.cfg, outputsOf(o.results), o.receipt)) : [];
   const page = (f: string, t: string) => (safe ? scrubThirdParties(f, t, tp) : t);
@@ -313,7 +316,7 @@ export async function cmdInit(domainArg: string | undefined, a: Args, outDir: st
   log(`Reading ${PAGE_KINDS.length} pages of ${domain} on looot costs about ${usd(q.expected)}, at most ${usd(most)}. No paid call was made.`);
   const next = nextCommand("init", domain, cap, {}, outDir);
   const client = (deps.client ?? clientFromEnv)();
-  if (!client) fail(`LOOOT_TOKEN is not set. Nothing was spent. Create an agent token at looot.ai (Settings, Agent tokens), then run this.\n  export LOOOT_TOKEN=...\n  ${next}\nOr run looot-zeus init ${domain} --direct to read the pages without looot, no key and no charge.`, 2);
+  if (!client) fail(`LOOOT_TOKEN is not set. Nothing was spent. No looot account yet? Sign up at https://looot.ai/auth/sign-up ($2 free credit). Then sign in with npx -y looot@latest login (a browser page to approve), or create an agent token at looot.ai (Settings, Agent tokens) and set LOOOT_TOKEN, then run this.\n  export LOOOT_TOKEN=...\n  ${next}\nOr run looot-zeus init ${domain} --direct to read the pages without looot, no key and no charge.`, 2);
   if (!(await confirmPaid(`Read them for at most ${usd(most)}?`, next, a, deps))) return null;
   return initDomain(domain, { runner: client, direct: false, cap, outDir, configPath, log });
 }
@@ -329,20 +332,60 @@ export function writeCandidates(outDir: string, out: RivalsOut): void {
  * company.similar call on your own domain, so that call is quoted first and the other modules are
  * priced on 3 rivals (and 3 seeds). Returns the module to run first, or undefined.
  */
-async function getQuote(cfg: GtmConfig, mods: GtmModule[], offline: boolean): Promise<{ q: Quote; rivals?: GtmModule }> {
+export async function getQuote(cfg: GtmConfig, mods: GtmModule[], offline: boolean, rule: WorkspaceRule | null = null): Promise<{ q: Quote; rivals?: GtmModule }> {
   const unknown = unknownCapSections(resolveCaps(cfg), MODULES.map((m) => m.id));
   if (unknown.length > 0) console.error(`Warning: caps.sections has ${unknown.map((u) => `"${u}"`).join(", ")}, not a module. Modules: ${MODULES.map((m) => m.id).join(", ")}. That cap does nothing.`);
   const book = await loadPriceBook({ cacheDir: ".looot-zeus", offline });
   const need = rivalsNeeded(cfg, mods.map((m) => m.id));
-  if (!needsAny(need)) return { q: buildQuote(mods, cfg, book, { skipDone: new Set(["intake"]) }) };
+  if (!needsAny(need)) return { q: buildQuote(mods, cfg, book, { skipDone: new Set(["intake"]), rule }) };
   const rivals = rivalsModule(need);
-  return { q: buildQuote([rivals, ...mods], assumeRivals(cfg, need), book, { skipDone: new Set(["intake"]) }), rivals };
+  return { q: buildQuote([rivals, ...mods], assumeRivals(cfg, need), book, { skipDone: new Set(["intake"]), rule }), rivals };
 }
 
-export async function cmdQuote(a: Args, configPath: string): Promise<void> {
+/** Reads the workspace guardrails (free) so the quote can mark steps they may refuse. Never changes the brief. Prints one line. Never throws. */
+async function workspaceRule(cfg: GtmConfig, offline: boolean, client: (() => JobRunner | null) | undefined, log: Log): Promise<{ cfg: GtmConfig; rule: WorkspaceRule | null }> {
+  const c = (client ?? clientFromEnv)() as (JobRunner & { effectiveGuardrails?: () => Promise<unknown> }) | null;
+  const read = await readWorkspaceRule(c && typeof c.effectiveGuardrails === "function" ? { effectiveGuardrails: () => c.effectiveGuardrails!() } : null, offline);
+  log(read.note);
+  return { cfg, rule: read.rule };
+}
+
+/**
+ * The spend-limit check in front of a paid run. Refuses when a workspace spend limit has less left than the most the run
+ * can cost (the worst case under every cap, and never above --cap), and offers a smaller cap when the expected cost fits.
+ * A limit that cannot be read never refuses: the run goes on and stops at the first refusal.
+ */
+export function spendLimitGate(read: SpendLimitRead, q: Pick<Quote, "expectedCapped" | "worstCapped">, cap: number): { ok: boolean; message: string } {
+  const most = Math.min(q.worstCapped, cap);
+  if (read.state !== "below" || read.availableUsd === undefined || read.availableUsd >= most) return { ok: true, message: read.note };
+  const left = read.availableUsd;
+  const name = limitName(read.period);
+  const leftText = left >= 0.01 ? `$${left.toFixed(2)}` : `$${left.toFixed(4)}`;
+  const smaller = Math.floor(left * 100) / 100;
+  const offer = smaller > 0 && checkQuoteAgainstCap(q.expectedCapped, q.worstCapped, smaller).ok
+    ? ` Or run a smaller one inside what is left: add --cap ${smaller} (the run stops at that cap with a partial dossier).`
+    : "";
+  return { ok: false, message: `Refused. Your ${name} has ${leftText} left and this run can cost up to $${most.toFixed(2)}, so looot would refuse most of its calls. Nothing ran and nothing was spent. Raise the limit at ${SPEND_LIMIT_URL} (Budgets) or wait for it to reset, then run again.${offer}` };
+}
+
+/** Reads the workspace spend limits (free) and refuses the run when they cannot hold its worst case. Prints one line. */
+async function checkSpendLimit(client: JobRunner, q: Quote, cap: number, log: Log): Promise<SpendLimitRead | null> {
+  const c = client as JobRunner & { spendLimit?: (worstUsd: number) => Promise<SpendLimitRead> };
+  if (typeof c.spendLimit !== "function") return null;
+  const read = await c.spendLimit(Math.min(q.worstCapped, cap));
+  const gate = spendLimitGate(read, q, cap);
+  if (read.state === "below") log(read.note);
+  // The refusal is the exit message, so a caller without a log (the hosted page) still shows it.
+  if (!gate.ok) fail(gate.message, 3);
+  log(gate.message);
+  return read;
+}
+
+export async function cmdQuote(a: Args, configPath: string, deps: Pick<PaidDeps, "client"> = {}): Promise<void> {
   const cfg = loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true });
   const mods = selectModules(a.only as string | undefined);
-  const { q } = await getQuote(cfg, mods, a.offline === true);
+  const ws = await workspaceRule(cfg, a.offline === true, deps.client, console.log);
+  const { q } = await getQuote(ws.cfg, mods, a.offline === true, ws.rule);
   const cap = a.cap === undefined ? undefined : capOf(a, 10);
   console.log(`Quote for ${cfg.domain}, depth ${cfg.depth}. No paid call was made.\n`);
   console.log(formatQuote(q, cap));
@@ -358,7 +401,7 @@ export async function cmdQuote(a: Args, configPath: string): Promise<void> {
  * The paid part of a run. Called only after the quote was printed and the cap check passed.
  * The ledger holds each call's ceiling before the call is made, so the run stops at the cap.
  */
-export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quote; cap: number; client: JobRunner; outDir: string; configPath: string; public: boolean; safe?: boolean; maskAccounts?: boolean; rivals?: GtmModule; log?: Log; assetsFetch?: typeof fetch }): Promise<Receipt> {
+export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quote; cap: number; client: JobRunner; outDir: string; configPath: string; public: boolean; safe?: boolean; maskAccounts?: boolean; rivals?: GtmModule; log?: Log; assetsFetch?: typeof fetch; /** The period of the spend limit read at quote time. */ limitPeriod?: string }): Promise<Receipt> {
   const log = o.log ?? console.log;
   const { mods, q, cap, client, outDir } = o;
   let cfg = o.cfg;
@@ -371,7 +414,7 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
   try {
     if (o.rivals) {
       // The brief named no rivals (or no seeds). One quoted call on your own domain fills them first.
-      first = await runPipeline({ mods: [o.rivals], cfg, quote: q, runner: client, ledger, mode: "live", outDir, onModuleEnd: (id, r) => log(moduleLine(id, r, live)), onCall: (c) => live.push(c) });
+      first = await runPipeline({ mods: [o.rivals], cfg, quote: q, runner: client, ledger, mode: "live", outDir, limitPeriod: o.limitPeriod, onModuleEnd: (id, r) => log(moduleLine(id, r, live)), onCall: (c) => live.push(c) });
       const r = first.results.get("rivals");
       const out = r?.status === "done" ? (r.out as RivalsOut) : null;
       if (out) {
@@ -384,7 +427,7 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
       }
     }
     res = await runPipeline({
-      mods, cfg, quote: q, runner: client, ledger, mode: "live", outDir,
+      mods, cfg, quote: q, runner: client, ledger, mode: "live", outDir, limitPeriod: o.limitPeriod, limitStopped: first?.limitStopped,
       preset: { intake: { out: { pages: [], config: cfg, guessed: [] }, summary: `config from ${o.configPath}` } },
       onModuleEnd: (id, r) => log(moduleLine(id, r, live)),
       onCall: (c) => live.push(c),
@@ -401,7 +444,7 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
   const results = new Map([...(first?.results ?? []), ...res.results]);
   const timings = new Map([...(first?.timings ?? []), ...[...res.timings].map(([id, t]) => [id, { startedAtMs: t.startedAtMs + shift, endedAtMs: t.endedAtMs + shift }] as const)]);
   const labels = Object.fromEntries([...(o.rivals ? [o.rivals] : []), ...mods].map((m) => [m.id, m.label]));
-  const receipt = buildReceipt({ domain: cfg.domain, mode: "live", cap, quote: q, labels, results, timings, calls, startedAt, finishedAt: res.finishedAt, capStopped: (first?.capStopped ?? false) || res.capStopped });
+  const receipt = buildReceipt({ domain: cfg.domain, mode: "live", cap, quote: q, labels, results, timings, calls, startedAt, finishedAt: res.finishedAt, capStopped: (first?.capStopped ?? false) || res.capStopped, limitStopped: res.limitStopped ?? first?.limitStopped });
   // Last week's files go to history/ before this run's files replace them.
   const prev = archivePrevious(outDir);
   if (o.assetsFetch) {
@@ -415,26 +458,29 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
   printSummary(res.results, log);
   if (changes) log(`\n${changes.total === 0 ? "Nothing changed" : `${changes.total} changes`} since the run of ${prev!.at.slice(0, 10)}. See ${join(outDir, "changes.md")}`);
   if (o.public) publicLine(outDir, log, o.maskAccounts === true);
-  log(`\n${stopLine(res)} · ${receipt.run.calls} calls · ${usd(receipt.run.charged)} new spend${receipt.run.replayedCalls ? ` · ${receipt.run.replayedCalls} replayed free` : ""} · ${ms(receipt.run.durationMs)} · ${join(outDir, "dossier.html")}`);
+  log(`\n${stopLine({ ...res, results, limitStopped: res.limitStopped ?? first?.limitStopped })} · ${receipt.run.calls} calls · ${usd(receipt.run.charged)} new spend${receipt.run.replayedCalls ? ` · ${receipt.run.replayedCalls} replayed free` : ""} · ${ms(receipt.run.durationMs)} · ${join(outDir, "dossier.html")}`);
   return receipt;
 }
 
 export async function cmdRun(a: Args, configPath: string, outDir: string, deps: PaidDeps = {}): Promise<Receipt | null> {
   const log = deps.log ?? console.log;
-  const cfg = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
+  const cfg0 = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
   const mods = selectModules(a.only as string | undefined);
   const cap = capOf(a, 10);
-  const { q, rivals } = await getQuote(cfg, mods, a.offline === true);
+  const ws = await workspaceRule(cfg0, a.offline === true, deps.client, log);
+  const cfg = ws.cfg;
+  const { q, rivals } = await getQuote(cfg, mods, a.offline === true, ws.rule);
   // The price is printed here, before the client exists and before any paid call.
   log(formatQuote(q, cap));
   const chk = checkQuoteAgainstCap(q.expectedCapped, q.worstCapped, cap);
   log(chk.message);
   if (!chk.ok) fail("", 3);
   const client = (deps.client ?? clientFromEnv)();
-  if (!client) fail("LOOOT_TOKEN is not set. Create an agent token at looot.ai (Settings, Agent tokens). To see the dossier without a key, run looot-zeus demo.", 2);
+  if (!client) fail("LOOOT_TOKEN is not set. No looot account yet? Sign up at https://looot.ai/auth/sign-up ($2 free credit). Then sign in with npx -y looot@latest login (a browser page to approve), or create an agent token at looot.ai (Settings, Agent tokens) and set LOOOT_TOKEN. To see the dossier without a key, run looot-zeus demo.", 2);
+  const limits = await checkSpendLimit(client, q, cap, log);
   const next = nextCommand("run", undefined, cap, a, outDir);
   if (!(await confirmPaid(`Run it with a cap of ${capText(cap)}?`, next, a, deps))) return null;
-  return runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
+  return runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
 }
 
 // ---- prepare: cheap discovery for the agent ---------------------------------------------------------
@@ -480,7 +526,7 @@ export async function cmdPrepare(domainArg: string | undefined, a: Args, configP
   if (!chk.ok) fail("Nothing ran and nothing was spent.", 3);
   const client = (deps.client ?? clientFromEnv)();
   const next = nextCommand("prepare", wanted, cap, a, outDir);
-  if (!client) fail(`LOOOT_TOKEN is not set. Nothing was spent. Create an agent token at looot.ai (Settings, Agent tokens), then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
+  if (!client) fail(`LOOOT_TOKEN is not set. Nothing was spent. No looot account yet? Sign up at https://looot.ai/auth/sign-up ($2 free credit). Then sign in with npx -y looot@latest login (a browser page to approve), or create an agent token at looot.ai (Settings, Agent tokens) and set LOOOT_TOKEN, then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
   if (!(await confirmPaid(`Run the rival check with a cap of ${capText(cap)}?`, next, a, deps))) return null;
   let res;
   try {
@@ -549,10 +595,12 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
     await initDomain(wanted, { runner: new DirectRunner(deps.fetch ?? fetch), direct: true, cap: 0.25, outDir, configPath, log, next: `You can edit ${configPath} and run this command again. Nothing paid has run.` });
   }
 
-  const cfg = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
+  const cfg0 = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
   const mods = selectModules(a.only as string | undefined);
   if (a.offline !== true) log("Reading live prices from looot.");
-  const { q, rivals } = await getQuote(cfg, mods, a.offline === true);
+  const ws = await workspaceRule(cfg0, a.offline === true, deps.client, log);
+  const cfg = ws.cfg;
+  const { q, rivals } = await getQuote(cfg, mods, a.offline === true, ws.rule);
   const suggested = suggestCap(q.worstCapped);
   const cap = capOf(a, suggested);
   log(`\nStep 2 of 3. The price for ${cfg.domain}, depth ${cfg.depth}. No paid call was made.\n`);
@@ -564,12 +612,13 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
 
   const next = nextCommand("run", cfg.domain, cap, a, outDir);
   const client = (deps.client ?? clientFromEnv)();
-  if (!client) fail(`LOOOT_TOKEN is not set, so the paid run cannot start. Nothing was spent. Create an agent token at looot.ai (Settings, Agent tokens), then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
+  if (!client) fail(`LOOOT_TOKEN is not set, so the paid run cannot start. Nothing was spent. No looot account yet? Sign up at https://looot.ai/auth/sign-up ($2 free credit). Then sign in with npx -y looot@latest login (a browser page to approve), or create an agent token at looot.ai (Settings, Agent tokens) and set LOOOT_TOKEN, then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
 
+  const limits = await checkSpendLimit(client, q, cap, log);
   if (!(await confirmPaid(`Run it with a cap of ${capText(cap)}?`, next, a, deps))) return null;
 
   log(`\nStep 3 of 3. Running inside a ${capText(cap)} cap.`);
-  const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
+  const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
   // In a terminal the dossier opens at the end. --no-open skips it. Tests pass their own opener.
   const tty = deps.isTTY ?? (process.stdin.isTTY === true && process.stdout.isTTY === true);
   const opener = deps.open ?? (deps.isTTY === undefined ? openFile : undefined);
@@ -642,8 +691,26 @@ export function cmdOpen(outDir: string, what?: string): void {
 
 /** `looot-zeus export --public`. A copy of the last dossier you can show anyone, in <out>/public/. */
 export function cmdExport(a: Args, outDir: string, deps: { log?: Log } = {}): void {
-  if (a.public !== true) fail("export needs --public. It writes a masked copy to <out>/public/.", 2);
+  if (a.crm === true) return crmLine(a, outDir, deps.log ?? console.log);
+  if (a.public !== true) fail("export needs --public (a masked copy in <out>/public/) or --crm (CSV files for your CRM in <out>/crm/).", 2);
   publicLine(outDir, deps.log ?? console.log, a["mask-accounts"] === true);
+}
+
+/** `looot-zeus export --crm`. Company CSV always, contacts only from a non-safe run with people. */
+function crmLine(a: Args, outDir: string, log: Log): void {
+  const format = String(a.format ?? "generic").toLowerCase();
+  if (!(CRM_FORMATS as readonly string[]).includes(format)) fail(`--format must be one of ${CRM_FORMATS.join(", ")}.`, 2);
+  const state = readState(outDir);
+  if (!state) fail(`${join(outDir, STATE_FILE)} does not exist yet. Run looot-zeus run first.`, 2);
+  const out = (id: string) => (state.results[id]?.out ?? {}) as { rows?: unknown[] };
+  const people = withCommitteePhones((out("enrich").rows ?? out("people").rows ?? []) as never[], ((state.results["committee"]?.out as { accounts?: never[] } | undefined)?.accounts ?? []));
+  const rf = join(outDir, "receipt.json");
+  const receipt = existsSync(rf) ? JSON.parse(readFileSync(rf, "utf8")) : null;
+  const safe = a.public === true || a["safe-demo"] === true || state.safe === true;
+  if (state.placeholder) log("PLACEHOLDER data: these companies and people are invented by looot-zeus demo. Do not import them into a real CRM.");
+  const r = writeCrm(outDir, format as CrmFormat, { accounts: out("accounts").rows ?? [], people, receipt: receipt && state.placeholder ? { ...receipt, placeholder: state.placeholder } : receipt, safe, contactDetails: a["contact-details"] === true });
+  log(`CRM files in ${r.dir}/: ${r.companies} companies${r.contacts ? `, ${r.contacts} contacts${a["contact-details"] === true ? "" : " (no emails or phones, add --contact-details)"}` : safe ? ", no contacts (safe output)" : ", no contacts (the run had no people data, a paid --people run adds them)"}, receipt.txt.`);
+  log(IMPORT_HOW[format as CrmFormat]);
 }
 
 /**
@@ -884,7 +951,7 @@ export async function cmdMore(whatArg: string | undefined, a: Args, outDir: stri
     if (!chk.ok) fail("Nothing ran and nothing was spent.", 3);
     const next = ["looot-zeus", "more", what, ...(count ? ["--count", String(count)] : []), ...(a["no-phones"] === true ? ["--no-phones"] : []), ...(a.phones === true ? ["--phones"] : []), ...(a.people === true ? ["--people"] : []), "--cap", String(cap), "--yes", ...(outDir !== "gtm" ? ["--out", outDir] : [])].join(" ");
     const client = (deps.client ?? clientFromEnv)();
-    if (!client) fail(`LOOOT_TOKEN is not set, so nothing ran and nothing was spent. Create an agent token at looot.ai (Settings, Agent tokens), then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
+    if (!client) fail(`LOOOT_TOKEN is not set, so nothing ran and nothing was spent. No looot account yet? Sign up at https://looot.ai/auth/sign-up ($2 free credit). Then sign in with npx -y looot@latest login (a browser page to approve), or create an agent token at looot.ai (Settings, Agent tokens) and set LOOOT_TOKEN, then run this.\n  export LOOOT_TOKEN=...\n  ${next}`, 2);
     if (!(await confirmPaid(`Fetch it with a cap of ${capText(cap)}?`, next, a, deps))) return null;
     // The modules this pull needs read what the folder already has.
     const want = new Set(spec.mods);
@@ -1031,4 +1098,34 @@ export function cmdSetStatus(kind: "approve" | "reject" | "done", id: string | u
     return;
   }
   log(`${kind === "reject" ? "Rejected" : "Marked done"} ${hit[0].id}.`);
+}
+
+/**
+ * `looot-zeus import-supabase`. Upserts the run in <out>/state.json into your Supabase tables
+ * (supabase/migrations), deduped by domain. --dry-run prints the counts and writes nothing.
+ * Reads SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from env; the key is never printed.
+ */
+export async function cmdImportSupabase(a: Args, outDir: string, deps: { log?: Log; env?: NodeJS.ProcessEnv; fetch?: typeof fetch } = {}): Promise<void> {
+  const log = deps.log ?? console.log;
+  const state = readState(outDir);
+  if (!state) fail(`${join(outDir, STATE_FILE)} does not exist yet. Run looot-zeus run (or demo) first.`, 2);
+  const rf = join(outDir, "receipt.json");
+  const receipt = existsSync(rf) ? JSON.parse(readFileSync(rf, "utf8")) : null;
+  const rows = supabaseRowsOf(state, receipt, { contactDetails: a["contact-details"] === true });
+  if (state.placeholder) log("PLACEHOLDER data: these companies and people are invented by looot-zeus demo. The run row is marked mode demo.");
+  const withEmail = rows.people.filter((p) => p.email || p.phone).length;
+  const line = `${rows.accounts.length} accounts, ${rows.committees.length} committees, ${rows.people.length} people (${withEmail ? `${withEmail} with email or phone` : "no emails or phones"}), ${rows.plays.length} plays, ${rows.rivals.length} rivals`;
+  if (a["dry-run"] === true) {
+    log(`Dry run, nothing written. Would upsert by domain: ${line}.`);
+    return;
+  }
+  const env = deps.env ?? process.env;
+  const { target, missing } = supabaseFromEnv(env);
+  if (!target) fail(`Set ${missing.join(" and ")} in the environment (Vercel's Supabase integration adds both). Add --dry-run to see the counts without them.`, 2);
+  try {
+    const r = await importToSupabase(rows, target, deps.fetch ?? fetch);
+    log(`Imported into ${target.url}: ${line}. Run row ${r.runId}.`);
+  } catch (e) {
+    fail(redact((e as Error).message, target.key), 1);
+  }
 }
