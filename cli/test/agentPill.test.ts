@@ -10,7 +10,7 @@ const repo = join(PKG_ROOT, "..");
 test("the city pill is the agent one-liner; npx is only the developer note", () => {
   assert.equal(AGENT_ONE_LINER, "run zeus.looot.ai for mycompany.com");
   const p = agentPill();
-  assert.match(p, /<span>Make yours, tell your agent<\/span><code>run zeus\.looot\.ai for mycompany\.com<\/code>/);
+  assert.match(p, /<span>Make it yours, tell your agent<\/span><code>run zeus\.looot\.ai for mycompany\.com<\/code>/);
   assert.match(p, /class="zdev src">For developers: <code>npx looot-zeus run yourdomain\.com<\/code>/);
 });
 

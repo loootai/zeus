@@ -91,7 +91,7 @@ export const DEV_COMMAND = "npx looot-zeus run yourdomain.com";
 
 /** The "tell your agent" pill with a copy button, and the small developer note under it. */
 export function agentPill(acts = ""): string {
-  return `<div class="obar"><span class="tryl zcmd"><span>Make yours, tell your agent</span><code>${e(AGENT_ONE_LINER)}</code></span><button type="button" class="cp xexp-b" data-copy="${e(AGENT_ONE_LINER)}">Copy</button>${acts}</div><p class="zdev src">For developers: <code>${e(DEV_COMMAND)}</code></p>`;
+  return `<div class="obar"><span class="tryl zcmd"><span>Make it yours, tell your agent</span><code>${e(AGENT_ONE_LINER)}</code></span><button type="button" class="cp xexp-b" data-copy="${e(AGENT_ONE_LINER)}">Copy</button>${acts}</div><p class="zdev src">For developers: <code>${e(DEV_COMMAND)}</code></p>`;
 }
 
 /** Share, fork it, tell your agent and powered by looot. Share shows on public (safe) pages only: a private page stays on your machine. */
