@@ -132,7 +132,7 @@ test("export --public keeps the owner's own domain and brand, swaps rivals and p
   for (const s of ["acmereal.io", "Acme Real", "Bigrival", "megacorp.io"]) assert.ok(before.includes(s), s);
   const e = exportPublic(out);
   assert.deepEqual(readdirSync(e.dir).sort(), ["city", "dossier.html", "dossier.md", "receipt.json"]);
-  assert.deepEqual(readdirSync(join(e.dir, "city")), ["index.html"]);
+  assert.deepEqual(readdirSync(join(e.dir, "city")).sort(), ["index.html", "zeus"]); // zeus/: the mascot clips, no run data
   for (const f of PUBLIC_FILES) {
     const t = readFileSync(join(e.dir, f), "utf8").toLowerCase();
     for (const s of originals) assert.equal(t.split(s.toLowerCase()).length - 1, 0, `${f} still has ${s}`);

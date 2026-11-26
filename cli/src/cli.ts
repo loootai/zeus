@@ -32,7 +32,9 @@ const HELP = `looot-zeus, one domain in, a GTM dossier out.
                      --yes skips the question, --cap <usd> sets the cap (default the suggested cap).
                      Before the run, a quoted rival check reads each candidate's home page and
                      keeps 3 to 5 real rivals, with their logos and social pages.
-                     Opens the dossier at the end, --no-open skips it.
+                     Pushes it to zeus.looot.ai and opens your page there (https://zeus.looot.ai/p/<domain>).
+                     With --no-push, or when the push fails, it opens the local dossier instead.
+                     --no-open skips opening anything.
 
 Step by step
   prepare <domain>   For your agent. Reads the site for free, then a quoted rival check (a few
@@ -127,14 +129,15 @@ Options
   --private          serve only. Show your real contacts. Prints a warning
   --only <ids>       Run only these modules (and what they need), comma separated
   --goal <text>      What you want most, for "Your next plays" on the city page: "more customers",
-                     "beat competitors", "get found", "grow accounts", "new markets", "clean data"
+                     "beat competitors", "get found", "grow accounts", "new markets", "clean data".
+                     Pick several: repeat --goal or separate them with commas
   --offline          Quote from the dated price table, no network
   --demo             watch or learn with placeholder data
   --apply-learnings  Use the weights learn wrote in gtm/learnings.json for this run
   --results <file>   The replies CSV for learn
   --campaign-id <id> Only this Instantly campaign, for learn
   --yes, -y          Skip the [y/N] question before a paid call. Needed when there is no terminal
-  --no-open          run <domain> opens gtm/dossier.html at the end in a terminal. This skips it
+  --no-open          run <domain> opens the Zeus page (or gtm/dossier.html when not pushed) at the end in a terminal. This skips it
 
 Needs LOOOT_TOKEN (or LOOOT_API_KEY) for push, init (without --direct), run and more. quote, demo, learn and log need no looot key.`;
 
@@ -182,7 +185,7 @@ async function main(): Promise<void> {
         campaign: { type: "string" },
         "campaign-id": { type: "string" },
         angle: { type: "string" },
-        goal: { type: "string" },
+        goal: { type: "string", multiple: true },
         file: { type: "string" },
         port: { type: "string" },
         dir: { type: "string" },
@@ -192,7 +195,8 @@ async function main(): Promise<void> {
   } catch (e) {
     fail(`${(e as Error).message}\n\n${HELP}`, 2);
   }
-  const a = parsed.values as Args;
+  // --goal may repeat: the goals go on as one comma separated line (withGoal reads it).
+  const a = { ...parsed.values, goal: parsed.values.goal?.join(", ") } as Args;
   const [cmd, arg] = parsed.positionals;
   if (a.help || !cmd) return console.log(HELP);
   const outDir = String(a.out);

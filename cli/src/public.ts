@@ -11,6 +11,8 @@ import { readSnapshot } from "./history.js";
 import { validateReceipt } from "./receipt.js";
 import { writeFile } from "./util.js";
 import { stripAssets } from "./assets.js";
+import { writeMascotFiles } from "./city/mascot.js";
+import { writeWorkflowFiles } from "./city/runAny.js";
 
 export const PUBLIC_FILES = ["receipt.json", "dossier.html", "dossier.md", "city/index.html"];
 
@@ -166,5 +168,7 @@ export function exportPublic(outDir: string, configPath: string = join(outDir, "
     throw new Error(`The public export was not written, because:\n  ${problems.slice(0, 10).join("\n  ")}`);
   }
   for (const [f, t] of texts) writeFile(join(dir, f), t);
+  writeMascotFiles(join(dir, "city"));
+  writeWorkflowFiles(join(dir, "city"));
   return { dir, files: PUBLIC_FILES.map((f) => join(dir, f)), checked: swaps.length };
 }

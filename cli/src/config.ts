@@ -162,7 +162,7 @@ export function normalizeConfig(raw: unknown, overrides: { depth?: Depth; phones
   return {
     ...(caps ? { caps } : {}),
     domain,
-    ...(typeof r.goal === "string" && r.goal.trim() ? { goal: r.goal.trim().slice(0, 80) } : {}),
+    ...(typeof r.goal === "string" && r.goal.trim() ? { goal: r.goal.trim().slice(0, 200) } : {}),
     brand: String(r.brand ?? domain.split(".")[0]),
     offer: String(r.offer ?? ""),
     icp: {

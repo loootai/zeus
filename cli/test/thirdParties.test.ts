@@ -85,3 +85,17 @@ test("a fit reason with only the short name is scrubbed from every shared page",
   execFileSync(process.execPath, [cli, "export", "--public", "--out", out], { cwd: join(out, "..") });
   for (const f of ["city/index.html", "dossier.html", "dossier.md"]) assert.ok(!named(readFileSync(join(out, "public", f), "utf8"), lead), `public/${f} names ${lead}`);
 });
+
+test("an account named after a plain word (Forum) does not rewrite that word in a play title", () => {
+  const snap = { domain: "me.com", accounts: [{ domain: "forum.example.org", name: "Forum", grade: "B", score: 60 }, { domain: "forumone.com", name: "Forum One", grade: "B", score: 60 }, { domain: "zentrix.com", name: "Zentrix", grade: "A", score: 80 }], competitors: [] };
+  const s = thirdPartySwaps(snap);
+  const title = "Write a content brief (SERP grows video and forum features).";
+  assert.equal(applyThirdParties(title, s), title);
+  assert.deepEqual(thirdPartyLeaks(title, s), []);
+  // The name as a proper noun, with a legal suffix, the distinctive forms and the domains are still masked.
+  assert.equal(applyThirdParties("Forum signed; forum Inc too; Forum One and forum one; zentrix and forumone.com", s), "Account A signed; Account A Inc too; Account B and Account B; Account C and account-b.example");
+  // The leak guard stays strict for distinctive names in any casing.
+  assert.deepEqual(thirdPartyLeaks("ZENTRIX and forum one", s).sort(), ["Forum One", "Zentrix"]);
+  assert.deepEqual(thirdPartyLeaks("a Forum thread", s), ["Forum"]);
+  assert.deepEqual(thirdPartyLeaks("FORUM TODAY", s), ["Forum"]);
+});

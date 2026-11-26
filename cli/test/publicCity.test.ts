@@ -39,16 +39,18 @@ test("the public dossier names no third party, has no people, links, logos of ot
   assert.ok(accounts.kind === "table" && accounts.columns.some((c) => c.key === "industry"), "sector stays");
 });
 
-test("the shared city is the private city's shell with a share header, no Share button and no people menu", () => {
+test("the shared city is the story only (Luisa 2026-11-26): no app shell, no second city, no Share button, no people", () => {
   const r = safeRun(demo())!;
   const priv = renderCity(r.d, { showBrand: true });
   const pub = renderCity(publicDossier(r.d, r.tp), { showBrand: true, share: {} });
-  for (const k of ['<aside class="side"', "data-iso", "iso-sec", "powered by", "Build your own", "What the free run made"]) {
-    assert.ok(priv.includes(k), `private has ${k}`);
-    assert.ok(pub.includes(k), `shared has ${k}`);
-  }
-  assert.match(pub, /GTM map by Zeus/);
-  assert.match(pub, /Map my company/);
+  for (const k of ['<aside class="side"', "data-iso", "iso-sec", "powered by", "Build your own", "What the free run made"]) assert.ok(priv.includes(k), `private has ${k}`);
+  for (const k of ['<aside class="side"', "data-iso data-roads", 'class="sec iso-sec"', "Make it yours, tell your agent", '<section class="view"']) assert.ok(!pub.includes(k), `shared has no ${k}`);
+  for (const k of ["Get your own", "See every result", "https://zeus.looot.ai/p/"]) assert.ok(pub.includes(k), `shared has ${k}`);
+  assert.match(pub, /GTM engine by Zeus/);
+  // Direction A (2026-11-26): the shared copy opens with the story and ends with "Get your own GTM engine" (copy, David 2026-11-26); the private page has neither.
+  assert.match(pub, /Get your own GTM engine/);
+  assert.match(pub, /class="zs-hero"/);
+  assert.doesNotMatch(priv, /zs-hero|GTM engine by Zeus/);
   assert.doesNotMatch(pub, /class="za zshare"|class="znb zshare"|href="#committees"|href="#openers"|Export to CRM/);
   assert.doesNotMatch(priv, /GTM map by Zeus/);
 });

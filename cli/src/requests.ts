@@ -165,6 +165,7 @@ export function costText(c: number | null): string {
 const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml", ".gif": "image/gif", ".ico": "image/x-icon",
+  ".webm": "video/webm",
 };
 
 /** The header the page sends its per-session token in. */

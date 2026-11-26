@@ -3,6 +3,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderCity } from "./city/index.js";
+import { writeMascotFiles } from "./city/mascot.js";
+import { writeWorkflowFiles } from "./city/runAny.js";
 import { assemble } from "./dossier/index.js";
 import { renderHtml } from "./dossier/html.js";
 import { renderMarkdown } from "./dossier/md.js";
@@ -63,5 +65,9 @@ export function writeSafeView(outDir: string, dir: string): string | null {
   writeFile(join(dir, "index.html"), p["city/index.html"]);
   writeFile(join(dir, "city", "index.html"), p["city/index.html"]);
   writeFile(join(dir, "dossier.html"), p["dossier.html"]);
+  writeMascotFiles(dir);
+  writeMascotFiles(join(dir, "city"));
+  writeWorkflowFiles(dir);
+  writeWorkflowFiles(join(dir, "city"));
   return dir;
 }

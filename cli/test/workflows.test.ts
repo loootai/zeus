@@ -119,7 +119,9 @@ test("the Zeus page embeds the same catalog and builds the same prompt", { skip:
   const html = readFileSync(page, "utf8");
   const data = JSON.parse(html.match(/<script type="application\/json" id="zwf-data">([\s\S]*?)<\/script>/)![1]);
   assert.deepEqual(data.c.map((c: { name: string }) => c.name), CATALOG.categories.map((c) => c.name));
-  assert.deepEqual(data.w, CATALOG.workflows.map((w) => [w.id, w.cat, w.task, w.check, w.output, w.featured ? 1 : 0]));
+  assert.deepEqual(data.w, CATALOG.workflows.map((w) => [w.id, w.cat, w.task, w.check, w.output, w.featured ? 1 : 0, w.p]));
+  assert.deepEqual(data.c.map((c: { o: string }) => c.o), CATALOG.categories.map((c) => c.outcome));
+  assert.deepEqual(data.pv.map((p: [string, string]) => p[0]), CATALOG.providers.map((p) => p.name));
   const src = html.match(/\/\*zwf-prompt\*\/([\s\S]*?)\/\*\/zwf-prompt\*\//)![1];
   const zwfPrompt = new Function(`${src};return zwfPrompt;`)() as (w: Workflow, cat: string, ctx: object) => string;
   const ctx = { domain: "higgsfield.ai", company: "Higgsfield" };
@@ -134,4 +136,34 @@ test("the Zeus page embeds the same catalog and builds the same prompt", { skip:
   const side = html.slice(html.indexOf("<aside"), html.indexOf("</aside>"));
   assert.ok(side.indexOf('href="#workflows"') > -1 && side.indexOf('href="#workflows"') < side.indexOf("<h6>Keep it running</h6>"));
   assert.match(html, /data-view="workflows" data-title="Run any workflow"/);
+});
+
+// Stacked provider logos (David, 26 Nov 2026): every workflow names the looot providers it uses.
+test("every workflow uses at least 3 looot providers, each with a logo file", () => {
+  const ids = CATALOG.providers.map((p) => p.id);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const w of CATALOG.workflows) {
+    assert.ok(w.p.length >= 3 && w.p.length <= 10, `workflow ${w.id} has ${w.p.length} providers`);
+    assert.equal(new Set(w.p).size, w.p.length, `workflow ${w.id} repeats a provider`);
+    for (const i of w.p) assert.ok(Number.isInteger(i) && CATALOG.providers[i], `workflow ${w.id}: provider ${i}`);
+  }
+  for (const p of CATALOG.providers) {
+    assert.match(p.logo, /^providers\/[a-z0-9]+\.webp$/, p.id);
+    const f = join(PKG_ROOT, "src", "city", "shell", p.logo);
+    assert.ok(existsSync(f), `logo for ${p.id}`);
+    const b = readFileSync(f);
+    assert.ok(b.length < 6144, `${p.id} logo under 6 KB`);
+    assert.equal(b.subarray(8, 12).toString(), "WEBP", `${p.id} logo is WebP`);
+    assert.ok(!/exif|xmp|icc/i.test(b.toString("latin1")), `${p.id} logo carries no metadata`);
+  }
+  // Every provider listed is used by some workflow.
+  const used = new Set(CATALOG.workflows.flatMap((w) => w.p));
+  assert.equal(used.size, CATALOG.providers.length);
+});
+
+test("every category has a short outcome headline, the copy rules hold", () => {
+  for (const c of CATALOG.categories) {
+    assert.ok(c.outcome && c.outcome.length <= 32, c.name);
+    assert.ok(!c.outcome.includes(", and ") && !/[–—:]/.test(c.outcome), c.outcome);
+  }
 });

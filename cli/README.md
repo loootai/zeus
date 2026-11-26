@@ -34,7 +34,7 @@ You see the price and confirm before any paid call. Here is what the command doe
 1. It reads 4 pages of your site with a plain web request. No looot call and no charge. It writes the brief to `gtm/config.yaml`.
 2. It prints the quote. You see the calls, the expected cost, the worst case and a suggested cap. Nothing paid has run yet.
 3. It asks `Run it with a cap of $X? [y/N]`. Only a `y` starts the paid run. Any other answer stops it and nothing is spent.
-4. It runs inside that cap and writes `gtm/dossier.html` and the list of what each call cost.
+4. It runs inside that cap, writes `gtm/` (the local dossier and the list of what each call cost), pushes the result to zeus.looot.ai and opens your private page at `https://zeus.looot.ai/p/<domain>`. With `--no-push`, or when the push fails (the run says why and how to send it with `looot-zeus push`), it opens the local `gtm/dossier.html` instead.
 
 Add `--cap 5` to set your own cap. Add `--yes` to skip the question, for example in a script. Without a terminal and without `--yes`, the command stops after the quote, spends nothing and prints the command to run next. If you want to fix the brief first, answer no, edit `gtm/config.yaml` and run the same command again. It keeps your edits.
 
@@ -57,7 +57,7 @@ export LOOOT_TOKEN=...
 looot-zeus init yourdomain.com     # shows the price, asks, reads 4 pages, writes gtm/config.yaml
 looot-zeus quote                   # prices the run per module, makes no paid call
 looot-zeus run --cap 10            # shows the quote, asks, runs every module inside a 10 USD cap
-looot-zeus open                    # opens gtm/dossier.html
+looot-zeus open                    # opens the local gtm/dossier.html (offline copy)
 looot-zeus open city               # opens gtm/city/index.html, the city page
 ```
 
@@ -198,7 +198,7 @@ Target accounts keep their names unless you add `--mask-accounts`. Then accounts
 
 ## Push to zeus.looot.ai
 
-`run` ends by pushing the city to zeus.looot.ai with the same looot key (`LOOOT_TOKEN`, `LOOOT_API_KEY` or the saved `looot login`). Members of your looot workspace see it at `https://zeus.looot.ai/p/<domain>` after Sign in with looot; anyone else gets a 404. `--no-push` skips it, `looot-zeus push` sends the last run again, `ZEUS_URL` overrides where.
+`run` ends by pushing the city to zeus.looot.ai with the same looot key (`LOOOT_TOKEN`, `LOOOT_API_KEY` or the saved `looot login`). Members of your looot workspace see it at `https://zeus.looot.ai/p/<domain>` after Sign in with looot; anyone else gets a 404. In a terminal `run` then opens that page and prints its link (`--no-open` skips the opening). `--no-push` skips the push and opens the local dossier instead, `looot-zeus push` sends the last run again, `ZEUS_URL` overrides where.
 
 The push is plain data, `zeus.push.v1`: the safe city dossier (people as a role, no email, phone or profile link) and the public share bundle. No HTML is sent: the site checks the data, scrubs it again and renders the page. A malformed field comes back as a 422 that names it (`city.sections[2].blocks[0].kind must be one of ...`). Limits: 2 MB a push, 20 pushes an hour and 60 a day per workspace, 50 cities listed, each kept 30 days.
 
@@ -242,9 +242,15 @@ The rules.
 ## Your next plays
 
 The city page opens with "Your next plays": 5 plays picked for this company from the
-[Workflow Atlas by Walid](https://looot-gtm-atlas.walidboulanouar.chatgpt.site/), 1,000 GTM workflows in 20 goals. Credit for
-the workflows, their decision rules and provider routes goes to Walid; `src/plays/atlas.json` is extracted from the Atlas page
-by `scripts/extractAtlas.mjs`.
+[Workflow Atlas by Walid](https://looot.ai/workflow-atlas), 1,000 GTM workflows in 20 goals. Credit for the workflows, their
+decision rules and provider routes goes to Walid. His dataset on looot.ai,
+`https://looot.ai/workflow-atlas/workflows-atlas.json`, is the one source of truth: Zeus keeps no Atlas of its own.
+
+- A run reads that file once a day into `.looot-zeus/atlas.json`. Offline, or when looot.ai cannot be read, it uses that cache,
+  then `src/plays/atlas.vendored.json`, the same file reduced to the fields Zeus uses and shipped with the CLI. So the CLI works
+  offline and a looot.ai outage never stops a run.
+- `npm run atlas:check` diffs the vendored copy against the live file (exit 1 on a difference); `npm run atlas:sync` rewrites it.
+- Every play links to its page on looot.ai, `looot.ai/workflow-atlas/<slug>` (Read the full workflow), with Walid's slug.
 
 - A play is picked only when a subject its own words name (hiring, funding, rivals, ads, tech stack, keyword gaps, AI answers,
   agent readiness, target accounts, reviews, mentions, buying committees) is a finding of this run. Its "why it fits" line is

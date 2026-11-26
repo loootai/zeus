@@ -101,7 +101,8 @@ export function publicDossier(d: Dossier, tp: ThirdParty[]): Dossier {
     ...(d.plays ? { plays: sec(d.plays) } : {}),
     ...(d.ledger ? { ledger: d.ledger } : {}),
     // Your next plays: the top 5 and the goal fit counts. No Run it command on a public page; the deep pass below scrubs every why and prompt.
-    ...(d.nextPlays?.length ? { nextPlays: d.nextPlays.slice(0, 5).map(({ runCommand: _r, triggers: _t, score: _s, ...p }) => p) as unknown as Dossier["nextPlays"] } : {}),
+    // No slug or url either: looot.page takes no link from a bundle, its renderer finds the looot.ai page from the play id.
+    ...(d.nextPlays?.length ? { nextPlays: d.nextPlays.slice(0, 5).map(({ runCommand: _r, triggers: _t, score: _s, slug: _g, url: _u, ...p }) => p) as unknown as Dossier["nextPlays"] } : {}),
     ...(d.playFits ? { playFits: d.playFits } : {}),
     ...(d.goal ? { goal: d.goal } : {}),
   };

@@ -2,7 +2,7 @@
 // instead of calling process.exit, so tests can run them in-process with mocks.
 
 import { buildShareBundle, publishShare, unpublishShare, DEFAULT_PAGES_URL } from "./publish.js";
-import { buildPushBundle, DEFAULT_ZEUS_URL, pushCity, pushLines, pushToken, type PushBundle, type PushResult } from "./push.js";
+import { buildPushBundle, DEFAULT_ZEUS_URL, pushCity, pushHostAllowed, pushLines, pushToken, type PushBundle, type PushResult } from "./push.js";
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -16,7 +16,9 @@ import { DirectRunner } from "./direct.js";
 import { assemble } from "./dossier/index.js";
 import { renderHtml } from "./dossier/html.js";
 import { renderCity } from "./city/index.js";
-import { goalsFor, OUTCOMES } from "./plays/index.js";
+import { writeMascotFiles } from "./city/mascot.js";
+import { writeWorkflowFiles } from "./city/runAny.js";
+import { cleanGoals, goalsFor, loadAtlas, OUTCOMES, useAtlas } from "./plays/index.js";
 import { renderMarkdown } from "./dossier/md.js";
 import { withCommitteePhones, writeArtifacts } from "./exports.js";
 import { CRM_FORMATS, IMPORT_HOW, writeCrm, type CrmFormat } from "./crm.js";
@@ -65,15 +67,16 @@ export function fail(msg: string, code = 1): never {
 export type Args = Record<string, string | boolean | undefined>;
 export type Log = (line: string) => void;
 
-/** --goal for "Your next plays": one of the 6 outcomes or an Atlas goal. An unknown goal is said and ignored. */
+/** --goal for "Your next plays": one or more of the 6 outcomes or Atlas goals, repeated (--goal a --goal b) or
+ * comma separated. Unknown goals are said and ignored. */
 export function withGoal(cfg: GtmConfig, a: Args, log: Log): GtmConfig {
-  if (typeof a.goal !== "string" || !a.goal.trim()) return cfg;
-  const g = a.goal.trim().slice(0, 80);
-  if (!goalsFor(g)) {
-    log(`--goal "${g}" is not one Zeus knows, so the next plays use every goal. Goals: ${OUTCOMES.map((o) => `"${o.key}"`).join(", ")}, or an Atlas goal name.`);
-    return cfg;
-  }
-  return { ...cfg, goal: g };
+  const raw = ([] as unknown[]).concat((a as Record<string, unknown>).goal ?? []).filter((x): x is string => typeof x === "string" && !!x.trim());
+  if (!raw.length) return cfg;
+  const parts = raw.flatMap((x) => x.split(",")).map((x) => x.trim().slice(0, 80)).filter(Boolean);
+  const bad = parts.filter((x) => !goalsFor(x));
+  const g = cleanGoals(parts.join(", "));
+  if (bad.length) log(`--goal "${bad.join(", ")}" is not one Zeus knows, so ${g ? "the next plays leave it out" : "the next plays use every goal"}. Goals: ${OUTCOMES.map((o) => `"${o.key}"`).join(", ")}, or an Atlas goal name.`);
+  return g ? { ...cfg, goal: g } : cfg;
 }
 
 export function depthOf(a: Args): Depth | undefined {
@@ -141,6 +144,8 @@ export function writeAll(outDir: string, o: { cfg: GtmConfig; mods: GtmModule[];
   writeFile(join(outDir, "dossier.html"), page("dossier.html", renderHtml(d)));
   writeFile(join(outDir, "dossier.md"), page("dossier.md", renderMarkdown(d)));
   writeFile(join(outDir, "city", "index.html"), page("city/index.html", renderCity(d)));
+  writeMascotFiles(join(outDir, "city"));
+  writeWorkflowFiles(join(outDir, "city"));
   writeFile(join(outDir, "receipt.json"), JSON.stringify(o.receipt, null, 2) + "\n");
   writeFile(join(outDir, "receipt.md"), receiptMarkdown(o.receipt));
   if (o.writeConfig) writeFile(join(outDir, "config.yaml"), configToYaml(o.cfg, [o.placeholder ? "PLACEHOLDER config used by looot-zeus demo." : "looot-zeus config"]));
@@ -349,10 +354,17 @@ export function writeCandidates(outDir: string, out: RivalsOut): void {
  * company.similar call on your own domain, so that call is quoted first and the other modules are
  * priced on 3 rivals (and 3 seeds). Returns the module to run first, or undefined.
  */
-export async function getQuote(cfg: GtmConfig, mods: GtmModule[], offline: boolean, rule: WorkspaceRule | null = null): Promise<{ q: Quote; rivals?: GtmModule }> {
+export async function getQuote(cfg: GtmConfig, mods: GtmModule[], offline: boolean, rule: WorkspaceRule | null = null, atlasFetch?: typeof fetch): Promise<{ q: Quote; rivals?: GtmModule }> {
   const unknown = unknownCapSections(resolveCaps(cfg), MODULES.map((m) => m.id));
   if (unknown.length > 0) console.error(`Warning: caps.sections has ${unknown.map((u) => `"${u}"`).join(", ")}, not a module. Modules: ${MODULES.map((m) => m.id).join(", ")}. That cap does nothing.`);
   const book = await loadPriceBook({ cacheDir: ".looot-zeus", offline });
+  // The plays come from Walid's Atlas on looot.ai (cached a day, the vendored copy when it cannot be read).
+  const atlas = await loadAtlas({ cacheDir: ".looot-zeus", offline, fetch: atlasFetch });
+  try {
+    useAtlas(atlas.atlas);
+  } catch {
+    // Checked already; if it still cannot be expanded, the plays stay on the copy in use.
+  }
   const need = rivalsNeeded(cfg, mods.map((m) => m.id));
   if (!needsAny(need)) return { q: buildQuote(mods, cfg, book, { skipDone: new Set(["intake"]), rule }) };
   const rivals = rivalsModule(need);
@@ -475,7 +487,7 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
   printSummary(res.results, log);
   if (changes) log(`\n${changes.total === 0 ? "Nothing changed" : `${changes.total} changes`} since the run of ${prev!.at.slice(0, 10)}. See ${join(outDir, "changes.md")}`);
   if (o.public) publicLine(outDir, log, o.maskAccounts === true);
-  log(`\n${stopLine({ ...res, results, limitStopped: res.limitStopped ?? first?.limitStopped })} · ${receipt.run.calls} calls · ${usd(receipt.run.charged)} new spend${receipt.run.replayedCalls ? ` · ${receipt.run.replayedCalls} replayed free` : ""} · ${ms(receipt.run.durationMs)} · ${join(outDir, "dossier.html")}`);
+  log(`\n${stopLine({ ...res, results, limitStopped: res.limitStopped ?? first?.limitStopped })} · ${receipt.run.calls} calls · ${usd(receipt.run.charged)} new spend${receipt.run.replayedCalls ? ` · ${receipt.run.replayedCalls} replayed free` : ""} · ${ms(receipt.run.durationMs)} · local files in ${outDir}/`);
   return receipt;
 }
 
@@ -498,7 +510,8 @@ export async function cmdRun(a: Args, configPath: string, outDir: string, deps: 
   const next = nextCommand("run", undefined, cap, a, outDir);
   if (!(await confirmPaid(`Run it with a cap of ${capText(cap)}?`, next, a, deps))) return null;
   const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
-  await autoPush(receipt, a, outDir, deps, log);
+  const page = await autoPush(receipt, a, outDir, deps, log);
+  if (page) log(`Your GTM engine: ${page}`);
   return receipt;
 }
 
@@ -638,13 +651,20 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
 
   log(`\nStep 3 of 3. Running inside a ${capText(cap)} cap.`);
   const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
-  await autoPush(receipt, a, outDir, deps, log);
-  // In a terminal the dossier opens at the end. --no-open skips it. Tests pass their own opener.
+  const page = await autoPush(receipt, a, outDir, deps, log);
+  if (page) log(`\nYour GTM engine: ${page}\nThe local files stay in ${outDir}/ (looot-zeus open shows the offline dossier).`);
+  // In a terminal the result opens at the end: the Zeus page after a push, else the local dossier.
+  // --no-open skips it. Tests pass their own opener.
   const tty = deps.isTTY ?? (process.stdin.isTTY === true && process.stdout.isTTY === true);
   const opener = deps.open ?? (deps.isTTY === undefined ? openFile : undefined);
   if (tty && a["no-open"] !== true && opener) {
-    opener(resolve(outDir, "dossier.html"));
-    log(`Opened ${join(outDir, "dossier.html")}. Add --no-open to skip this next time.`);
+    if (page) {
+      opener(page);
+      log(`Opened ${page}. Add --no-open to skip this next time.`);
+    } else {
+      opener(resolve(outDir, "dossier.html"));
+      log(`Opened the local dossier ${join(outDir, "dossier.html")}. Add --no-open to skip this next time.`);
+    }
   }
   return receipt;
 }
@@ -658,16 +678,34 @@ const zeusUrl = (env: Record<string, string | undefined>) => env.ZEUS_URL?.trim(
  * After a real run: push the city to zeus.looot.ai with the same key the run used, unless --no-push.
  * A failed push never fails the run: the folder is complete and `looot-zeus push` sends it again.
  */
-async function autoPush(receipt: Receipt | null, a: Args, outDir: string, deps: PaidDeps, log: Log): Promise<void> {
-  if (!receipt || a["no-push"] === true || receipt.placeholder) return;
-  if (deps.client && !deps.push) return; // tests with a fake client never reach the network
+async function autoPush(receipt: Receipt | null, a: Args, outDir: string, deps: PaidDeps, log: Log): Promise<string | null> {
+  if (!receipt || receipt.placeholder) return null;
+  if (a["no-push"] === true) {
+    log(`Not pushed to Zeus (--no-push). The run is complete in ${outDir}/. Send it with looot-zeus push to see it at ${zeusUrl(process.env)}/p/${receipt.run.domain}.`);
+    return null;
+  }
+  if (deps.client && !deps.push) return null; // tests with a fake client never reach the network
   try {
     const r = await doPush(outDir, deps, process.env);
     for (const l of pushLines(r)) log(l);
-    if (!r.ok) log(`The run itself is complete in ${outDir}/. Fix the above and send it again with looot-zeus push.`);
+    if (r.ok) {
+      // Only a Zeus page is opened in the browser, never whatever link an answer carries.
+      if (r.url && isZeusPage(r.url)) return r.url;
+      log("Pushed, but Zeus sent no page link to open, so the local dossier opens instead.");
+      return null;
+    }
+    log(`The run itself is complete in ${outDir}/. Fix the above and send it again with looot-zeus push.`);
   } catch (e) {
     log(`Not pushed to Zeus: ${(e as Error).message}. The run is complete in ${outDir}/. Send it with looot-zeus push.`);
   }
+  return null;
+}
+
+/** True for a Zeus page link the CLI may hand to the system opener: a Zeus host and a plain /p/<domain> path, no query. */
+function isZeusPage(url: string): boolean {
+  if (!pushHostAllowed(url)) return false;
+  const u = new URL(url);
+  return /^\/p\/[a-z0-9.-]+$/i.test(u.pathname) && u.search === "" && u.hash === "";
 }
 
 async function doPush(outDir: string, deps: PaidDeps, env: Record<string, string | undefined>): Promise<PushResult> {

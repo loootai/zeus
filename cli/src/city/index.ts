@@ -9,12 +9,18 @@ import type { Dossier } from "../dossier/index.js";
 import { maskValue } from "../dossier/mask.js";
 import { emptyState, renderBlock } from "./blocks.js";
 import { CITY_CSS } from "./style.js";
-import { CITY_JS, HEAD_JS } from "./script.js";
+import { CITY_JS, HEAD_JS, SHARE_JS } from "./script.js";
 import { readFileSync } from "node:fs";
 import { logoData } from "../assets.js";
 import { crmPrompt } from "../crm.js";
-import { atlasBrowseData, OUTCOMES } from "../plays/index.js";
+import { ATLAS_PAGE_URL, atlasBrowseData, OUTCOMES, playUrl } from "../plays/index.js";
+import { RUN_ANY_CSS, RUN_ANY_JS, RUN_ANY_LINK, RUN_ANY_NAV, runAnyView } from "./runAny.js";
+import { DO_FIRST_CSS, DO_FIRST_HTML, DO_FIRST_JS } from "./doFirst.js";
 import { ASK, HOOKS, hookByTitle, hookCommand, hookPrompt, keptHooks, type HookId } from "../plays/hooks.js";
+import { cleanCity, storyHtml, STORY_CSS, STORY_JS } from "./story.js";
+import type { OwnerCta, ViewCta } from "./ownerCta.js";
+export { storyFacts, heroFacts, topOutcomes, cleanCity, STORY_CSS, STORY_JS } from "./story.js";
+export { SHARE_JS } from "./script.js";
 
 const readJson = (f: string) => JSON.parse(readFileSync(new URL(f, import.meta.url), "utf8"));
 
@@ -44,8 +50,10 @@ const ISO_SVG = readFileSync(new URL("./shell/iso.svg", import.meta.url), "utf8"
 const ISO: { roads: number[][]; accounts: number; homes: number; rivals: number } = readJson("./shell/iso.json");
 const ICONS: Record<string, string> = readJson("./shell/icons.json");
 // The Zeus mascot that stands on the top right edge of the city map and throws his bolt (shell/mascot.*).
-// No <img>: its layers are CSS backgrounds (style.ts), so the page still loads nothing.
-export const MASCOT_HTML = readFileSync(new URL("./shell/mascot.html", import.meta.url), "utf8").trim();
+// No <img>: his still is a CSS background (style.ts). The two clips load from zeus/ next to the page (city/mascot.ts).
+/** The Zeus lightning bolt favicon (32 px PNG and 180 px apple-touch-icon, as data URIs: no SVG on the page, see city.test.ts), in the head of every city page. */
+export const FAVICON_HTML = readFileSync(new URL("./shell/favicon.html", import.meta.url), "utf8").trim();
+export const MASCOT_HTML = readFileSync(new URL("./shell/mascot.html", import.meta.url), "utf8").trim().replaceAll("{{zeus}}", "zeus/");
 
 /** The menu category a view sits under. */
 function menuGroup(view: string): string {
@@ -68,6 +76,17 @@ interface CityView {
 
 const isAi = (b: Block) => (b.kind === "table" && /^AI answer/i.test(b.caption ?? "")) || (b.kind === "note" && /^(No AI answer|The AI answer checks)/.test(b.text));
 
+/** Format finder: the angles and topics rivals use, their ad creatives and posts, never the run summary (David, 2026-11-26). */
+const isFormat = (b: Block) => (b.kind === "bars" && /angle|topic/i.test(b.caption ?? "")) || b.kind === "list" || (b.kind === "cards" && b.items.length > 0);
+
+/** Run plumbing (provider trails, lookups, per-call charges, cap stops, CLI commands): folded into "How this was built" at the bottom of a section. */
+export function isPlumbing(b: Block): boolean {
+  if (b.kind === "more") return true;
+  if (b.kind === "table") return /^(Provider trail|Evidence|Lookups|Searches that did not answer|Ads dropped|One provider)/i.test(b.caption ?? "");
+  if (b.kind === "note") return /(\bcalls?\b[^.]*charged|\blookups?\b|One provider, no fallback|stopped at the cap|reached the cap|at the cap|Every call|receipt\.(md|json)|on the receipt|gtm\/|\s--[a-z]|command below|looot-zeus )/i.test(b.text);
+  return false;
+}
+
 /** The free-run views, in menu order. Headings here are what the tests look for. */
 export const CITY_VIEWS: CityView[] = [
   { id: "targets", label: "Target accounts", group: menuGroup("targets"), ids: ["accounts", "enrich", "signals"], empty: "This run found no target accounts." },
@@ -77,7 +96,7 @@ export const CITY_VIEWS: CityView[] = [
   { id: "domains", label: "Domain lookup", group: menuGroup("domains"), ids: ["domains"], empty: "This run has no domain data." },
   { id: "pages", label: "Programmatic pages", group: menuGroup("pages"), ids: [], empty: "The free run writes no page drafts. Build more pages in the menu copies the request for your agent." },
   { id: "influencers", label: "Influencers", group: menuGroup("influencers"), ids: ["social"], empty: "This run has no social listening data." },
-  { id: "formats", label: "Format finder", group: menuGroup("formats"), ids: ["summary", "icp"], empty: "This run has no formats yet." },
+  { id: "formats", label: "Format finder", group: menuGroup("formats"), ids: ["ads", "social"], empty: "This run has no formats yet.", pick: isFormat },
   { id: "calendar", label: "Content calendar", group: menuGroup("calendar"), ids: [], empty: "This run has no content calendar. Drafts are not planned in the free run." },
   { id: "competitive", label: "Competitive analysis", group: menuGroup("competitive"), ids: ["competitors", "ads", "reviews"], empty: "This run has no rival data." },
   { id: "reddit", label: "Reddit", group: menuGroup("reddit"), ids: ["mentions"], empty: "This run has no Reddit or web mentions." },
@@ -124,9 +143,11 @@ function viewBlocks(d: Dossier, v: CityView): { section: Section; blocks: Block[
     if (!s) continue;
     // The next-steps table is folded into "Your next plays" (hookCards), so no view shows it again.
     const blocks = (v.pick ? (s.blocks ?? []).filter(v.pick) : s.blocks ?? []).filter((b) => !(id === "summary" && isNextStepsTable(b)));
-    if (blocks.length > 0) out.push({ section: s, blocks });
+    // Format finder leads with the takeaway lines, then the angle and topic bars, then the creatives.
+    const order = (b: Block) => (b.kind === "list" ? 0 : b.kind === "bars" ? 1 : 2);
+    if (blocks.length > 0) out.push({ section: s, blocks: v.id === "formats" ? [...blocks].sort((a, b) => order(a) - order(b)) : blocks });
   }
-  if (v.id === "formats" && d.plays) out.push({ section: d.plays, blocks: d.plays.blocks });
+  if (v.id === "formats" && d.plays && !d.public) out.push({ section: d.plays, blocks: d.plays.blocks });
   return out;
 }
 
@@ -161,14 +182,43 @@ export function badgeText(shown: number, total?: number): string {
 const secHtml = (title: string, k: string, body: string, id = "") => `<div class="sec"${id ? ` id="${id}"` : ""}><div class="sech"><h3>${e(title)}</h3>${k ? `<span class="k">${e(k)}</span>` : ""}</div>${body}</div>`;
 const vhead = (v: { id: string; label: string; group: string }) => `<section class="view" data-view="${v.id}" data-title="${e(v.label)}" data-group="${e(v.group)}"><div class="vhead"><div><div class="kicker">${e(v.group)}</div><h1>${e(v.label)}</h1></div></div>`;
 
+/** Provider slugs ("scrapecreators-linkedin-ads-search") and "(... via ...)" trails leave card subtitles and captions; they stay in How this was built. */
+const PROVIDER_SLUG = /,\s*[a-z][a-z0-9]*(?:-[a-z0-9]+){2,}\s*$/;
+const VIA_TRAIL = /\s*\([^()]*\bvia\b[^()]*\)/g;
+function noProviderNames(b: Block): Block {
+  const cap = (c?: string) => (c ? c.replace(VIA_TRAIL, "") : c);
+  if (b.kind === "cards") return { ...b, caption: cap(b.caption), items: b.items.map((c) => (c.sub ? { ...c, sub: c.sub.replace(PROVIDER_SLUG, "") } : c)) };
+  if (b.kind === "bars" || b.kind === "table") return { ...b, caption: cap(b.caption) };
+  return b;
+}
+const PLUMBING_COLS = new Set(["provider", "fallback", "trail", "charged"]);
+const isPartial = (status: string) => /partial|capped|stopped/i.test(status);
+const dateOf = (source: string) => source.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0] ?? "";
+
+/** One section as the reader sees it: a partial chip and the date in the header, the findings, then the run's
+ * plumbing (providers, trails, charges, cap stops) in a closed "How this was built". On a public (pushed or shared)
+ * page the CLI commands are left out: the owner's Complete and Refresh buttons copy a prompt instead. */
+export function sectionHtml(section: Section, blocks: Block[], pub: boolean): string {
+  // Provider and fallback columns are plumbing too: the findings tables keep only what was found.
+  const main = blocks.filter((b) => !isPlumbing(b)).map((b) => (b.kind === "table" && b.rows.length > 0 ? { ...b, columns: b.columns.filter((c) => !PLUMBING_COLS.has(c.key)) } : b)).map(noProviderNames);
+  const how = blocks.filter((b) => isPlumbing(b) && !(pub && b.kind === "more"));
+  const partial = isPartial(section.status) ? `<span class="chip zpartial" title="The run stopped at its spending cap here. What it found before the stop is shown.">Partial</span>` : "";
+  const date = dateOf(section.source ?? "");
+  const head = `<div class="sech"><h3>${e(section.title)}</h3>${partial}${date ? `<span class="k">${e(date)}</span>` : ""}</div>`;
+  const src = section.source ? `<p class="src">Sources: ${e(section.source)}</p>` : "";
+  const fold = how.length || src ? `<details class="zhow"><summary>How this was built</summary>${src}${how.map((b) => renderBlock(b, pub)).join("")}</details>` : "";
+  const body = main.length ? main.map((b) => renderBlock(b, pub)).join("") : emptyState("This part has no findings in this run.");
+  return `<div class="sec">${head}${body}${fold}</div>`;
+}
+
 function viewHtml(d: Dossier, v: CityView, shared = false): string {
   const parts = viewBlocks(d, v);
-  let body = parts.length === 0 ? emptyState(v.empty) : parts.map(({ section, blocks }) => secHtml(section.title, section.source ? `${section.status} · ${section.source}` : "", blocks.map((b) => renderBlock(b, d.public)).join(""))).join("");
+  let body = parts.length === 0 ? emptyState(v.empty) : parts.map(({ section, blocks }) => (v.id === "runlog" ? secHtml(section.title, section.source ? `${section.status} · ${section.source}` : "", blocks.map((b) => renderBlock(b, d.public)).join("")) : sectionHtml(section, blocks, d.public))).join("");
   // A looot.page copy has no people, so no committees or openers anchors either.
   if (v.id === "targets" && !shared) {
     // Buying committees and openers are menu anchors inside this view, as on David's page.
     const c = d.sections.find((x) => x.id === "committee");
-    body += `<span id="committees" class="zanc"></span>` + (c ? secHtml(c.title, c.source ? `${c.status} · ${c.source}` : "", c.blocks.map((b) => renderBlock(b, d.public)).join("")) : secHtml("Buying committees", "", emptyState("This run mapped no buying committees.")));
+    body += `<span id="committees" class="zanc"></span>` + (c ? sectionHtml(c, c.blocks, d.public) : secHtml("Buying committees", "", emptyState("This run mapped no buying committees.")));
     body += `<span id="openers" class="zanc"></span>` + secHtml("Outreach openers", "", emptyState("This run wrote no openers. Openers come with people data, see what a paid run adds."));
   }
   const extra = v.id === "runlog" && d.weekly ? secHtml("Run it again every week", d.weekly.price, `<p><code>${e(d.weekly.command)}</code> <button type="button" class="cp xexp-b" data-copy="${e(d.weekly.command)}">Copy</button></p>`) : "";
@@ -203,11 +253,16 @@ function osHtml(brand: string, domain: string, counts: Map<string, number>): str
   return `${vhead({ id: "os", label: GTM_OS.title, group: GTM_OS.title })}<div class="sec"><p class="src">${e(GTM_OS.note.split("{company}").join(brand))}</p><div class="zg-cards">${cards}</div></div>${next}</section>`;
 }
 
+/** Read the full workflow: the play's page on looot.ai (playUrl: Walid's slug, never a link from a bundle). */
+function read(p: { id: number; slug?: string }): string {
+  const url = playUrl(p);
+  return url ? `<a class="za zread" href="${e(url)}" target="_blank" rel="noopener noreferrer">Read the full workflow</a>` : "";
+}
+
 /** The plays section's title and its menu label. */
 export const PLAYS_TITLE = "Your next plays";
 /** Where the plays come from, credited on the page. */
 export const ATLAS_CREDIT = "Plays from the Workflow Atlas by Walid: 1,000 GTM workflows in 20 goals.";
-const ATLAS_URL = "https://looot-gtm-atlas.walidboulanouar.chatgpt.site/";
 
 /** "Your next plays": the 5 Atlas plays matched to this run, each with why it fits (one real finding), what
  * it produces, a price range from looot prices, Tell your agent and, only where Zeus has the command, Run it. */
@@ -218,10 +273,10 @@ export function playsHtml(d: Pick<Dossier, "nextPlays" | "goal" | "playFits"> & 
   const cards = ps.map((p, n) => {
     const run = p.runCommand ? `<button type="button" class="za cp zrun-it" data-copy="${e(p.runCommand)}" title="Copies ${e(p.runCommand)}">Run it</button>` : "";
     const range = `$${p.lowUsd.toFixed(2)} to $${p.highUsd.toFixed(2)}`;
-    return `<article class="card zg-card"><div class="zatl-h">${goalTile(p.goal)}<span class="chip">${e(p.goal)}</span><span class="chip zprice" title="${e(p.priceText)}">${e(range)}</span></div><h4 id="play-${e(String(p.id))}">${n + 1}. ${e(p.title)}</h4><p class="zwhy">${e(p.why)}</p><details class="zdet"><summary>Details</summary><dl><dt>Produces</dt><dd>${e(p.produces)}</dd><dt>Price</dt><dd>${e(p.priceText)}, capped at $${p.capUsd.toFixed(2)}</dd><dt>looot jobs</dt><dd>${e(p.jobs.join(", "))}</dd></dl></details><div class="zacts"><button type="button" class="za cp" data-copy="${e(p.prompt)}">Tell your agent</button>${run}</div></article>`;
+    return `<article class="card zg-card"><div class="zatl-h">${goalTile(p.goal)}<span class="chip">${e(p.goal)}</span><span class="chip zprice" title="${e(p.priceText)}">${e(range)}</span></div><h4 id="play-${e(String(p.id))}">${n + 1}. ${e(p.title)}</h4><p class="zwhy">${e(p.why)}</p><details class="zdet"><summary>Details</summary><dl><dt>Produces</dt><dd>${e(p.produces)}</dd><dt>Price</dt><dd>${e(p.priceText)}, capped at $${p.capUsd.toFixed(2)}</dd><dt>looot jobs</dt><dd>${e(p.jobs.join(", "))}</dd></dl></details><div class="zacts"><button type="button" class="za cp" data-copy="${e(p.prompt)}">Tell your agent</button>${run}${read(p)}</div></article>`;
   }).join("");
   const body = ps.length ? `<div class="zg-cards">${cards}</div>` : emptyState(`This run found nothing a play can be built on yet. Each play needs a real finding about ${brand}.`);
-  const note = `<p class="src">${goal ? `Goal: ${e(goal)}. ` : ""}Each reason is one finding from this run. Tell your agent copies the request with the looot jobs and a budget; nothing runs without your yes. ${e(ATLAS_CREDIT)} <a href="${ATLAS_URL}" target="_blank" rel="noopener noreferrer">Open the Atlas</a></p>`;
+  const note = `<p class="src">${goal ? `Goal: ${e(goal)}. ` : ""}Each reason is one finding from this run. Tell your agent copies the request with the looot jobs and a budget; nothing runs without your yes. ${e(ATLAS_CREDIT)} <a href="${ATLAS_PAGE_URL}" target="_blank" rel="noopener noreferrer">Open the Atlas</a></p>`;
   const hooks = hookCards(d, domain, ps.length, ps.map((p) => p.goal));
   const hooksHtml = hooks.length ? `<div class="sec" id="play-hooks"><div class="sech"><h3>Zeus can run these next</h3><span class="k">get more, keep it running, your own tools</span></div><p class="src">What your agent can do with Zeus after this run. Each one shows its price first and runs nothing without your yes. Schedules run in your own agent.</p><div class="zg-cards">${hooks.join("")}</div></div>` : "";
   return `${vhead({ id: "plays", label: PLAYS_TITLE, group: "Next" })}<div class="sec"><div class="sech"><h3>Picked for ${e(brand)}</h3><span class="k">top 5 from this run's findings</span></div>${note}${body}</div>${hooksHtml}${browseHtml(domain, units(ps), d.playFits, atlasUrl)}</section>`;
@@ -298,7 +353,7 @@ const units = (ps: { units: number }[]) => ps[0]?.units ?? 10;
  * small script from one inline JSON block (text only, no HTML in the data). Prices use the same formula
  * as the top 5 (matchPlays). */
 function browseHtml(domain: string, n: number, fits: Record<string, number> = {}, atlasUrl?: string): string {
-  const data = JSON.stringify({ ...(atlasUrl ? { src: atlasUrl } : atlasBrowseData()), domain, units: n, fits, meta: Object.fromEntries(Object.entries(GOAL_META).map(([g, [, promise]]) => [g, [goalSvg(g), promise, GOAL_ICONS[g]?.tone ?? "green"]])) }).replace(/</g, "\\u003c");
+  const data = JSON.stringify({ ...(atlasUrl ? { src: atlasUrl } : atlasBrowseData()), page: ATLAS_PAGE_URL, domain, units: n, fits, meta: Object.fromEntries(Object.entries(GOAL_META).map(([g, [, promise]]) => [g, [goalSvg(g), promise, GOAL_ICONS[g]?.tone ?? "green"]])) }).replace(/</g, "\\u003c");
   return `<div class="sec" id="atlas-browse"><div class="sech"><h3>All plays by goal</h3><span class="k">1,000 workflows in 20 goals</span></div><div class="zatl"></div></div><script type="application/json" id="atlas-data">${data}</script><script>${BROWSE_JS}</script>`;
 }
 
@@ -315,7 +370,7 @@ box.replaceChildren(back('Back to '+D.goals[p[1]],function(){list(p[1])}));var a
 var ol=el('ol','');ol.style.cssText='margin:4px 0;padding-left:20px;font-size:13.5px;line-height:1.5';p[5].forEach(function(k){var v=D.providers[k],li=el('li','');li.append(el('b','',v[0]+': '),document.createTextNode(v[1]+(v[2]?' (looot job '+v[2]+')':' (no looot job yet)')));ol.append(li)});
 var dl=el('dl','');[['Decision rule',p[3]],['Produces',p[4]],['Price',jobs.length?'about '+money(lo)+' to '+money(hi)+' for '+D.units+' companies, capped at $'+cap.toFixed(2):'not runnable through looot yet']].forEach(function(x){dl.append(el('dt','',x[0]),el('dd','',x[1]))});
 var acts=el('div','zacts');if(jobs.length)acts.append(btn('Tell your agent','Run this play for '+D.domain+' with looot: '+p[2]+' Decision rule: '+p[3]+' Use these looot jobs with fallback on: '+jobs.map(function(j){return 'job:'+j}).join(', ')+'. Then: '+p[4]+' Do it for '+D.units+' companies. Show me the price first and spend nothing without my yes. Budget $'+cap.toFixed(2)+', stop at it.'));var rc=D.run[D.goals[p[1]]];if(rc){var r=btn('Run it',rc);r.title='Copies '+rc;acts.append(r)}
-a.append(ol,dl,acts);box.append(a)}
+if(p[6]){var rd=el('a','za zread','Read the full workflow');rd.href=D.page+'/'+encodeURIComponent(p[6]);rd.target='_blank';rd.rel='noopener noreferrer';acts.append(rd)}a.append(ol,dl,acts);box.append(a)}
 if(D.src){box.append(el('p','src','Loading the plays...'));fetch(D.src,{credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(x){D.goals=x.goals;D.plays=x.plays;D.providers=x.providers;cats()}).catch(function(){box.replaceChildren(el('p','src','The plays could not load. Reload the page to try again.'))})}else cats()})();`;
 
 /** Export to CRM: copies the prompt for the user's agent. Private page only: a shared or public page never has it. */
@@ -438,18 +493,66 @@ function cityValues(d: Dossier, brand: string, domain: string, counts: Map<strin
   return m;
 }
 
+/** The page title: "<company>'s GTM engine". The city is only the picture of it (Luisa, 2026-11-26). */
+export function engineTitle(brand: string): string {
+  return `${brand}'s GTM engine`;
+}
+/** The caption over the city map. */
+export const CITY_HINT = "Your GTM engine, drawn as a city. Hover a building, click to open it";
+
+/** The owner's actions: Share and powered by looot, no Fork it and no Tell your agent. */
+export function ownerActionsHtml(d: Pick<Dossier, "public">): string {
+  return actionsHtml(d).replace(/<a class="za" href="[^"]*github\.com\/loootai\/zeus"[^>]*>Fork it<\/a>/, "").replace(/<button type="button" class="za cp" data-copy="[^"]*">Tell your agent<\/button>/, "");
+}
+
+const money2 = (n: number) => `$${(Math.ceil(n * 100) / 100).toFixed(2)}`;
+/** What the toast says after a copy (the Get more toast). */
+/** The owner's bars (A, B, C and the per-view bar). */
+export const OWNER_CSS = ".zown{margin:14px 0 18px;display:flex;flex-direction:column;gap:10px}.zown-a{background:#fff;border:1px solid #E4E7EC;border-radius:14px;padding:14px 16px}.zown-btn{border:0;cursor:pointer;font:inherit;font-weight:700}.zown-m{margin:8px 0 0;font-size:13px;color:#4A5260}.zown-l{margin:8px 0 0 18px;font-size:13px;line-height:1.55;color:#2E3238}.zown-p{color:#6F7988}.zown-k{font-size:13px;color:#6F7988;margin:0}.zown-link{border:0;background:none;padding:0;font:inherit;font-weight:600;color:#0A7A4B;text-decoration:underline;cursor:pointer}.zown-s{margin-left:6px}.zown-v{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:6px 0 14px}.zown-v .zown-m{margin:0}.zown-sm{padding:8px 14px;font-size:13px}.zown-acts{margin:0}.zg-empty .zown-link{margin-left:6px}";
+const PASTE_NOTE = "Paste it into your agent (Claude Code, Cursor, ChatGPT).";
+
+/** The owner's bar under one view's heading: Complete this section (when missing) and Refresh this section. */
+export function viewBar(c: ViewCta | undefined): string {
+  if (!c) return "";
+  const comp = c.complete ? `<button type="button" class="ztop-b cp zown-btn zown-sm" data-copy="${e(c.complete)}" data-note="${e(PASTE_NOTE)}">Complete this section</button><span class="zown-m">${e(c.state ?? "")}${c.expected != null ? `, about ${money2(c.expected)}, cap ${money2(c.cap ?? 1)}` : ", priced before it runs"}. Your agent asks before it spends.</span>` : "";
+  return `<div class="zown zown-v">${comp}<button type="button" class="zown-link cp" data-copy="${e(c.refresh)}" data-note="${e(PASTE_NOTE)}">Refresh this section</button></div>`;
+}
+function withViewBar(html: string, v: { id: string; label: string }, c: OwnerCta): string {
+  const bar = viewBar(c.views[v.id]);
+  if (!bar) return html;
+  const at = `<h1>${e(v.label)}</h1></div></div>`;
+  let out = html.includes(at) ? html.replace(at, () => at + bar) : html;
+  // An empty card ("Nothing here yet") offers Complete this section inline instead of a bare 0.
+  const cv = c.views[v.id];
+  if (cv?.complete) out = out.replace(/<div class="empty zg-empty"><b>Nothing here yet<\/b>([\s\S]*?)<\/div>/g, (_m, msg: string) => `<div class="empty zg-empty"><b>Nothing here yet</b>${msg} <button type="button" class="zown-link cp" data-copy="${e(cv.complete!)}" data-note="${e(PASTE_NOTE)}">Complete this section</button></div>`);
+  return out;
+}
+
+/** A (main button, hidden when nothing is missing), B and C (small links) for the owner. */
+export function ownerBar(c: OwnerCta, acts = ""): string {
+  const priced = c.items.filter((i) => i.expected !== null);
+  const list = c.items.map((i) => `<li><b>${e(i.label)}</b>: ${e(i.state)}${i.expected !== null ? ` <span class="zown-p">about ${money2(i.expected)}</span>` : ` <span class="zown-p">priced before it runs</span>`}</li>`).join("");
+  const a = c.items.length
+    ? `<div class="zown-a"><button type="button" class="ztop-b cp zown-btn" data-copy="${e(c.prompt)}" data-note="${e(PASTE_NOTE)}">Complete your GTM engine</button><p class="zown-m">${priced.length ? `About ${money2(c.expected)}, capped at ${money2(c.cap)}. ` : ""}Your agent asks you before it spends.</p><ul class="zown-l">${list}</ul></div>`
+    : "";
+  const links = `<p class="zown-k"><button type="button" class="zown-link cp" data-copy="${e(c.mapPrompt)}" data-note="${e(PASTE_NOTE)}">Map another company</button><span class="zown-s">prospects, partners, rivals</span> · <button type="button" class="zown-link cp" data-copy="${e(c.refreshPrompt)}" data-note="${e(PASTE_NOTE)}">Refresh my engine</button><span class="zown-s">what changed since ${e(c.runDate || "your run")}</span></p>`;
+  return `<div class="zown">${a}${links}<div class="obar zown-acts">${acts}</div></div>`;
+}
+
 /** Builds the whole city page from an assembled dossier. Pure, no file or network access. */
-export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's own run: real brand and domain, people still masked. */ showBrand?: boolean; /** The looot.page copy (#24): a share header and a Build your own footer, and the owner's logo as a checked data: URI. */ share?: { logo?: string }; /** Fetch the Atlas browse data from this same-origin URL instead of inlining it (hosted zeus.looot.ai pages). */ atlasUrl?: string } = {}): string {
+export function renderCity(d: Dossier, o: { /** The signed-in owner's private page (/p/<domain>): A, B and C (ownerCta.ts) instead of the visitor pill. */ owner?: OwnerCta; /** Hosted safe page of the user's own run: real brand and domain, people still masked. */ showBrand?: boolean; /** The looot.page copy (#24): a share header and a Build your own footer, and the owner's logo as a checked data: URI. */ share?: { logo?: string; /** looot-pages origin that serves the mascot clips. */ clipBase?: string }; /** Load the Run any workflow catalog from this URL instead of zeus/workflows.js beside the page (hosted zeus.looot.ai). */ workflowsUrl?: string; /** Fetch the Atlas browse data from this same-origin URL instead of inlining it (hosted zeus.looot.ai pages). */ atlasUrl?: string } = {}): string {
   // The run's own brand and domain are shown on every page, public included; only third parties are masked.
   const real = !d.public || o.showBrand !== false;
   const brand = real ? d.brand || d.domain : "Your brand";
   const domain = real ? d.domain : "yourdomain.com";
-  const counts = new Map(CITY_VIEWS.map((v) => [v.id, countOf(viewBlocks(d, v).flatMap((p) => p.blocks))]));
-  const totals = new Map(CITY_VIEWS.map((v) => [v.id, totalOf(viewBlocks(d, v).flatMap((p) => p.blocks))]));
+  const counts = new Map(CITY_VIEWS.map((v) => [v.id, countOf(viewBlocks(d, v).flatMap((p) => p.blocks).filter((b) => !isPlumbing(b)))]));
+  const totals = new Map(CITY_VIEWS.map((v) => [v.id, totalOf(viewBlocks(d, v).flatMap((p) => p.blocks).filter((b) => !isPlumbing(b)))]));
   const committees = d.sections.find((x) => x.id === "committee");
   if (committees) counts.set("committees", countOf(committees.blocks));
   const nPlays = d.nextPlays?.length ?? 0;
-  const nav = `<div class="ngroup solo"><div class="nav"><a href="#overview">${ICONS.overview ?? ""}<span class="mt">${e(brand)} City</span></a></div></div>` +
+  // "Run any workflow" (runAny.ts) is on every city page except the looot.page share copy.
+  const runAny = !o.share;
+  const nav = `<div class="ngroup solo"><div class="nav"><a href="#overview">${ICONS.overview ?? ""}<span class="mt">GTM engine</span></a></div></div>` + (runAny ? RUN_ANY_NAV : "") +
     MENU.map((c) => `<div class="ngroup zcat"><h6>${e(c.name)}</h6><div class="nav">${c.items.map((i) => menuEntry(i, domain, d.public, counts, totals, Boolean(o.share))).join("")}</div></div>`).join("") +
     `<div class="ngroup zcat"><h6>${e(GTM_OS.title)}</h6><div class="nav">${GTM_OS.items.map((i) => `<a href="#os">${ICONS._lock ?? ""}<span class="mt">${e(i.label)}<small class="zsub">Coming soon</small></span></a>`).join("")}<a href="#os">${ICONS.overview ?? ""}<span class="mt">${e(GTM_OS.next.label)}</span></a></div></div>` +
     `<div class="ngroup zcat"><h6>More credit</h6><div class="nav"><a href="#paid">${ICONS.runlog ?? ""}<span class="mt">What a paid run adds</span></a></div></div>` +
@@ -462,7 +565,8 @@ export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's o
   const logo = logoSrc && /^data:image\/(png|jpeg|gif|webp|x-icon|vnd\.microsoft\.icon);base64,[A-Za-z0-9+/=]+$/.test(logoSrc) ? logoSrc : undefined;
   const side = `<aside class="side" aria-label="Sections"><div class="brand"><span class="logo">${logo ? `<img src="${e(logo)}" alt="" width="28" height="28">` : `<span class="lgt" aria-hidden="true">${e((brand.trim()[0] ?? "Z").toUpperCase())}</span>`}</span><b>${e(brand)}</b><small>looot Zeus, ${d.placeholder ? "example run" : "free run"}</small></div>${nav}<div class="sfoot">Built <b>${e(date)}</b><br>Data from looot runs. Each section says where it came from.</div></aside>`;
   // Buildings Zeus does not have yet are greyed and open the paid list, as David greys locked ones.
-  const iso = fill(ISO_SVG, cityValues(d, brand, domain, counts, totals.get("targets"))).replace(/<a class="(is[al][^"]*)" href="#paid"/g, '<a class="$1 zoff" href="#paid"');
+  const filled = fill(ISO_SVG, cityValues(d, brand, domain, counts, totals.get("targets")));
+  const iso = filled.replace(/<a class="(is[al][^"]*)" href="#paid"/g, '<a class="$1 zoff" href="#paid"');
   const overStats = (d.overview?.blocks.find((x): x is Extract<Block, { kind: "stat" }> => x.kind === "stat")?.items ?? []).slice(0, 8);
   const VIEW_OF: Record<string, string> = { buyers: "targets", signals: "targets", ads: "competitive", social: "influencers", seo: "seo", receipt: "runlog" };
   const kgrid = overStats.length ? secHtml("The run in numbers", "", `<div class="kgrid">${overStats.map((s) => `<a class="kc" href="#${VIEW_OF[(s as { view?: string }).view ?? ""] ?? "overview"}"><div class="kc-top"><span class="kc-l">${e(s.label)}</span></div><div class="kc-mid"><span class="kval">${e(s.value)}</span></div><div class="kc-viz"><div class="kfoot">${e(s.hint ?? "")}</div></div></a>`).join("")}</div>`) : "";
@@ -471,18 +575,41 @@ export function renderCity(d: Dossier, o: { /** Hosted safe page of the user's o
   const paidCard = `<div class="sec ztop"><div class="ztop-m"><h3>What a paid run adds</h3><p>More accounts, people data, phones and a weekly re-run. Every command prices its calls first and spends nothing without your yes.</p></div><a class="ztop-b" href="#paid">See the list</a></div>`;
   const mark = logo ? `<img src="${e(logo)}" alt="" width="24" height="24">` : `<span class="lgt" aria-hidden="true">${e((brand.trim()[0] ?? "Z").toUpperCase())}</span>`;
   const shareHead = o.share ? `<div class="zsh"><span class="zsh-l">${mark}</span><b>${e(brand)}</b><span class="zsh-k">GTM map by Zeus</span><span class="zsh-d">${e(domain)}${date ? ` · ${e(dayLabel(date))} ${e(date.slice(0, 4))}` : ""}</span></div>` : "";
+  // The looot.page copy is the story only (Direction A, story.ts; Luisa 2026-11-26): hero city, findings, plays, a link to
+  // the owner's full map and the end card. No app shell, no explorer, no second city: the hero's city is the city.
+  if (o.share) {
+    const story = storyHtml({ d, brand, domain, city: cleanCity(filled), logo, zeusUrl: ZEUS_SHARED_URL, roads: ISO.roads, clipBase: o.share.clipBase });
+    return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${e(brand)}'s GTM engine</title>${FAVICON_HTML}<script>${HEAD_JS}</script><style>${CITY_CSS}</style><style>${STORY_CSS}</style></head>
+<body class="zshp">${story.top}${story.end}<script>${SHARE_JS}</script><script>${STORY_JS}</script></body></html>
+`;
+  }
   const shareFoot = o.share ? `<div class="sec ztop zcta"><div class="ztop-m"><h3>Build your own</h3><p>Tell your agent: <code>run zeus.looot.ai for yourcompany.com</code>. The first run is free.</p></div><a class="ztop-b" href="${ZEUS_SHARED_URL}" target="_blank" rel="noopener noreferrer">Map my company</a></div>` : "";
-  const overview = `<section class="view" data-view="overview" data-title="${e(brand)} City" data-group="Overview">${shareHead}<div class="vhead"><div><h1>${e(brand)} City</h1></div></div>${d.placeholder ? `<div class="note zslim" title="${e(d.placeholder)}">${e(d.placeholder)}</div>` : ""}${agentPill(actionsHtml(d, Boolean(o.share)) + crmButton(d))}<div class="sec iso-sec"><div class="sech"><h3>${e(brand)} City</h3><span class="k">hover a building, click to open it</span></div>${MASCOT_HTML}<div class="iso" data-iso data-roads="${e(JSON.stringify(ISO.roads))}">${iso}<div class="iso-tip" role="tooltip" hidden><div><b></b><span></span></div></div></div></div>${flow}${kgrid}${paidCard}${playsCard}</section>`;
+  const title = engineTitle(brand);
+  // The signed-in owner (o.owner, the private /p page) gets A, B and C instead of the visitor's "Make it yours" pill, Fork it and the developer note.
+  const bar = o.owner ? ownerBar(o.owner, ownerActionsHtml(d) + crmButton(d)) : agentPill(actionsHtml(d, Boolean(o.share)) + crmButton(d));
+  const overview = `<section class="view" data-view="overview" data-title="${e(title)}" data-group="Overview">${shareHead}<div class="vhead"><div><h1>${e(title)}</h1></div></div>${d.placeholder ? `<div class="note zslim" title="${e(d.placeholder)}">${e(d.placeholder)}</div>` : ""}${bar}${runAny && !o.owner ? DO_FIRST_HTML : ""}<div class="sec iso-sec"><div class="sech"><h3>${e(title)}</h3><span class="k">${CITY_HINT}</span></div>${MASCOT_HTML}<div class="iso" data-iso data-roads="${e(JSON.stringify(ISO.roads))}">${iso}<div class="iso-tip" role="tooltip" hidden><div><b></b><span></span></div></div></div></div>${flow}${kgrid}${paidCard}${playsCard}</section>`;
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${e(brand)} City</title><script>${HEAD_JS}</script><style>${CITY_CSS}</style></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${e(title)}</title>${FAVICON_HTML}<script>${HEAD_JS}</script><style>${CITY_CSS}</style>${runAny ? `<style>${RUN_ANY_CSS}${o.owner ? "" : DO_FIRST_CSS}</style>` : ""}${o.owner ? `<style>${OWNER_CSS}</style>` : ""}</head>
 <body><div class="scrim"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="zgrey"><feColorMatrix type="saturate" values="0"/></filter></svg>\n<div class="app">${side}
-<main><div class="top"><div class="wrap"><button class="menu" type="button" aria-label="Open menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="tl"><div class="crumb" id="vtitle">${e(brand)} City</div><div class="hl" id="vgroup">Overview</div></div><span class="date">${e(domain)}${date ? `, ${e(date)}` : ""}</span></div></div><div class="wrap">
+<main><div class="top"><div class="wrap"><button class="menu" type="button" aria-label="Open menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="tl"><div class="crumb" id="vtitle">${e(title)}</div><div class="hl" id="vgroup">Overview</div></div><span class="date">${e(domain)}${date ? `, ${e(date)}` : ""}</span></div></div><div class="wrap">
 ${overview}
-${CITY_VIEWS.map((v) => viewHtml(d, v, Boolean(o.share))).join("\n")}
+${CITY_VIEWS.map((v) => (o.owner ? withViewBar(viewHtml(d, v, Boolean(o.share)), v, o.owner) : viewHtml(d, v, Boolean(o.share)))).join("\n")}
 ${osHtml(brand, domain, counts)}
 ${paidHtml()}
-${playsHtml(d, brand, domain, o.atlasUrl)}
-${shareFoot}</div></main></div><script>${CITY_JS}</script></body></html>
+${runAny ? runAnyView(domain, brand, o.workflowsUrl) : ""}
+${runAny ? playsHtml(d, brand, domain, o.atlasUrl).replace('<div class="sec" id="atlas-browse">', `${RUN_ANY_LINK}$&`) : playsHtml(d, brand, domain, o.atlasUrl)}
+${shareFoot}</div></main></div><script>${CITY_JS}</script>${runAny ? `<script>${RUN_ANY_JS}</script>${o.owner ? "" : `<script>${DO_FIRST_JS}</script>`}` : ""}</body></html>
 `;
+}
+
+/** The city art of a run with no labels, links or text (story.ts cleanCity): looot-pages draws its Open Graph image from it. */
+export function cityArt(d: Dossier, o: { showBrand?: boolean } = {}): string {
+  const real = !d.public || o.showBrand !== false;
+  const brand = real ? d.brand || d.domain : "Your brand";
+  const domain = real ? d.domain : "yourdomain.com";
+  const counts = new Map(CITY_VIEWS.map((v) => [v.id, countOf(viewBlocks(d, v).flatMap((p) => p.blocks).filter((b) => !isPlumbing(b)))]));
+  const totals = new Map(CITY_VIEWS.map((v) => [v.id, totalOf(viewBlocks(d, v).flatMap((p) => p.blocks).filter((b) => !isPlumbing(b)))]));
+  return cleanCity(fill(ISO_SVG, cityValues(d, brand, domain, counts, totals.get("targets"))));
 }

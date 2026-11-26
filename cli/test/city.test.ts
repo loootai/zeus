@@ -28,7 +28,7 @@ test("the city page has every section heading, works from disk and names no loca
   const html = readFileSync(join(demo(), "city", "index.html"), "utf8");
   for (const h of HEADINGS) assert.match(html, new RegExp(`<h1>${h}</h1>`), h);
   assert.doesNotMatch(html, /~\/Desktop|\/Users\/|\/home\/|C:\\\\|\/tmp\//);
-  assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href=|@import|url\(http/i);
+  assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href="(?!data:image\/png;base64,)|@import|url\(http/i);
   assert.doesNotMatch(html, /zlk|Available after top up|Morning brief|Battlecards/);
   assert.match(html, /<h1>What a paid run adds<\/h1>/);
 });
@@ -115,4 +115,51 @@ test("the sidebar shows the company logo the run fetched, on its own public page
     assert.ok(!renderCity(bare).includes("svg+xml"));
     assert.match(renderCity(bare), /<span class="logo"><span class="lgt"/);
   } finally { setLogos(new Map()); }
+});
+
+test("each view shows its own findings: Format finder is ads and social, plumbing folds into How this was built (David, 2026-11-26)", () => {
+  const d = {
+    domain: "acme.com", brand: "Acme", generatedAt: "2026-11-26T10:00:00Z", public: true,
+    sections: [
+      { num: "", id: "summary", title: "Summary", status: "done", source: "", blocks: [{ kind: "kv", items: [{ label: "Offer", value: "SUMMARY-OFFER" }] }, { kind: "list", items: ["icp: SUMMARY-LINE"] }] },
+      { num: "", id: "ads", title: "Ad board", status: "done", source: "scrapecreators-x, 2026-11-25", blocks: [
+        { kind: "bars", caption: "Angles your rivals run", items: [{ label: "Speed and ease", value: 9 }] },
+        { kind: "table", caption: "Lookups", columns: [{ key: "who", label: "Who" }], rows: [{ who: "LOOKUP-ROW" }] },
+        { kind: "note", text: "7 lookups. 4 hit. Charged $0.0094 in total." },
+      ] },
+      { num: "", id: "seo", title: "Search + AI", status: "capped", source: "dataforseo, 2026-11-25", blocks: [
+        { kind: "table", caption: "Google ranks", columns: [{ key: "keyword", label: "Keyword" }, { key: "provider", label: "Provider" }], rows: [{ keyword: "kw1", provider: "PROVIDER-CELL" }] },
+        { kind: "note", text: "The run reached the cap inside this module. What is shown is partial." },
+        { kind: "more", label: "More keywords", command: "looot-zeus run --only seo", price: "$0.05" },
+      ] },
+    ],
+  } as unknown as Dossier;
+  const html = renderCity(d);
+  const view = (id: string) => html.slice(html.indexOf(`data-view="${id}"`), html.indexOf("</section>", html.indexOf(`data-view="${id}"`)));
+  const f = view("formats");
+  assert.ok(f.includes("Speed and ease"), "formats shows the ad angles");
+  assert.ok(!f.includes("SUMMARY-OFFER") && !f.includes("SUMMARY-LINE"), "formats never shows the run summary");
+  const main = (v: string) => v.slice(0, v.indexOf('<details class="zhow">') < 0 ? v.length : v.indexOf('<details class="zhow">'));
+  assert.ok(!main(f).includes("LOOKUP-ROW"), "formats shows no lookups");
+  const c = view("competitive");
+  assert.ok(!main(c).includes("LOOKUP-ROW") && c.includes("LOOKUP-ROW"), "lookups sit inside How this was built");
+  const s = view("seo");
+  assert.ok(s.includes('class="chip zpartial"'), "a capped section has a Partial chip");
+  assert.ok(!main(s).includes("reached the cap"), "the cap note is folded");
+  assert.ok(!s.includes("PROVIDER-CELL"), "the provider column is not in the findings table");
+  assert.ok(!s.includes("looot-zeus run --only seo"), "a public page shows no CLI command");
+});
+
+test("card subtitles and captions drop provider slugs and via trails (David, 2026-11-26)", () => {
+  const d = { domain: "acme.com", brand: "Acme", generatedAt: "2026-11-26T10:00:00Z", public: true, sections: [
+    { num: "", id: "ads", title: "Ad board", status: "done", source: "x, 2026-11-25", blocks: [
+      { kind: "bars", caption: "Angles your rivals run", items: [{ label: "Speed", value: 1 }] },
+      { kind: "cards", caption: "Rival, 3 posts (LinkedIn page hit via scrapecreators-linkedin-company-posts)", items: [{ title: "Ad one", sub: "first seen 2026-11-19, scrapecreators-google-company-ads" }, { title: "Ad two", sub: "Rival, 2026-11-18" }] },
+    ] },
+  ] } as unknown as Dossier;
+  const html = renderCity(d);
+  const f = html.slice(html.indexOf('data-view="formats"'), html.indexOf("</section>", html.indexOf('data-view="formats"')));
+  assert.ok(f.includes("first seen 2026-11-19") && !f.includes("scrapecreators"), "no provider slug in the formats view");
+  assert.ok(f.includes("Rival, 3 posts"));
+  assert.ok(f.includes("Rival, 2026-11-18"), "a subtitle ending in a date keeps its date");
 });

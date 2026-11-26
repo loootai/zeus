@@ -6,7 +6,7 @@ import type { Snapshot } from "./history.js";
 import { stripAssets } from "./assets.js";
 
 /** One third-party string and the label that replaces it on a shared page. */
-export interface ThirdParty { from: string; to: string; word: boolean }
+export interface ThirdParty { from: string; to: string; word: boolean; exact?: boolean }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const htmlEsc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -30,7 +30,16 @@ const PLAIN_WORDS = new Set(("search find data news jobs job metro legacy platfo
   "people person mail email home page pages link links field fields guide guides review reviews answer answers rank ranks share shares signal signals " +
   "content local social ads ad brand brands growth sales price prices pricing trade trust clear bright light spark pulse focus scale point points level " +
   "simple direct prime core base edge front next shift stack loop wave flow path bridge range river ocean forest stone story stories report reports " +
-  "insight insights index track tracker hub view views check checks match lead leads target targets").split(" "));
+  "insight insights index track tracker hub view views check checks match lead leads target targets " +
+  "forum forums community communities network networks group groups club studio studios media digital labs cloud video videos " +
+  "feature features thread threads chat blog blogs answer question questions event events summit school academy library " +
+  "office market place space spaces house box frame mode note notes board boards list lists square circle union alliance").split(" "));
+
+/** True when every word of a name is a plain or generic word ("Forum", "Digital Media"): such a name is a word in other text too. */
+export function isGenericName(name: string): boolean {
+  const words = name.toLowerCase().split(/[\s-]+/).filter(Boolean);
+  return words.length > 0 && words.every((w) => GENERIC.has(w) || PLAIN_WORDS.has(w));
+}
 
 /** The short forms a page or a provider uses for a company: the leading word of a multi-word name
  * ("Northwind" for "Northwind Logistics") and the main label of its domain ("northwind-logistics",
@@ -56,7 +65,7 @@ export function thirdPartySwaps(snap: Pick<Snapshot, "domain" | "accounts" | "co
   const add = (from: string, to: string, word: boolean) => {
     const f = from.trim();
     if (f.length < (word ? 3 : 4) || f.toLowerCase() === to.toLowerCase()) return;
-    out.push({ from: f, to, word });
+    out.push(word && isGenericName(f) ? { from: f, to, word, exact: true } : { from: f, to, word });
   };
   const accounts = new Map<string, { domain: string; name: string }>();
   for (const a of [...snap.accounts, ...(snap.lookalikes ?? [])]) {
@@ -84,14 +93,22 @@ export function thirdPartySwaps(snap: Pick<Snapshot, "domain" | "accounts" | "co
   return withHtml.sort((a, b) => b.from.length - a.from.length);
 }
 
-// Whole names only, any casing (a leak in any casing must be caught). A plain English word is never a
-// swap on its own (PLAIN_WORDS), so "Search" in a heading is never taken for search.com.
-const pattern = (s: ThirdParty) => (s.word ? `(?<![\\p{L}\\p{N}])${esc(s.from)}(?![\\p{L}\\p{N}])` : `(?<![\\p{L}\\p{N}.-])(?:www\\.)?${esc(s.from)}(?![\\p{L}\\p{N}-])`);
+// Whole names only. A distinctive name is caught in any casing (a leak in any casing must be caught).
+// A name made only of plain words ("Forum", "Digital Media") is caught only in its own casing (or all caps), as a
+// proper noun, or in any casing with a legal suffix ("forum inc"): "forum features" in a sentence stays a word.
+// A plain English word is never a short form on its own (PLAIN_WORDS), so "Search" in a heading stays.
+const LEGAL = "inc llc ltd limited gmbh ag sa sas sarl bv nv plc corp corporation co srl spa oy ab as pty".split(" ");
+const anyCase = (s: string) => [...s].map((c) => (c.toLowerCase() !== c.toUpperCase() ? `[${esc(c.toLowerCase())}${esc(c.toUpperCase())}]` : esc(c))).join("");
+const pattern = (s: ThirdParty) => {
+  if (!s.word) return `(?<![\\p{L}\\p{N}.-])(?:${anyCase("www.")})?${anyCase(s.from)}(?![\\p{L}\\p{N}-])`;
+  const body = s.exact ? `(?:${esc(s.from)}|${esc(s.from.toUpperCase())}|${anyCase(s.from)}(?=,?\\s+(?:${LEGAL.map(anyCase).join("|")})(?![\\p{L}\\p{N}])))` : anyCase(s.from);
+  return `(?<![\\p{L}\\p{N}])${body}(?![\\p{L}\\p{N}])`;
+};
 
 /** Replaces every third-party name and domain in one pass, so a label is never swapped again. */
 export function applyThirdParties(text: string, swaps: ThirdParty[]): string {
   if (swaps.length === 0) return text;
-  const re = new RegExp(swaps.map((s) => `(${pattern(s)})`).join("|"), "giu");
+  const re = new RegExp(swaps.map((s) => `(${pattern(s)})`).join("|"), "gu");
   return text.replace(re, (...m) => {
     const i = (m.slice(1, swaps.length + 1) as (string | undefined)[]).findIndex((g) => g !== undefined);
     return swaps[i]?.to ?? m[0];
@@ -100,7 +117,7 @@ export function applyThirdParties(text: string, swaps: ThirdParty[]): string {
 
 /** The third-party names or domains still in a page: the guard that stops a shared page. */
 export function thirdPartyLeaks(text: string, swaps: ThirdParty[]): string[] {
-  return [...new Set(swaps.filter((s) => new RegExp(pattern(s), "iu").test(text)).map((s) => s.from))];
+  return [...new Set(swaps.filter((s) => new RegExp(pattern(s), "u").test(text)).map((s) => s.from))];
 }
 
 /** Turns a safe page into one that names no third party, drops logos, and throws if one is left. */

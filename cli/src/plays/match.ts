@@ -14,15 +14,37 @@ import { join } from "node:path";
 import { JOBS } from "../modules/jobs.js";
 import { unitPrice, type PriceBook } from "../quote.js";
 import type { Finding, Topic } from "./findings.js";
+import { vendoredAtlas, workflowUrl, type VendoredAtlas } from "./atlasSource.js";
 
-/** One Atlas play: its goal, what it does, its decision rule, what it produces and its provider route. */
-export interface AtlasPlay { id: number; goal: string; title: string; rule: string; delivery: string; steps: { provider: string; purpose: string }[] }
-/** The extracted Atlas (scripts/extractAtlas.mjs), expanded from its compact rows. */
-export const ATLAS: { source: string; extracted: string; goals: string[]; plays: AtlasPlay[] } = (() => {
-  const raw = JSON.parse(readFileSync(new URL("./atlas.json", import.meta.url), "utf8")) as { source: string; extracted: string; goals: string[]; providers: { provider: string; purpose: string }[]; plays: [number, number, string, string, string, number[]][] };
-  const plays = raw.plays.map(([id, g, title, rule, delivery, steps]) => ({ id, goal: raw.goals[g]!, title, rule, delivery, steps: steps.map((k) => raw.providers[k]!) }));
-  return { source: raw.source, extracted: raw.extracted, goals: raw.goals, plays };
-})();
+/** One Atlas play: its goal, what it does, its decision rule, what it produces, its provider route and its looot.ai slug. */
+export interface AtlasPlay { id: number; slug: string; goal: string; title: string; rule: string; delivery: string; steps: { provider: string; purpose: string }[] }
+/** The Atlas as the matcher reads it. */
+export interface Atlas { source: string; generatedAt: string; goals: string[]; plays: AtlasPlay[] }
+
+// Zeus's copy rule (no comma before "and", no em dash) applies to every generated page, so the Atlas wording is
+// kept with only that one change.
+const copy = (t: string) => t.replace(/, and /g, " and ").replace(/\s*\u2014\s*/g, ", ");
+
+/** Expands the compact Atlas (atlasSource.ts) into plays, with Zeus's copy rule applied. */
+export function expandAtlas(v: VendoredAtlas): Atlas {
+  const plays = v.plays.map(([id, g, slug, title, rule, delivery, steps]) => ({ id, slug, goal: v.goals[g]!, title: copy(title), rule: copy(rule), delivery: copy(delivery), steps: steps.map((k) => ({ provider: v.providers[k]!.provider, purpose: copy(v.providers[k]!.purpose) })) }));
+  return { source: v.source, generatedAt: v.generatedAt, goals: v.goals, plays };
+}
+
+/** The Atlas in use: the vendored copy until a run loads the live one (useAtlas). Walid's dataset on looot.ai. */
+export let ATLAS: Atlas = expandAtlas(vendoredAtlas());
+
+/** A play's full workflow page on looot.ai: its own slug, else the Atlas's for its id (a looot.page bundle carries
+ * no link), so a link is only ever built from Walid's slugs. Undefined for an id the Atlas does not have. */
+export function playUrl(p: { id: number; slug?: string }): string | undefined {
+  const slug = p.slug || ATLAS.plays.find((x) => x.id === p.id)?.slug;
+  return slug ? workflowUrl(slug) : undefined;
+}
+
+/** Makes this Atlas the one the matcher and the city page use, for the rest of the process. */
+export function useAtlas(v: VendoredAtlas): void {
+  ATLAS = expandAtlas(v);
+}
 
 /** Which looot job does each Atlas provider step. A provider with no job here is not runnable through Zeus. */
 export const STEP_JOB: Record<string, string> = {
@@ -54,14 +76,40 @@ export const OUTCOMES: { key: string; label: string; goals: string[] }[] = [
   { key: "clean data", label: "Clean data, cut costs", goals: ["CRM and data quality", "GTM operations", "Data spend and reliability"] },
 ];
 
-/** The Atlas goals for a goal: an outcome key or label, or one Atlas goal name. Anything else is null. */
-export function goalsFor(goal: string | undefined): string[] | null {
-  const g = (goal ?? "").trim().toLowerCase();
+/** One goal: an outcome key or label, or one Atlas goal name, as [canonical name, its Atlas goals]. */
+function oneGoal(goal: string): [string, string[]] | null {
+  const g = goal.trim().toLowerCase();
   if (!g) return null;
   const o = OUTCOMES.find((x) => x.key === g || x.label.toLowerCase() === g);
-  if (o) return o.goals;
+  if (o) return [o.key, o.goals];
   const a = ATLAS.goals.find((x) => x.toLowerCase() === g);
-  return a ? [a] : null;
+  return a ? [a, [a]] : null;
+}
+
+/** The goals picked, in order, each with its Atlas goals. Takes one goal, or several separated by commas or
+ * "and" ("more customers, get found and new markets"). Unknown parts are dropped; repeats count once. */
+export function goalList(goal: string | undefined): [string, string[]][] {
+  const out: [string, string[]][] = [];
+  const add = (x: [string, string[]] | null) => { if (x && !out.some((o) => o[0] === x[0])) out.push(x); return !!x; };
+  const raw = (goal ?? "").trim();
+  if (add(oneGoal(raw))) return out;
+  for (const part of raw.split(",")) {
+    if (add(oneGoal(part))) continue;
+    for (const bit of part.split(/\band\b/i)) add(oneGoal(bit));
+  }
+  return out;
+}
+
+/** The picked goals as one canonical line ("more customers, get found"), or undefined when none is known. */
+export function cleanGoals(goal: string | undefined): string | undefined {
+  const l = goalList(goal);
+  return l.length ? l.map((x) => x[0]).join(", ") : undefined;
+}
+
+/** The Atlas goals for a goal, or for several (their union): see goalList. Nothing known is null. */
+export function goalsFor(goal: string | undefined): string[] | null {
+  const l = goalList(goal);
+  return l.length ? [...new Set(l.flatMap((x) => x[1]))] : null;
 }
 
 /** The words in a play that make a topic its trigger. */
@@ -98,6 +146,10 @@ const RUN: Record<string, string> = {
 /** One recommended play, ready for the page. */
 export interface NextPlay {
   id: number;
+  /** Walid's slug: the play's page is looot.ai/workflow-atlas/<slug>. */
+  slug: string;
+  /** The full workflow on looot.ai (Read the full workflow). */
+  url: string;
   goal: string;
   title: string;
   /** "Why it fits <company>: <one finding>." Built only from the run's findings. */
@@ -158,6 +210,8 @@ export function matchPlays(i: { company: string; domain: string; findings: Findi
   }
   scored.sort((a, z) => z.score - a.score);
   if (i.fitOnly) return scored.map((s) => build(s.p, s.triggers, s.score, s.jobs, found.get(s.lead)!, i, book, units));
+  const groups = goalList(i.goal);
+  if (groups.length > 1) return spread(scored, groups, i, found, book, units);
   const perGoal = new Map<string, number>();
   const maxPerGoal = wanted ? Math.max(2, Math.ceil((i.n ?? 5) / wanted.length)) : 2;
   const usedWhy = new Set<Topic>();
@@ -178,6 +232,29 @@ export function matchPlays(i: { company: string; domain: string; findings: Findi
   return out;
 }
 
+/** Several goals picked: round-robin by goal, best play first in each, so every goal gets its share of the 5.
+ * A play citing a finding not cited yet goes first; a goal with no fitting play left gives its turn away. */
+function spread(scored: { p: AtlasPlay; triggers: Topic[]; lead: Topic; score: number; jobs: string[] }[], groups: [string, string[]][], i: { company: string; domain: string; isPublic?: boolean; n?: number }, found: Map<Topic, Finding>, book: PriceBook, units: number): NextPlay[] {
+  const n = i.n ?? 5;
+  const out: NextPlay[] = [];
+  const taken = new Set<number>();
+  const usedWhy = new Set<Topic>();
+  for (let more = true; more && out.length < n;) {
+    more = false;
+    for (const [, gs] of groups) {
+      if (out.length >= n) break;
+      const left = scored.filter((s) => !taken.has(s.p.id) && gs.includes(s.p.goal));
+      const s = left.find((x) => !usedWhy.has(x.lead)) ?? left[0];
+      if (!s) continue;
+      more = true;
+      taken.add(s.p.id);
+      usedWhy.add(s.lead);
+      out.push(build(s.p, s.triggers, s.score, s.jobs, found.get(s.lead)!, i, book, units));
+    }
+  }
+  return out;
+}
+
 function build(p: AtlasPlay, triggers: Topic[], score: number, jobs: string[], f: Finding, i: { company: string; domain: string; isPublic?: boolean }, book: PriceBook, units: number): NextPlay {
   const low = jobs.reduce((n, j) => n + unitPrice(j, book) * (JOBS[j]!.basis === "result" ? (JOBS[j]!.rowsPerCall ?? 1) : 1), 0) * units;
   const high = jobs.reduce((n, j) => n + JOBS[j]!.capUsd, 0) * units;
@@ -187,15 +264,15 @@ function build(p: AtlasPlay, triggers: Topic[], score: number, jobs: string[], f
   const priceText = `about ${money(low)} to ${money(high)} for ${what}`;
   const prompt = `Run this play for ${i.domain} with looot: ${p.title} Decision rule: ${p.rule} Use these looot jobs with fallback on: ${jobs.map((j) => `job:${j}`).join(", ")}. Then: ${p.delivery} Do it for ${what}. Show me the price first and spend nothing without my yes. Budget $${cap.toFixed(2)}, stop at it.`;
   const run = RUN[p.goal];
-  return { id: p.id, goal: p.goal, title: p.title, why, produces: p.delivery, jobs, lowUsd: r2(low) || 0.01, highUsd: r2(high), capUsd: cap, units, priceText, prompt, ...(run ? { runCommand: run } : {}), triggers, score };
+  return { id: p.id, slug: p.slug, url: workflowUrl(p.slug), goal: p.goal, title: p.title, why, produces: p.delivery, jobs, lowUsd: r2(low) || 0.01, highUsd: r2(high), capUsd: cap, units, priceText, prompt, ...(run ? { runCommand: run } : {}), triggers, score };
 }
 
 /** The whole Atlas for the city's browse view, compact: goals, providers with their looot job and unit
- * prices, plays as [id, goal index, title, rule, delivery, provider indexes], and the Run it commands. */
-export function atlasBrowseData(book: PriceBook = DATED): { goals: string[]; providers: [string, string, string | null, number, number][]; plays: [number, number, string, string, string, number[]][]; run: Record<string, string> } {
+ * prices, plays as [id, goal index, title, rule, delivery, provider indexes, slug], and the Run it commands. */
+export function atlasBrowseData(book: PriceBook = DATED): { goals: string[]; providers: [string, string, string | null, number, number][]; plays: [number, number, string, string, string, number[], string][]; run: Record<string, string> } {
   const names: { provider: string; purpose: string }[] = [];
   const idx = (n: { provider: string; purpose: string }) => { let k = names.findIndex((x) => x.provider === n.provider && x.purpose === n.purpose); if (k < 0) { k = names.length; names.push(n); } return k; };
-  const plays = ATLAS.plays.map((p) => [p.id, ATLAS.goals.indexOf(p.goal), p.title, p.rule, p.delivery, p.steps.map(idx)] as [number, number, string, string, string, number[]]);
+  const plays = ATLAS.plays.map((p) => [p.id, ATLAS.goals.indexOf(p.goal), p.title, p.rule, p.delivery, p.steps.map(idx), p.slug] as [number, number, string, string, string, number[], string]);
   const providers = names.map((n) => {
     const j = STEP_JOB[n.provider];
     const info = j ? JOBS[j] : undefined;

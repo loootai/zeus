@@ -5,15 +5,15 @@ import { readFileSync } from "node:fs";
 import { MOTION_CSS } from "./motion.js";
 
 const DAVID_CSS = readFileSync(new URL("./shell/zeus.css", import.meta.url), "utf8");
-// The Zeus mascot on the city map, shared with build/mascot.py. Its three layers are inlined as data: URIs.
+// The Zeus mascot on the city map, shared with build/mascot.py. His still is inlined as a data: URI, so every
+// copy of the page shows him; the idle and throw clips ship as files next to the page (city/mascot.ts).
 const webp = (f: string) => `data:image/webp;base64,${readFileSync(new URL(`./shell/${f}`, import.meta.url)).toString("base64")}`;
-export const MASCOT_CSS = readFileSync(new URL("./shell/mascot.css", import.meta.url), "utf8")
-  .replace("{{body}}", webp("zeus-body.webp")).replace("{{glow}}", webp("zeus-glow.webp")).replace("{{bolt}}", webp("zeus-bolt.webp"));
+export const MASCOT_CSS = readFileSync(new URL("./shell/mascot.css", import.meta.url), "utf8").replace("{{still}}", webp("zeus-still.webp"));
 
 const ZG_CSS = `
 .view{display:none}.view.act{display:block}
 .logo .lgt{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#D7FF3A;color:#111;font-weight:800;font-size:15px;font-family:var(--disp,inherit)}
-.zg-cap{font-size:13px;font-weight:600;color:var(--ink2);margin:16px 0 8px}
+.zhow{margin:18px 0 0;border-top:1px solid var(--line,#E4E7EC);padding-top:10px}.zhow>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2,#4A5260)}.zhow[open]>summary{margin-bottom:8px}.zpartial{margin-left:8px;background:#FFF4E5;color:#8A5300;border-color:#F5D9AE}.zg-cap{font-size:13px;font-weight:600;color:var(--ink2);margin:16px 0 8px}
 .zatl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.zatl-h h4{margin:0}.zatl-i{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;border-radius:9px;background:#EEF1F5;color:#3A4250;box-shadow:inset 0 0 0 1px rgba(16,24,40,.05)}.zatl-i svg{width:18px;height:18px}.zgi-green{background:#E8F5EE;color:#1E8E5A}.zgi-blue{background:#EAF1FD;color:#2F6BD8}.zgi-violet{background:#F1ECFC;color:#6D4BC9}.zgi-amber{background:#FFF3E6;color:#B5651D}.zgi-rose{background:#FBEAE8;color:#C0392B}.zgi-teal{background:#E5F5F6;color:#14808A}.zfit{margin-left:auto;background:#D7FF3A;color:#111}.zprice{margin-left:auto}.zatl-c{cursor:pointer}.zatl-c:hover{border-color:var(--ink2)}.zdet summary{cursor:pointer;font-size:13px;color:var(--muted)}
 .zg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .zg-card{display:flex;flex-direction:column;gap:6px}.zg-card h4{margin:0;font-size:14.5px}.zg-card p{margin:0;color:var(--ink2);font-size:13.5px}

@@ -70,7 +70,7 @@
     {
       "name": "Keep it running",
       "items": [
-        { "key": "refresh", "label": "Refresh my city every month", "state": "unlock", "usd": 2,
+        { "key": "refresh", "label": "Refresh my GTM engine every month", "state": "unlock", "usd": 2,
           "prompt": "Set up Zeus for {domain} with looot. Run Zeus again on the first Monday of each month and write what changed since the last run. Show me the price first. Budget $2 a month." },
         { "key": "prospecting", "label": "Run prospecting every week", "state": "unlock", "usd": 2,
           "prompt": "Set up Zeus for {domain} with looot. Every Monday find 10 new accounts like my best target accounts with their buying committee and one opener each. Send nothing. Budget $2 a week." },

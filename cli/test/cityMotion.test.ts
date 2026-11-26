@@ -7,6 +7,7 @@ import { renderCity } from "../src/city/index.js";
 import { CITY_CSS } from "../src/city/style.js";
 import { CITY_JS, HEAD_JS } from "../src/city/script.js";
 import { MOTION_CSS } from "../src/city/motion.js";
+import { STORY_CSS } from "../src/city/story.js";
 import { matchPlays } from "../src/plays/index.js";
 import { buildNextSteps } from "../src/modules/nextSteps.js";
 import { synthesis, type SynthesisOut } from "../src/modules/synthesis.js";
@@ -29,8 +30,11 @@ function dossier(pub = false): Dossier {
 }
 
 test("one next-steps section: Your next plays, at the end of the page and last in the menu; the old section is gone", () => {
-  for (const pub of [false, true]) {
-    const html = renderCity(dossier(pub), pub ? { showBrand: true, share: {} } : {});
+  // The shared copy is the story only (no views, no menu): its plays are the story's "Your next plays" block.
+  const shared = renderCity(dossier(true), { showBrand: true, share: {} });
+  assert.ok(!shared.includes("Next steps your agent can offer") && !shared.includes('<section class="view"') && shared.includes('class="zs-plays"'));
+  for (const pub of [false]) {
+    const html = renderCity(dossier(pub), {});
     assert.ok(!html.includes("Next steps your agent can offer"), "the old section is removed");
     const views = [...html.matchAll(/<section class="view" data-view="([a-z-]+)"/g)].map((m) => m[1]);
     assert.equal(views.at(-1), "plays", `plays is the last view: ${views.join(",")}`);
@@ -66,10 +70,10 @@ test("the old next steps are folded into Your next plays as cards, deduped again
   assert.match(hooks, /npx looot-zeus run --people --phones --cap 10/);
   assert.match(hooks, /Run it/, "the private page can copy the command");
   const pub = renderCity(dossier(true), { showBrand: true, share: {} });
-  const pubHooks = pub.slice(pub.indexOf('id="play-hooks"'), pub.indexOf('id="atlas-browse"'));
-  assert.ok(pubHooks.includes(HOOKS["lookalikes-50"].title));
-  assert.ok(!/zrun-h/.test(pubHooks), "no Run it on the shared page");
-  assert.ok(!/<dt>Command<\/dt>/.test(pubHooks), "no command on the shared page");
+  // The shared copy shows only the top plays in the story: no hook cards, no Run it, no command.
+  assert.ok(pub.includes('class="zs-plays"'));
+  assert.ok(!/zrun-h|zrun-it/.test(pub), "no Run it on the shared page");
+  assert.ok(!/<dt>Command<\/dt>/.test(pub), "no command on the shared page");
 });
 
 test("motion: hidden start states need a class a script set, reduced motion sets none, the page is complete without scripts", () => {
@@ -100,6 +104,7 @@ test("motion: hidden start states need a class a script set, reduced motion sets
 
 test("the shared page header shimmers once", () => {
   assert.match(MOTION_CSS, /\.zm \.zsh::after\{[^}]*animation:zshim [^}]* 1 forwards/);
+  assert.match(STORY_CSS, /\.zm \.zs-shim::after\{[^}]*animation:zshim [^}]* 1 forwards/);
   const pub = renderCity(dossier(true), { showBrand: true, share: {} });
-  assert.match(pub, /<div class="zsh">/);
+  assert.match(pub, /<div class="zs-who zs-shim">/);
 });

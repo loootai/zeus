@@ -4,9 +4,13 @@
 // in its own script (test/workflows.test.ts checks the two agree), so a page with no server can still copy it.
 import { readFileSync } from "node:fs";
 
-export interface WorkflowCategory { name: string; slug: string; lead: string; count: number; featured: number }
-export interface Workflow { id: number; cat: number; task: string; check: string; output: string; featured: boolean }
-export interface WorkflowCatalog { source: string; categories: WorkflowCategory[]; workflows: Workflow[] }
+/** outcome: the headline the page shows for the category (build/make_workflows.py OUTCOMES); name stays the key. */
+export interface WorkflowCategory { name: string; slug: string; lead: string; count: number; featured: number; outcome: string }
+/** p: the looot providers the workflow uses, most relevant first, as positions in CATALOG.providers. */
+export interface Workflow { id: number; cat: number; task: string; check: string; output: string; featured: boolean; p: number[] }
+/** A looot data provider: logo is its file under src/city/shell/ (build/workflow_providers.py). */
+export interface WorkflowProvider { id: string; name: string; logo: string }
+export interface WorkflowCatalog { source: string; providers: WorkflowProvider[]; categories: WorkflowCategory[]; workflows: Workflow[] }
 
 export const CATALOG: WorkflowCatalog = JSON.parse(readFileSync(new URL("./workflows.json", import.meta.url), "utf8"));
 

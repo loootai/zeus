@@ -188,3 +188,44 @@ test("atlasUrl: the hosted page fetches the Atlas browse data instead of inlinin
   assert.ok(inline.length - hosted.length > 200_000, `${inline.length - hosted.length} bytes saved`);
   assert.match(hosted, /fetch\(D\.src,\{credentials:'same-origin'\}\)/);
 });
+
+// Several goals (David, 26 Nov 2026: "It should also be AND"): the goal picker and --goal take more than one.
+test("several goals parse from commas, 'and' or repeats; unknown parts drop and one goal still works as before", async () => {
+  const { goalList, cleanGoals } = await import("../src/plays/index.js");
+  assert.deepEqual(goalList("more customers").map((g) => g[0]), ["more customers"]);
+  assert.deepEqual(goalList("more customers, get found and new markets").map((g) => g[0]), ["more customers", "get found", "new markets"]);
+  assert.deepEqual(goalList("Get found, Enter new markets").map((g) => g[0]), ["get found", "new markets"]);
+  assert.deepEqual(goalList("SEO and AI search, more customers").map((g) => g[0]), ["SEO and AI search", "more customers"], "an Atlas goal with 'and' in its name stays whole");
+  assert.deepEqual(goalList("Clean data, cut costs").map((g) => g[0]), ["clean data"], "the label with a comma is one goal");
+  assert.equal(cleanGoals("get found, <script>x</script>, get found"), "get found", "unknown parts never echo, repeats count once");
+  assert.equal(cleanGoals("make me rich"), undefined);
+  assert.deepEqual(goalsFor("get found, beat competitors")!.sort(), [...goalsFor("get found")!, ...goalsFor("beat competitors")!].sort());
+});
+
+test("--goal takes several goals, repeated or comma separated, and says which ones it does not know", async () => {
+  const { withGoal } = await import("../src/commands.js");
+  const logs: string[] = [];
+  const log = (l: string) => logs.push(l);
+  assert.equal(withGoal({} as never, { goal: "get found" }, log).goal, "get found");
+  assert.equal(withGoal({} as never, { goal: "get found, new markets" }, log).goal, "get found, new markets");
+  assert.equal(withGoal({} as never, { goal: "more customers, nonsense" }, log).goal, "more customers");
+  assert.match(logs.join("\n"), /"nonsense" is not one Zeus knows, so the next plays leave it out/);
+  assert.equal(withGoal({} as never, { goal: "nonsense" }, log).goal, undefined);
+  assert.match(logs.at(-1)!, /the next plays use every goal/);
+});
+
+test("several goals: the 5 plays go round-robin across the goals picked, best first in each", () => {
+  const findings = [hiring, rivals, seo];
+  const goals = ["more customers", "beat competitors", "get found"];
+  const plays = matchPlays({ ...base, findings, goal: goals.join(", ") });
+  assert.equal(plays.length, 5);
+  const of = (p: { goal: string }) => goals.findIndex((g) => goalsFor(g)!.includes(p.goal));
+  const order = plays.map(of);
+  assert.ok(order.every((i) => i >= 0), "every play is inside a goal picked");
+  // Each goal that has a fitting play gets one before any goal gets a second.
+  const firsts = order.slice(0, new Set(order).size);
+  assert.equal(new Set(firsts).size, firsts.length, `round-robin order ${order.join(",")}`);
+  assert.ok(new Set(order).size >= 2, "the picks span more than one goal");
+  // One goal alone keeps the single-goal behaviour.
+  assert.deepEqual(matchPlays({ ...base, findings, goal: "get found" }).map((p) => p.id), matchPlays({ ...base, findings, goal: "get found" }).map((p) => p.id));
+});

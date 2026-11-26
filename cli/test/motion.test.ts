@@ -208,15 +208,71 @@ const PAGE = `<html><head><title>Acme</title></head><body><h1>Acme</h1>
 </body></html>`;
 const fakeFetch = (async (input: string | URL | Request) => new Response(/\/(pricing|customers|vs\/bigco)/.test(String(input)) ? PAGE : HOME, { status: 200, headers: { "content-type": "text/html" } })) as typeof fetch;
 
-async function oneShot(a: Args, isTTY: boolean) {
+async function oneShot(a: Args, isTTY: boolean, push?: OneShotDeps["push"]) {
   const dir = mkdtempSync(join(tmpdir(), "looot-zeus-open-"));
   const outDir = join(dir, "gtm");
   const opened: string[] = [];
   const events: string[] = [];
   const m = mock();
-  await cmdRunDomain("acme.example", { offline: true, ...a }, join(outDir, "config.yaml"), outDir, { fetch: fakeFetch, client: () => m.runner, isTTY, ask: async () => "y", open: (f) => opened.push(f), log: (l) => events.push(l) });
+  await cmdRunDomain("acme.example", { offline: true, ...a }, join(outDir, "config.yaml"), outDir, { fetch: fakeFetch, client: () => m.runner, isTTY, ask: async () => "y", open: (f) => opened.push(f), log: (l) => events.push(l), ...(push ? { push } : {}) });
   return { outDir, opened, events };
 }
+
+const ZEUS_PAGE = "https://zeus.looot.ai/p/acme.example";
+const pushedOk: OneShotDeps["push"] = async () => ({ ok: true, status: 200, url: ZEUS_PAGE, domain: "acme.example" });
+
+test("run <domain> that pushed opens and prints the Zeus page, not the local dossier", async () => {
+  const s = await oneShot({}, true, pushedOk);
+  assert.deepEqual(s.opened, [ZEUS_PAGE]);
+  const text = s.events.join("\n");
+  assert.match(text, /Your GTM engine: https:\/\/zeus\.looot\.ai\/p\/acme\.example/);
+  assert.doesNotMatch(text, /Opened .*dossier\.html/);
+  // the local files are still written
+  for (const f of ["dossier.html", "dossier.md", "receipt.json", join("city", "index.html")]) assert.ok(existsSync(join(s.outDir, f)), f);
+  // the last run line points at the page, not at the local dossier
+  assert.doesNotMatch(s.events.find((e) => /calls · /.test(e)) ?? "", /dossier\.html/);
+});
+
+test("run <domain> that pushed prints the Zeus page even without a terminal, and opens nothing", async () => {
+  const s = await oneShot({ yes: true }, false, pushedOk);
+  assert.deepEqual(s.opened, []);
+  assert.match(s.events.join("\n"), /Your GTM engine: https:\/\/zeus\.looot\.ai\/p\/acme\.example/);
+});
+
+test("run <domain> whose push was refused opens the local dossier and says why and how to push", async () => {
+  const s = await oneShot({}, true, async () => ({ ok: false, status: 401, message: "key not accepted" }));
+  assert.equal(s.opened.length, 1);
+  assert.ok(s.opened[0].endsWith(join("gtm", "dossier.html")));
+  const text = s.events.join("\n");
+  assert.match(text, /Push refused \(401\): key not accepted/);
+  assert.match(text, /looot-zeus push/);
+  assert.match(text, /Opened the local dossier/);
+});
+
+test("run <domain> whose push threw opens the local dossier and says why", async () => {
+  const s = await oneShot({}, true, async () => { throw new Error("network down"); });
+  assert.ok(s.opened[0].endsWith(join("gtm", "dossier.html")));
+  assert.match(s.events.join("\n"), /Not pushed to Zeus: network down.*looot-zeus push/s);
+});
+
+test("run <domain> never opens a non-Zeus link from the push answer", async () => {
+  const s = await oneShot({}, true, async () => ({ ok: true, status: 200, url: "https://evil.example/p/acme.example" }));
+  assert.equal(s.opened.length, 1);
+  assert.ok(s.opened[0].endsWith(join("gtm", "dossier.html")));
+  assert.doesNotMatch(s.events.join("\n"), /Your GTM engine/);
+  const q = await oneShot({}, true, async () => ({ ok: true, status: 200, url: "https://zeus.looot.ai/p/acme.example?x=1&calc" }));
+  assert.ok(q.opened[0].endsWith(join("gtm", "dossier.html")));
+});
+
+test("run <domain> --no-push opens the local dossier and says how to push", async () => {
+  let pushed = 0;
+  const s = await oneShot({ "no-push": true }, true, async () => { pushed++; return { ok: true, status: 200, url: ZEUS_PAGE }; });
+  assert.equal(pushed, 0);
+  assert.ok(s.opened[0].endsWith(join("gtm", "dossier.html")));
+  const text = s.events.join("\n");
+  assert.match(text, /Not pushed to Zeus \(--no-push\)/);
+  assert.match(text, /looot-zeus push/);
+});
 
 test("run <domain> opens the dossier at the end in a terminal", async () => {
   const s = await oneShot({}, true);
