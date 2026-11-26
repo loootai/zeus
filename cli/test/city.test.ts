@@ -69,7 +69,10 @@ test("city page: fork it, tell your agent and powered by looot on every page; sh
   for (const h of [priv, pub]) {
     assert.ok(h.includes(`href="${ZEUS_REPO_URL}"`) && h.includes(">Fork it<"));
     assert.ok(h.includes(">Tell your agent<") && h.includes("npx looot-zeus skill"));
-    assert.ok(h.includes('href="https://looot.ai"') && h.includes("Powered by looot"));
+    assert.ok(h.includes("Powered by looot") && h.includes(">Build your own<"));
+    // Build your own and powered by looot go to Zeus, tagged as a city page; never to looot.ai.
+    assert.equal(h.match(/class="(?:zplk|zpb)" href="https:\/\/zeus\.looot\.ai\/\?utm_source=zeus-city"/g)?.length, 2);
+    assert.ok(!/class="(?:zplk|zpb)" href="https:\/\/looot\.ai/.test(h));
     assert.ok(!h.includes(", and ") && !h.includes("—"));
   }
   assert.ok(pub.includes('class="za zshare"'));

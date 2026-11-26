@@ -78,8 +78,8 @@
           "prompt": "Set up Zeus for {domain} with looot. Send me one short note each morning with new signals on my target accounts, rank moves on my buyer keywords and new Reddit threads. Budget $0.50 a day." },
         { "key": "alerts", "label": "Send alerts to Slack", "state": "unlock", "usd": 0.5,
           "prompt": "Set up Zeus for {domain} with looot. Post to one Slack channel when a target account hires, raises money or names a rival. Budget $0.50 a day." },
-        { "key": "crm", "label": "Send to my CRM", "state": "unlock", "usd": 0.5,
-          "prompt": "Set up Zeus for {domain} with looot. Push my target accounts, their people and the openers into my CRM with a source note on each. Budget $0.50." }
+        { "key": "crm", "label": "Plug in your CRM", "state": "unlock", "usd": 0.5,
+          "prompt": "Plug my CRM into Zeus for {domain} with looot. Ask me which CRM I use (HubSpot, Salesforce, Attio or Close) and connect it through looot. Then push my target accounts and their buying committees into it, with the openers and a source note on each record. Skip records that are already there. Budget $0.50." }
       ]
     },
     {

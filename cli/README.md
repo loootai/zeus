@@ -196,6 +196,14 @@ It writes `gtm/public/` with `receipt.json`, `dossier.html`, `dossier.md` and `c
 
 Target accounts keep their names unless you add `--mask-accounts`. Then accounts and lookalikes become Account 1, Account 2 on `account-1.example`, their industry shows as Business and your seed customers become `customer-1.example`. Use it when the target list is your own pipeline.
 
+## Push to zeus.looot.ai
+
+`run` ends by pushing the city to zeus.looot.ai with the same looot key (`LOOOT_TOKEN`, `LOOOT_API_KEY` or the saved `looot login`). Members of your looot workspace see it at `https://zeus.looot.ai/p/<domain>` after Sign in with looot; anyone else gets a 404. `--no-push` skips it, `looot-zeus push` sends the last run again, `ZEUS_URL` overrides where.
+
+The push is plain data, `zeus.push.v1`: the safe city dossier (people as a role, no email, phone or profile link) and the public share bundle. No HTML is sent: the site checks the data, scrubs it again and renders the page. A malformed field comes back as a 422 that names it (`city.sections[2].blocks[0].kind must be one of ...`). Limits: 2 MB a push, 20 pushes an hour and 60 a day per workspace, 50 cities listed, each kept 30 days.
+
+API: `POST /api/cities` (or `PUT /api/cities/<domain>`) with `Authorization: Bearer <looot key>`; `GET /api/cities` and `GET /api/cities/<domain>` read them back.
+
 ## Learn from every run
 
 Zeus never sends anything. Your outreach tool sends. Zeus reads what happened and uses it in the next run.
@@ -231,6 +239,24 @@ The rules.
 
 `npx looot-zeus learn --demo` shows it on made up data with no key. It writes to `gtm/learn-demo/`.
 
+## Your next plays
+
+The city page opens with "Your next plays": 5 plays picked for this company from the
+[Workflow Atlas by Walid](https://looot-gtm-atlas.walidboulanouar.chatgpt.site/), 1,000 GTM workflows in 20 goals. Credit for
+the workflows, their decision rules and provider routes goes to Walid; `src/plays/atlas.json` is extracted from the Atlas page
+by `scripts/extractAtlas.mjs`.
+
+- A play is picked only when a subject its own words name (hiring, funding, rivals, ads, tech stack, keyword gaps, AI answers,
+  agent readiness, target accounts, reviews, mentions, buying committees) is a finding of this run. Its "why it fits" line is
+  that finding, word for word. A shared or public page uses the counted version, with no account or rival name.
+- The price range is the play's looot jobs at their catalog prices (the run's cached prices, else the dated table) for the
+  accounts the run found. No call is made to price it.
+- Tell your agent copies a request naming the exact `job:` ids and a budget. Run it shows only where Zeus has the command today
+  (`run --only signals`, `more accounts`, `more committee`, `more ads`, `more seo`, `more social`).
+- `looot-zeus run yourdomain.com --goal "more customers"` keeps the plays inside one outcome: "more customers",
+  "beat competitors", "get found", "grow accounts", "new markets" or "clean data" (or one Atlas goal name). The hosted home
+  page has the same 6 as a picker.
+
 ## Get more
 
 Each view of the dossier has a button that copies a command to fetch more of that thing into the same folder. The command shows the price and asks before it spends, like `run`.
@@ -261,6 +287,7 @@ Without `serve` the button copies the prompt to the clipboard, so you can paste 
 ```bash
 npx looot-zeus pending            # list pending requests with their estimated cost
 npx looot-zeus approve <id|all>   # mark approved and print the fixed command to run
+npx looot-zeus workflow <id>      # print the brief for one of the 1,000 workflows (a workflow request prints this)
 npx looot-zeus reject <id>
 npx looot-zeus done <id>
 ```

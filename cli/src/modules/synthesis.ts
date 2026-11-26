@@ -15,7 +15,8 @@ import { mentions } from "./mentions.js";
 import { reviews } from "./reviews.js";
 import { seo } from "./seo.js";
 import { signals } from "./signals.js";
-import { buildNextSteps, type NextStep, nextStepsFile } from "./nextSteps.js";
+import { agentSteps, buildNextSteps, type AgentStep, type NextStep, nextStepsFile } from "./nextSteps.js";
+import { cachedPriceBook, findingsOf, matchPlays } from "../plays/index.js";
 import type { GtmModule } from "./types.js";
 
 export interface Play {
@@ -34,7 +35,7 @@ export interface SynthesisOut {
   plays: Play[];
   brief: { offer: string; icp: string; competitors: string };
   /** Suggestions for the user's own agent (hooks): each priced, with the looot job and a ready prompt. Nothing runs from here. */
-  nextSteps?: NextStep[];
+  nextSteps?: (AgentStep | NextStep)[];
 }
 
 interface ScoredAccount { account: string; score: number; intent: string; reasons?: string }
@@ -240,7 +241,7 @@ export const synthesis: GtmModule = {
     };
     if (ctx.mode === "demo") {
       const f = loadFixture("plays");
-      return { status: "done", summary: "summary and 10 plays (placeholder)", out: { placeholder: f.placeholder, lines: f.summary, plays: f.plays, brief, nextSteps: buildNextSteps(cfg, {}) } satisfies SynthesisOut };
+      return { status: "done", summary: "summary and 10 plays (placeholder)", out: { placeholder: f.placeholder, lines: f.summary, plays: f.plays, brief, nextSteps: agentSteps(buildNextSteps(cfg, {}), []) } satisfies SynthesisOut };
     }
     // What the data points to comes first, so it is in the 10 lines printed at the end of the run.
     const lines: string[] = highlights(ctx.outputs);
@@ -249,10 +250,13 @@ export const synthesis: GtmModule = {
       if (s && id !== "synthesis") lines.push(`${id}: ${s}`);
     }
     const plays = rulePlays(ctx.outputs, cfg);
+    // The same top plays the city page shows (dossier nextPlaysOf), so the agent offers what the page shows.
+    const accRows = ((ctx.outputs.accounts as { rows?: unknown[] } | null)?.rows ?? []).length;
+    const top = matchPlays({ company: cfg.brand || cfg.domain, domain: cfg.domain, findings: findingsOf(ctx.outputs as Record<string, never>), goal: cfg.goal, units: accRows || 10, book: cachedPriceBook() });
     return {
       status: "done",
       summary: plays.length > 0 ? `facts collected, ${plays.length} ${plays.length === 1 ? "play" : "plays"} from the data` : "facts collected, no play had enough data",
-      out: { lines, plays, brief, nextSteps: buildNextSteps(cfg, ctx.outputs) } satisfies SynthesisOut,
+      out: { lines, plays, brief, nextSteps: agentSteps(buildNextSteps(cfg, ctx.outputs), top) } satisfies SynthesisOut,
     };
   },
   render(out): Section {
@@ -275,7 +279,7 @@ export const synthesis: GtmModule = {
           : [{ kind: "note" as const, text: "No play had enough data in this run. Your agent can read gtm/dossier.md and add plays to gtm/plays.md, each with evidence, the list it applies to, the command to scale it and the expected cost." }]),
         { kind: "table", caption: "Next actions, nothing runs without your yes", columns: [{ key: "action", label: "Action" }, { key: "cost", label: "Cost" }], rows: NEXT_ACTIONS },
         ...(o.nextSteps?.length
-          ? [{ kind: "table" as const, caption: "Next steps your agent can offer you (gtm/next-steps.json). Schedules run in your own agent, nothing runs without your yes", columns: [{ key: "title", label: "Next step" }, { key: "why", label: "Why" }, { key: "price", label: "Price" }, { key: "when", label: "When" }], rows: o.nextSteps.map((n) => ({ title: n.title, why: n.why, price: n.price, when: n.schedule ?? "once" })) }]
+          ? [{ kind: "table" as const, caption: "Next steps your agent can offer you (gtm/next-steps.json). Schedules run in your own agent, nothing runs without your yes", columns: [{ key: "title", label: "Next step" }, { key: "why", label: "Why" }, { key: "price", label: "Price" }, { key: "when", label: "When" }], rows: o.nextSteps.filter((n) => (n as { kind?: string }).kind !== "play").map((n) => ({ title: n.title, why: n.why, price: n.price, when: n.schedule ?? "once" })) }]
           : []),
       ],
     };

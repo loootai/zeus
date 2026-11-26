@@ -18,7 +18,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp src/city/menu.json src/city/paid.json dist/src/city/ && cp -r src/city/shell dist/src/city/ && chmod +x dist/src/cli.js",
+    "build": "tsc -p tsconfig.json && cp src/city/menu.json src/city/paid.json dist/src/city/ && cp src/workflows.json dist/src/ && mkdir -p dist/src/plays && cp src/plays/atlas.json dist/src/plays/ && cp -r src/city/shell dist/src/city/ && chmod +x dist/src/cli.js",
     "test": "npm run build && node scripts/run-tests.mjs",
     "test:visual": "node test-visual/city.visual.mjs",
     "demo": "node dist/src/cli.js demo",

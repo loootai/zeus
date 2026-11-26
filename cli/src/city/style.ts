@@ -2,13 +2,19 @@
 // build/extract_city_shell.py) plus the few classes the generated blocks add (zg-*). No fonts are
 // loaded: the page works from disk, so David's fonts fall back to the system stack.
 import { readFileSync } from "node:fs";
+import { MOTION_CSS } from "./motion.js";
 
 const DAVID_CSS = readFileSync(new URL("./shell/zeus.css", import.meta.url), "utf8");
+// The Zeus mascot on the city map, shared with build/mascot.py. Its three layers are inlined as data: URIs.
+const webp = (f: string) => `data:image/webp;base64,${readFileSync(new URL(`./shell/${f}`, import.meta.url)).toString("base64")}`;
+export const MASCOT_CSS = readFileSync(new URL("./shell/mascot.css", import.meta.url), "utf8")
+  .replace("{{body}}", webp("zeus-body.webp")).replace("{{glow}}", webp("zeus-glow.webp")).replace("{{bolt}}", webp("zeus-bolt.webp"));
 
 const ZG_CSS = `
 .view{display:none}.view.act{display:block}
 .logo .lgt{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#D7FF3A;color:#111;font-weight:800;font-size:15px;font-family:var(--disp,inherit)}
 .zg-cap{font-size:13px;font-weight:600;color:var(--ink2);margin:16px 0 8px}
+.zatl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.zatl-h h4{margin:0}.zatl-i{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;border-radius:9px;background:#EEF1F5;color:#3A4250;box-shadow:inset 0 0 0 1px rgba(16,24,40,.05)}.zatl-i svg{width:18px;height:18px}.zgi-green{background:#E8F5EE;color:#1E8E5A}.zgi-blue{background:#EAF1FD;color:#2F6BD8}.zgi-violet{background:#F1ECFC;color:#6D4BC9}.zgi-amber{background:#FFF3E6;color:#B5651D}.zgi-rose{background:#FBEAE8;color:#C0392B}.zgi-teal{background:#E5F5F6;color:#14808A}.zfit{margin-left:auto;background:#D7FF3A;color:#111}.zprice{margin-left:auto}.zatl-c{cursor:pointer}.zatl-c:hover{border-color:var(--ink2)}.zdet summary{cursor:pointer;font-size:13px;color:var(--muted)}
 .zg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .zg-card{display:flex;flex-direction:column;gap:6px}.zg-card h4{margin:0;font-size:14.5px}.zg-card p{margin:0;color:var(--ink2);font-size:13.5px}
 .zg-card-h{display:flex;align-items:flex-start;gap:10px}.zg-tag{margin-left:auto}
@@ -35,9 +41,11 @@ const ZG_CSS = `
 .brand .logo img{display:block;width:28px;height:28px;border-radius:8px;object-fit:contain}
 .zpaid ul{margin:8px 0 0;padding-left:18px}.zpaid li{margin:8px 0}
 .zun.cp{cursor:pointer}
+.zsh{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 14px;padding:6px 14px 6px 6px;border:1px solid var(--line);border-radius:99px;background:var(--card,#fff);font-size:13px;color:var(--ink2)}.zsh b{color:var(--ink);font-size:14px}.zsh-l img,.zsh-l .lgt{display:grid;place-items:center;width:24px;height:24px;border-radius:99px;object-fit:contain;font-size:12px}.zsh-k{padding:2px 8px;border-radius:99px;background:#E8F5EE;color:#1E8E5A;font-weight:600;font-size:12px}.zsh-d{color:var(--muted)}
+.zcta{margin-top:24px}.zcta code{font-size:12.5px}
 .zdev{font-size:12px;margin:6px 0 0;color:var(--mute,#6b7280)}.zdev code{font-size:11px}
-.ztoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}.ztoast.on{opacity:1}.zcm{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(16,24,40,.28);opacity:0;transition:opacity .2s;cursor:pointer}.zcm[hidden]{display:none}.zcm.on{opacity:1}.zcmc{font-family:Geist,system-ui,sans-serif;background:#FFFFFF;color:#1C1D1F;border:1px solid #E4E7EC;border-radius:16px;box-shadow:0 24px 64px rgba(16,24,40,.24);padding:32px 32px 28px;max-width:440px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;transform:scale(.96) translateY(8px);transition:transform .2s}.zcm.on .zcmc{transform:none}.zcmc svg{margin-bottom:8px}.zcmt{font-size:22px;font-weight:600;letter-spacing:-.01em}.zcml{font-size:18px;line-height:1.45;color:#4B5563}@media (prefers-reduced-motion:reduce){.zcm,.zcmc{transition:none}.zcmc{transform:none}}
+.ztoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}.ztoast.on{opacity:1}
 `;
 
 /** David's city styles plus the generated-block styles. */
-export const CITY_CSS = DAVID_CSS + ZG_CSS;
+export const CITY_CSS = DAVID_CSS + ZG_CSS + MASCOT_CSS + MOTION_CSS;

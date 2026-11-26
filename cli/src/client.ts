@@ -430,9 +430,9 @@ export function readSavedLogin(env: Record<string, string | undefined> = process
   }
 }
 
-/** Builds a client from LOOOT_TOKEN, else from the login `looot login` saved. The token value never leaves this function. */
+/** Builds a client from LOOOT_TOKEN (or LOOOT_API_KEY), else from the login `looot login` saved. The token value never leaves this function. */
 export function clientFromEnv(env: Record<string, string | undefined> = process.env): LoootClient | null {
-  const token = env.LOOOT_TOKEN?.trim();
+  const token = env.LOOOT_TOKEN?.trim() || env.LOOOT_API_KEY?.trim();
   if (token) return new LoootClient({ token, baseUrl: env.LOOOT_API_URL });
   const saved = readSavedLogin(env);
   if (!saved) return null;

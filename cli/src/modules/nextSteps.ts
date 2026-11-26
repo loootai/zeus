@@ -10,18 +10,11 @@ import { searchJob } from "./accounts.js";
 // A cycle (index imports synthesis imports this file), safe because MODULES is only read inside a call.
 import { MODULES } from "./index.js";
 import type { GtmModule } from "./types.js";
+import type { NextPlay } from "../plays/match.js";
+import { HOOKS, hookCommand, hookPrompt, keptHooks, type HookId } from "../plays/hooks.js";
 
-export type NextStepId =
-  | "hiring-signals"
-  | "lookalikes-50"
-  | "competitor-pricing-watch"
-  | "trigger-alerts"
-  | "monthly-refresh"
-  | "send-to-crm"
-  | "weekly-prospecting"
-  | "weekly-digest"
-  | "memory"
-  | "next-best-move";
+export type NextStepId = HookId;
+
 
 export interface NextStep {
   id: NextStepId;
@@ -76,8 +69,8 @@ const money = (n: number) => (n === 0 ? "$0" : n < 0.01 ? `under $0.01` : `about
 const priced = (p: Priced, per: string) => `${money(p.priceUsd)} ${per}, at most $${p.maxUsd.toFixed(2)}`;
 const FREE: Priced = { priceUsd: 0, maxUsd: 0, jobs: [] };
 
-const SCHEDULER = "Use your own scheduler (for example cron, Claude Code /schedule or your agent's routines). Zeus does not schedule anything.";
-const ASK = "Show me the price first and run nothing paid without my yes.";
+/** Title, command and prompt of a hook, from plays/hooks.ts (the one source the city page reads too). */
+const hook = (id: HookId, d: string) => ({ id, title: HOOKS[id].title, command: hookCommand(id, d), prompt: hookPrompt(id, d) });
 
 /**
  * Up to 10 next steps for the user's agent, built from the brief and this run's outputs. Pure: no network,
@@ -101,85 +94,80 @@ export function buildNextSteps(cfg: GtmConfig, outputs: Readonly<Record<string, 
 
   return [
     {
-      id: "hiring-signals",
-      title: "Check who is hiring for the roles you sell to",
+      ...hook("hiring-signals", d),
       why: hiring > 0 ? `${hiring} of your accounts post open roles now. Hiring is the strongest buying signal Zeus scores.` : "Open roles are the strongest buying signal Zeus scores. They change every week.",
       ...sig, price: priced(sig, "a run"), job: "jobs.search",
-      command: "npx looot-zeus run --only signals", schedule: "weekly",
-      prompt: `In my ${d} project folder, run \`npx looot-zeus run --only signals\` every Monday. ${ASK} Then tell me which accounts started hiring for a role we sell to. ${SCHEDULER}`,
+      schedule: "weekly",
     },
     {
-      id: "lookalikes-50",
-      title: "Find 50 more accounts like your best ones",
+      ...hook("lookalikes-50", d),
       why: accRows > 0 ? `This run kept ${accRows} accounts. 50 more like your best ones widen the list without changing the brief.` : "50 more accounts like your best ones, from the same brief.",
       ...look, price: priced(look, "once"), job: searchJob(cfg),
-      command: "npx looot-zeus more accounts --count 50", schedule: null,
-      prompt: `In my ${d} project folder, run \`npx looot-zeus more accounts --count 50\`. ${ASK}`,
+      schedule: null,
     },
     {
-      id: "competitor-pricing-watch",
-      title: "Watch your rivals' pricing pages",
+      ...hook("competitor-pricing-watch", d),
       why: rivals > 0 ? `${rivals} rivals in your brief. A price change is the moment to compare.` : "A rival's price change is the moment to compare.",
       ...rivalsP, price: priced(rivalsP, "a run"), job: "web.scrape.markdown",
-      command: "npx looot-zeus run --only competitors", schedule: "weekly",
-      prompt: `In my ${d} project folder, run \`npx looot-zeus run --only competitors\` every week. ${ASK} Tell me only when a rival's pricing page changed. ${SCHEDULER}`,
+      schedule: "weekly",
     },
     {
-      id: "trigger-alerts",
-      title: "Alert me when an account turns hot",
+      ...hook("trigger-alerts", d),
       why: hot > 0 ? `${hot} accounts are hot today. An alert catches the next one the week it happens.` : "No account is hot today. An alert catches the first one the week it happens.",
       ...watch, price: `${priced(watch, "a run")} (watch re-runs the whole dossier)`, job: null,
-      command: "npx looot-zeus watch --cap 5", schedule: "weekly",
-      prompt: `In my ${d} project folder, run \`npx looot-zeus watch --cap 5\` every week. ${ASK} Read gtm/changes.md and message me only when an account turned hot. ${SCHEDULER}`,
+      schedule: "weekly",
     },
     {
-      id: "monthly-refresh",
-      title: "Refresh the whole dossier each month",
+      ...hook("monthly-refresh", d),
       why: "Accounts, rivals, ads and rankings drift. A monthly run keeps the dossier current.",
       ...full, price: priced(full, "a run"), job: null,
-      command: `npx looot-zeus run ${d}`, schedule: "monthly",
-      prompt: `On the 1st of each month, in my ${d} project folder, run \`npx looot-zeus run ${d}\` and show me the quote. Run it only after my yes, with the cap it suggests. ${SCHEDULER}`,
+      schedule: "monthly",
     },
     {
-      id: "send-to-crm",
-      title: "Send the accounts to your CRM",
+      ...hook("send-to-crm", d),
       why: "The exports are already written in gtm/exports (Instantly, HubSpot, Attio, CSV).",
-      ...FREE, price: "$0 on looot", job: null, command: null, schedule: null,
-      prompt: `Import gtm/exports from my ${d} project folder into my CRM with the CRM tool you are connected to. Show me what you will create before you write anything.`,
+      ...FREE, price: "$0 on looot", job: null, schedule: null,
     },
     {
-      id: "weekly-prospecting",
-      title: "Add 25 new accounts every week",
+      ...hook("weekly-prospecting", d),
       why: "A steady weekly list beats one big list that goes stale.",
       ...weekly, price: priced(weekly, "a run"), job: searchJob(cfg),
-      command: "npx looot-zeus more accounts --count 25", schedule: "weekly",
-      prompt: `Every Monday, in my ${d} project folder, run \`npx looot-zeus more accounts --count 25\`. ${ASK} ${SCHEDULER}`,
+      schedule: "weekly",
     },
     {
-      id: "weekly-digest",
-      title: "A weekly digest of what changed",
+      ...hook("weekly-digest", d),
       why: "One message a week: new hot accounts, rival moves, ranking changes.",
-      ...FREE, price: "$0, reads the files the scheduled runs wrote", job: null, command: null, schedule: "weekly",
-      prompt: `Every Friday, read gtm/changes.md and gtm/plays.md in my ${d} project folder and send me five lines on what changed this week. ${SCHEDULER}`,
+      ...FREE, price: "$0, reads the files the scheduled runs wrote", job: null, schedule: "weekly",
     },
     {
-      id: "memory",
-      title: "Remember what worked",
+      ...hook("memory", d),
       why: "Zeus keeps no memory of its own. Your agent's memory (or a memory provider you use) can keep which angles and accounts worked.",
-      ...FREE, price: "$0 on looot", job: null, command: null, schedule: null,
-      prompt: `After each campaign, save in your own memory (or the memory provider I use) which angle, accounts and titles got replies for ${d}, with the date. Read it before you suggest the next run.`,
+      ...FREE, price: "$0 on looot", job: null, schedule: null,
     },
     {
-      id: "next-best-move",
-      title: "Pick the next best move",
+      ...hook("next-best-move", d),
       why: "gtm/plays.md ranks what to do next from this run's data, each with its evidence and price.",
-      ...FREE, price: "$0, reads the dossier", job: null, command: null, schedule: null,
-      prompt: `Read gtm/plays.md in my ${d} project folder and tell me the one play to do this week, with its evidence and price.`,
+      ...FREE, price: "$0, reads the dossier", job: null, schedule: null,
     },
   ];
 }
 
 /** next-steps.json for the user's agent. */
-export function nextStepsFile(steps: NextStep[]): string {
+export function nextStepsFile(steps: (NextStep | AgentStep)[]): string {
   return `${JSON.stringify({ note: "Suggestions only. Nothing runs without the user's yes. Schedules run in the user's own agent.", nextSteps: steps }, null, 2)}\n`;
+}
+
+/** One entry of next-steps.json: a top Atlas play (kind "play", the same 5 the city page shows under
+ * "Your next plays") or a hook Zeus can run next (kind "hook"). The /gtm skill offers the first three. */
+export type AgentStep =
+  | (NextStep & { kind: "hook" })
+  | (Omit<NextStep, "id" | "schedule"> & { kind: "play"; id: string; goal: string; schedule: null });
+
+/** The steps for the user's agent, in the city page's order: the top plays first, then the hooks no top play already covers. */
+export function agentSteps(steps: NextStep[], plays: NextPlay[]): AgentStep[] {
+  const kept = new Set(keptHooks(plays.map((p) => p.goal)));
+  return [
+    ...plays.map((p) => ({ kind: "play" as const, id: `play-${p.id}`, goal: p.goal, title: p.title, why: p.why, priceUsd: p.lowUsd, maxUsd: p.capUsd, price: `${p.priceText}, capped at $${p.capUsd.toFixed(2)}`, job: p.jobs[0] ?? null, jobs: p.jobs, command: p.runCommand ?? null, schedule: null, prompt: p.prompt })),
+    ...steps.filter((s) => kept.has(s.id)).map((s) => ({ kind: "hook" as const, ...s })),
+  ];
 }

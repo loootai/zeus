@@ -8,6 +8,8 @@ export type Auto = "auto" | "on" | "off";
 
 export interface GtmConfig {
   domain: string;
+  /** What the user wants most (--goal), for "Your next plays": one of the 6 outcomes or an Atlas goal. */
+  goal?: string;
   brand: string;
   offer: string;
   icp: {
@@ -160,6 +162,7 @@ export function normalizeConfig(raw: unknown, overrides: { depth?: Depth; phones
   return {
     ...(caps ? { caps } : {}),
     domain,
+    ...(typeof r.goal === "string" && r.goal.trim() ? { goal: r.goal.trim().slice(0, 80) } : {}),
     brand: String(r.brand ?? domain.split(".")[0]),
     offer: String(r.offer ?? ""),
     icp: {

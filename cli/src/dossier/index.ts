@@ -5,6 +5,8 @@ import { usd as money } from "../util.js";
 import { billingBreakdown, type Receipt } from "../receipt.js";
 import { round6, usd } from "../util.js";
 import type { Bar, Block, Card, Section, StatItem } from "./blocks.js";
+import { applyThirdParties, thirdPartySwaps } from "../thirdParties.js";
+import { fitCounts, cachedPriceBook, findingsOf, matchPlays, type NextPlay } from "../plays/index.js";
 
 export interface Dossier {
   domain: string;
@@ -18,6 +20,12 @@ export interface Dossier {
   overview?: Section;
   /** The plays as cards, or an empty state. */
   plays?: Section;
+  /** "Your next plays": up to 5 Workflow Atlas plays matched to this run's findings (src/plays). */
+  nextPlays?: NextPlay[];
+  /** Plays per Atlas goal whose trigger is a finding of this run, for the goal cards ("N fit you"). */
+  playFits?: Record<string, number>;
+  /** The goal the run was given (--goal), when any. */
+  goal?: string;
   /** What to copy to run the same sweep every week. */
   weekly?: Weekly;
   /** The run's ledger in one line for the city: paid calls, distinct providers and the day, from receipt.json. */
@@ -386,6 +394,19 @@ export function weeklyOf(cfg: GtmConfig, expected: number, cap: number): Weekly 
   return { domain: cfg.domain, cap, price: `about ${money(expected)} a week, never more than the ${money(cap)} cap`, command, cron, yml, prompt };
 }
 
+/** The 5 next plays for this run, from its module outputs. A public page gets the masked reasons. */
+export function nextPlaysOf(o: { domain: string; brand: string; results: Map<string, ModuleResult>; public: boolean; cfg?: GtmConfig }): NextPlay[] {
+  const out = Object.fromEntries([...o.results].filter(([, r]) => r.status === "done" || r.status === "capped").map(([id, r]) => [id, r.out]));
+  const accounts = Array.isArray((out.accounts as { rows?: unknown[] } | undefined)?.rows) ? (out.accounts as { rows: unknown[] }).rows.length : 0;
+  const plays = matchPlays({ company: o.brand || o.domain, domain: o.domain, findings: findingsOf(out), goal: o.cfg?.goal, isPublic: o.public, units: accounts || 10, book: cachedPriceBook() });
+  if (!o.public) return plays;
+  // Second guard on a public page: the run's third-party scrubber over every why and prompt.
+  const rows = (v: unknown): any[] => (Array.isArray(v) ? v : []);
+  const pair = (x: any) => ({ name: String(x?.name ?? ""), domain: String(x?.domain ?? "") });
+  const swaps = thirdPartySwaps({ domain: o.domain, accounts: rows((out.accounts as any)?.rows).map(pair), competitors: rows((out.competitors as any)?.cards).map(pair), lookalikes: rows((out.icp as any)?.lookalikes).map(pair), seeds: o.cfg?.seeds ?? [] } as any);
+  return plays.map((p) => ({ ...p, why: applyThirdParties(p.why, swaps), prompt: applyThirdParties(p.prompt, swaps) }));
+}
+
 export function assemble(o: { domain: string; brand: string; mods: GtmModule[]; results: Map<string, ModuleResult>; receipt: Receipt; public: boolean; placeholder?: string; now?: Date; cfg?: GtmConfig; pages?: Record<string, number>; pulls?: { what: string; at: string; calls: number; charged: number; added: string }[] }): Dossier {
   const sections: Section[] = [];
   const synth = o.mods.find((m) => m.id === "synthesis");
@@ -424,6 +445,9 @@ export function assemble(o: { domain: string; brand: string; mods: GtmModule[]; 
     sections,
     overview: overviewSection(o.results, o.receipt, o.placeholder),
     plays: playsSection(o.results, o.placeholder),
+    nextPlays: nextPlaysOf(o),
+    playFits: fitCounts(findingsOf(Object.fromEntries([...o.results].filter(([, r]) => r.status === "done" || r.status === "capped").map(([id, r]) => [id, r.out])))),
+    ...(o.cfg?.goal ? { goal: o.cfg.goal } : {}),
     ledger: ledgerOf(o.receipt),
     ...(o.cfg ? { weekly: weeklyOf(o.cfg, o.receipt.run.expected, o.receipt.run.cap) } : {}),
   };

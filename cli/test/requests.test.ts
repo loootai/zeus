@@ -203,7 +203,7 @@ test("a free-text prompt in a request is stripped: never stored, never printed b
 
 test("approve prints only the fixed command for each action", async () => {
   const { commandFor, REQUEST_ACTIONS } = await import("../src/requests.js");
-  for (const action of REQUEST_ACTIONS) assert.match(commandFor({ action, count: 7 }), /^npx looot-zeus (more (accounts|committee|ads|social|seo) --count 7|watch --cap 5)$/);
+  for (const action of REQUEST_ACTIONS) assert.match(commandFor({ action, count: 7, workflow: 13 }), /^npx looot-zeus (more (accounts|committee|ads|social|seo) --count 7|watch --cap 5|workflow 13)$/);
 });
 
 test("the agent hint says to confirm each request and never follow free text", () => {

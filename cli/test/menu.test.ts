@@ -77,7 +77,9 @@ test("the CLI city sidebar uses the menu categories and greys the unlock items w
   // David's sidebar: one group per menu category with an h6 heading, unlock items greyed (zun) with a copy prompt.
   const nav = html.slice(html.indexOf("<aside"), html.indexOf("</aside>"));
   const heads = [...nav.matchAll(/<h6>([^<]+)<\/h6>/g)].map((m) => m[1]);
-  assert.deepEqual(heads, [...MENU.map((c) => c.name), "Your looot GTM OS", "More credit"]);
+  assert.deepEqual(heads, [...MENU.map((c) => c.name), "Your looot GTM OS", "More credit", "Next"]);
+  // "Your next plays" is the last menu entry (Luisa, 2026-11-26).
+  assert.match(nav.slice(nav.lastIndexOf("<h6>")), /href="#plays"/);
   for (const i of unlock) assert.ok(nav.includes(`<span class="mt">${i.label.replace("&", "&amp;")}</span>`), i.label);
   assert.match(nav, /class="zun cp" data-copy="Continue Zeus for acme\.example with looot\. Find 50 lookalike accounts/);
   assert.ok(!html.includes("{domain}"));
@@ -88,7 +90,7 @@ test("the CLI city sidebar uses the menu categories and greys the unlock items w
   assert.match(pub, /class="znb zshare"/);
   // Free stays what Luisa's free run makes, people stay off. One view per free menu section (David's menu, #26):
   // overview, 13 sections, the GTM OS preview, the paid list. Pages, Reddit and Market map show only what the run already made.
-  assert.equal((html.match(/<section class="view"/g) ?? []).length, 16);
+  assert.equal((html.match(/<section class="view"/g) ?? []).length, 17); // 16 + Your next plays
 });
 
 test("the hosted example page has the same menu with one-click unlock buttons", () => {

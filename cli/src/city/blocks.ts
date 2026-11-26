@@ -4,7 +4,9 @@ import type { Bar, Block, Card, Tone } from "../dossier/blocks.js";
 import { maskValue } from "../dossier/mask.js";
 import { renderPeople } from "./people.js";
 
-const meter = (frac: number, tone: Tone = "go") => `<span class="zg-meter" aria-hidden="true"><i class="zg-${tone === "plain" ? "go" : tone}" style="width:${Math.round(Math.max(0, Math.min(1, frac)) * 100)}%"></i></span>`;
+/** Only the known tones reach a class name; anything else (a shared page's data) reads as none. */
+const toneOf = (t: unknown): "go" | "warm" | "cold" | "" => (t === "go" || t === "warm" || t === "cold" ? t : "");
+const meter = (frac: number, tone: Tone = "go") => `<span class="zg-meter" aria-hidden="true"><i class="zg-${toneOf(tone) || "go"}" style="width:${Math.round(Math.max(0, Math.min(1, Number(frac) || 0)) * 100)}%"></i></span>`;
 
 /** The honest empty state a view shows when the run has nothing for it. */
 export function emptyState(msg: string): string {
@@ -15,7 +17,7 @@ function cardHtml(c: Card, pub: boolean): string {
   const v = (x: unknown, p?: Parameters<typeof maskValue>[1]) => e(maskValue(x, p, pub));
   const rows = (c.rows ?? []).map((r) => `<dt>${e(r.label)}</dt><dd>${v(r.value, r.pii)}</dd>`).join("");
   const letter = e((c.title || "?").trim().charAt(0).toUpperCase());
-  return `<article class="card zg-card"><div class="zg-card-h"><span class="zg-tile">${pub && c.titlePii ? "?" : letter}</span><div><h4>${v(c.title, c.titlePii)}</h4>${c.sub ? `<span class="zg-sub">${v(c.sub)}</span>` : ""}</div>${c.tag ? `<span class="chip zg-tag ${c.tone && c.tone !== "plain" ? "zg-" + c.tone : ""}">${e(c.tag)}</span>` : ""}</div>${c.text ? `<p>${v(c.text)}</p>` : ""}${c.meter ? `${meter(c.meter.max > 0 ? c.meter.value / c.meter.max : 0, c.tone)}<span class="zg-sub">${e(c.meter.label)}</span>` : ""}${rows ? `<dl>${rows}</dl>` : ""}${c.chips?.length ? `<div>${c.chips.map((x) => `<span class="chip">${v(x)}</span>`).join("")}</div>` : ""}${c.command ? `<div><code>${e(c.command)}</code> <button type="button" class="cp" data-copy="${e(c.command)}">Copy</button></div>` : ""}</article>`;
+  return `<article class="card zg-card"><div class="zg-card-h"><span class="zg-tile">${pub && c.titlePii ? "?" : letter}</span><div><h4>${v(c.title, c.titlePii)}</h4>${c.sub ? `<span class="zg-sub">${v(c.sub)}</span>` : ""}</div>${c.tag ? `<span class="chip zg-tag ${toneOf(c.tone) ? "zg-" + toneOf(c.tone) : ""}">${e(c.tag)}</span>` : ""}</div>${c.text ? `<p>${v(c.text)}</p>` : ""}${c.meter ? `${meter(c.meter.max > 0 ? c.meter.value / c.meter.max : 0, c.tone)}<span class="zg-sub">${e(c.meter.label)}</span>` : ""}${rows ? `<dl>${rows}</dl>` : ""}${c.chips?.length ? `<div>${c.chips.map((x) => `<span class="chip">${v(x)}</span>`).join("")}</div>` : ""}${c.command ? `<div><code>${e(c.command)}</code> <button type="button" class="cp" data-copy="${e(c.command)}">Copy</button></div>` : ""}</article>`;
 }
 
 function barRow(i: Bar, max: number, pub: boolean): string {

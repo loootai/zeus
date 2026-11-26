@@ -13,13 +13,15 @@
 //   looot-zeus more <accounts|committee|ads|social|seo> [--count N] [--cap N] [--yes]
 //   looot-zeus skill
 //   looot-zeus open
+//   looot-zeus push
 //   looot-zeus serve [--port 4317] [--dir city]
 //   looot-zeus delete [--yes] [--keep-public]
 //   looot-zeus pending | approve <id|all> | reject <id> | done <id>
+//   looot-zeus workflow <id>
 
 import { parseArgs } from "node:util";
 import { join } from "node:path";
-import { CliExit, type Args, cmdDelete, cmdDemo, cmdExport, cmdFixtures, cmdImportSupabase, cmdInit, cmdPrepare, cmdLearn, cmdLog, cmdMore, cmdOpen, cmdQuote, cmdRun, cmdRunDomain, cmdServe, cmdPending, cmdSetStatus, cmdSkill, cmdWatch } from "./commands.js";
+import { CliExit, type Args, cmdDelete, cmdPush, cmdDemo, cmdExport, cmdFixtures, cmdImportSupabase, cmdInit, cmdPrepare, cmdLearn, cmdLog, cmdMore, cmdOpen, cmdQuote, cmdRun, cmdRunDomain, cmdServe, cmdPending, cmdSetStatus, cmdSkill, cmdWatch, cmdWorkflow } from "./commands.js";
 import { ConfigError } from "./config.js";
 import { CRM_FORMATS } from "./crm.js";
 
@@ -62,6 +64,12 @@ Step by step
                      stay; rivals and people are swapped for Rival A and Person 1.
                      --mask-accounts also turns target accounts into Account 1 on account-1.example.
                      The copy has the dossier and the city page, company-level data only.
+  export --public --publish
+                     Also publishes a company-level page (no people, no contacts) at
+                     <company>.looot.page and prints its URL. Needs LOOOT_TOKEN; looot checks
+                     that the run is yours and about your domain. LOOOT_PAGES_URL overrides where.
+  export --unpublish <name>
+                     Takes your published page down (the name is the one publish printed).
   export --crm       CSV files your CRM imports, in gtm/crm/<format>/: companies.csv (target
                      accounts), contacts.csv (only when the run had people, a paid --people run;
                      never with --public or --safe-demo) and receipt.txt (the looot jobs behind it).
@@ -72,6 +80,10 @@ Step by step
                      Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in env (never printed).
                      --dry-run prints the counts and writes nothing. Emails and phones only with
                      --contact-details on a paid, non-safe run.
+  push               Send the last run's city to zeus.looot.ai with your looot key. Members of your
+                     looot workspace see it there after Sign in with looot; anyone else gets a 404.
+                     Plain data only (people as a role, no contacts); the site renders the page.
+                     run does this at the end on its own; --no-push skips it. ZEUS_URL overrides where.
   open               Open gtm/dossier.html.
   serve              Serve the page (city/ when there is one, else the output folder) on
                      http://127.0.0.1:4317. Buttons on the page add requests to
@@ -82,6 +94,9 @@ Step by step
   approve <id|all>   Mark requests approved and print the prompt for your agent to run.
   reject <id>        Drop a request.
   done <id>          Mark an approved request as run.
+  workflow <id>      Print the brief for one of the 1,000 workflows under Run any workflow on the
+                     page (task, check, what to hand back) for the domain in the config. Spends
+                     nothing. Your agent prices it with looot and asks before it runs.
   delete             Remove the local files that may hold contacts: the output folder (people and
                      account CSVs, exports, state.json, the private pages), .looot-zeus/ caches,
                      city/data/contacts*.json and city/img/people/. Keeps config.yaml. Asks [y/N]
@@ -111,6 +126,8 @@ Options
                      --public and serve
   --private          serve only. Show your real contacts. Prints a warning
   --only <ids>       Run only these modules (and what they need), comma separated
+  --goal <text>      What you want most, for "Your next plays" on the city page: "more customers",
+                     "beat competitors", "get found", "grow accounts", "new markets", "clean data"
   --offline          Quote from the dated price table, no network
   --demo             watch or learn with placeholder data
   --apply-learnings  Use the weights learn wrote in gtm/learnings.json for this run
@@ -119,7 +136,7 @@ Options
   --yes, -y          Skip the [y/N] question before a paid call. Needed when there is no terminal
   --no-open          run <domain> opens gtm/dossier.html at the end in a terminal. This skips it
 
-Needs LOOOT_TOKEN for init (without --direct), run and more. quote, demo, learn and log need no looot key.`;
+Needs LOOOT_TOKEN (or LOOOT_API_KEY) for push, init (without --direct), run and more. quote, demo, learn and log need no looot key.`;
 
 function fail(msg: string, code = 1): never {
   console.error(msg);
@@ -143,6 +160,8 @@ async function main(): Promise<void> {
         "max-runs": { type: "string" },
         "no-linkedin": { type: "boolean" },
         public: { type: "boolean" },
+        publish: { type: "boolean" },
+        unpublish: { type: "string" },
         "safe-demo": { type: "boolean" },
         private: { type: "boolean" },
         only: { type: "string" },
@@ -150,6 +169,7 @@ async function main(): Promise<void> {
         direct: { type: "boolean" },
         yes: { type: "boolean", short: "y" },
         "no-open": { type: "boolean" },
+        "no-push": { type: "boolean" },
         demo: { type: "boolean" },
         "mask-accounts": { type: "boolean" },
         crm: { type: "boolean" },
@@ -162,6 +182,7 @@ async function main(): Promise<void> {
         campaign: { type: "string" },
         "campaign-id": { type: "string" },
         angle: { type: "string" },
+        goal: { type: "string" },
         file: { type: "string" },
         port: { type: "string" },
         dir: { type: "string" },
@@ -195,6 +216,9 @@ async function main(): Promise<void> {
         }
         await cmdRun(a, configPath, outDir);
         return;
+      case "push":
+        await cmdPush(outDir);
+        return;
       case "demo":
         return await cmdDemo(a, outDir);
       case "watch":
@@ -210,7 +234,7 @@ async function main(): Promise<void> {
         cmdLog(a, outDir);
         return;
       case "export":
-        return cmdExport(a, outDir);
+        return await cmdExport(a, outDir);
       case "import-supabase":
         await cmdImportSupabase(a, outDir);
         return;
@@ -226,6 +250,9 @@ async function main(): Promise<void> {
       case "reject":
       case "done":
         return cmdSetStatus(cmd, arg);
+      case "workflow":
+        cmdWorkflow(arg, configPath);
+        return;
       case "skill":
         return cmdSkill();
       case "open":

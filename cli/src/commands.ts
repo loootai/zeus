@@ -1,6 +1,8 @@
 // The commands behind the CLI. cli.ts parses the arguments and calls these. They throw CliExit
 // instead of calling process.exit, so tests can run them in-process with mocks.
 
+import { buildShareBundle, publishShare, unpublishShare, DEFAULT_PAGES_URL } from "./publish.js";
+import { buildPushBundle, DEFAULT_ZEUS_URL, pushCity, pushLines, pushToken, type PushBundle, type PushResult } from "./push.js";
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -8,11 +10,13 @@ import { resolveCaps, unknownCapSections } from "./capDefaults.js";
 import { CapLedger, CapReached, checkQuoteAgainstCap, suggestCap } from "./cap.js";
 import { clientFromEnv, readWorkspaceRule, LoootError, SPEND_LIMIT_URL, limitName, type CallRecord, type JobRunner, type SpendLimitRead } from "./client.js";
 import { configToYaml, loadConfig, normalizeConfig, type Depth, type GtmConfig } from "./config.js";
+import { CATALOG, findWorkflow, workflowPrompt, type WorkflowContext } from "./workflows.js";
 import { placeholderReceipt } from "./demo.js";
 import { DirectRunner } from "./direct.js";
 import { assemble } from "./dossier/index.js";
 import { renderHtml } from "./dossier/html.js";
 import { renderCity } from "./city/index.js";
+import { goalsFor, OUTCOMES } from "./plays/index.js";
 import { renderMarkdown } from "./dossier/md.js";
 import { withCommitteePhones, writeArtifacts } from "./exports.js";
 import { CRM_FORMATS, IMPORT_HOW, writeCrm, type CrmFormat } from "./crm.js";
@@ -60,6 +64,17 @@ export function fail(msg: string, code = 1): never {
 
 export type Args = Record<string, string | boolean | undefined>;
 export type Log = (line: string) => void;
+
+/** --goal for "Your next plays": one of the 6 outcomes or an Atlas goal. An unknown goal is said and ignored. */
+export function withGoal(cfg: GtmConfig, a: Args, log: Log): GtmConfig {
+  if (typeof a.goal !== "string" || !a.goal.trim()) return cfg;
+  const g = a.goal.trim().slice(0, 80);
+  if (!goalsFor(g)) {
+    log(`--goal "${g}" is not one Zeus knows, so the next plays use every goal. Goals: ${OUTCOMES.map((o) => `"${o.key}"`).join(", ")}, or an Atlas goal name.`);
+    return cfg;
+  }
+  return { ...cfg, goal: g };
+}
 
 export function depthOf(a: Args): Depth | undefined {
   if (a.depth === undefined) return undefined;
@@ -244,6 +259,8 @@ export interface PaidDeps {
   assetsFetch?: typeof fetch;
   /** The clock, for the watch day in the repeat-protection key. Default now. */
   now?: () => Date;
+  /** Sends the finished city to zeus.looot.ai. Default pushCity with the user's own key; off when a test injects a client. */
+  push?: (b: PushBundle) => Promise<PushResult>;
 }
 
 async function askLine(question: string): Promise<string> {
@@ -464,7 +481,7 @@ export async function runWithCap(o: { cfg: GtmConfig; mods: GtmModule[]; q: Quot
 
 export async function cmdRun(a: Args, configPath: string, outDir: string, deps: PaidDeps = {}): Promise<Receipt | null> {
   const log = deps.log ?? console.log;
-  const cfg0 = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
+  const cfg0 = withGoal(withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log), a, log);
   const mods = selectModules(a.only as string | undefined);
   const cap = capOf(a, 10);
   const ws = await workspaceRule(cfg0, a.offline === true, deps.client, log);
@@ -480,7 +497,9 @@ export async function cmdRun(a: Args, configPath: string, outDir: string, deps: 
   const limits = await checkSpendLimit(client, q, cap, log);
   const next = nextCommand("run", undefined, cap, a, outDir);
   if (!(await confirmPaid(`Run it with a cap of ${capText(cap)}?`, next, a, deps))) return null;
-  return runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
+  const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
+  await autoPush(receipt, a, outDir, deps, log);
+  return receipt;
 }
 
 // ---- prepare: cheap discovery for the agent ---------------------------------------------------------
@@ -595,7 +614,7 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
     await initDomain(wanted, { runner: new DirectRunner(deps.fetch ?? fetch), direct: true, cap: 0.25, outDir, configPath, log, next: `You can edit ${configPath} and run this command again. Nothing paid has run.` });
   }
 
-  const cfg0 = withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log);
+  const cfg0 = withGoal(withLearnings(loadConfig(configPath, { depth: depthOf(a), phones: a.phones === true ? true : undefined, noPhones: a["no-phones"] === true, maxRuns: maxRunsOf(a), noLinkedin: a["no-linkedin"] === true, people: a.people === true }), a, outDir, log), a, log);
   const mods = selectModules(a.only as string | undefined);
   if (a.offline !== true) log("Reading live prices from looot.");
   const ws = await workspaceRule(cfg0, a.offline === true, deps.client, log);
@@ -619,6 +638,7 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
 
   log(`\nStep 3 of 3. Running inside a ${capText(cap)} cap.`);
   const receipt = await runWithCap({ cfg, mods, q, cap, client, outDir, configPath, public: a.public === true, safe: a["safe-demo"] === true, maskAccounts: a["mask-accounts"] === true, rivals, log, limitPeriod: limits?.period, assetsFetch: deps.assetsFetch ?? (deps.client ? undefined : fetch) });
+  await autoPush(receipt, a, outDir, deps, log);
   // In a terminal the dossier opens at the end. --no-open skips it. Tests pass their own opener.
   const tty = deps.isTTY ?? (process.stdin.isTTY === true && process.stdout.isTTY === true);
   const opener = deps.open ?? (deps.isTTY === undefined ? openFile : undefined);
@@ -627,6 +647,49 @@ export async function cmdRunDomain(domainArg: string, a: Args, configPath: strin
     log(`Opened ${join(outDir, "dossier.html")}. Add --no-open to skip this next time.`);
   }
   return receipt;
+}
+
+// ---- push: the city to zeus.looot.ai ----------------------------------------------------------------
+
+/** The Zeus site the city is pushed to: ZEUS_URL, else https://zeus.looot.ai. */
+const zeusUrl = (env: Record<string, string | undefined>) => env.ZEUS_URL?.trim() || DEFAULT_ZEUS_URL;
+
+/**
+ * After a real run: push the city to zeus.looot.ai with the same key the run used, unless --no-push.
+ * A failed push never fails the run: the folder is complete and `looot-zeus push` sends it again.
+ */
+async function autoPush(receipt: Receipt | null, a: Args, outDir: string, deps: PaidDeps, log: Log): Promise<void> {
+  if (!receipt || a["no-push"] === true || receipt.placeholder) return;
+  if (deps.client && !deps.push) return; // tests with a fake client never reach the network
+  try {
+    const r = await doPush(outDir, deps, process.env);
+    for (const l of pushLines(r)) log(l);
+    if (!r.ok) log(`The run itself is complete in ${outDir}/. Fix the above and send it again with looot-zeus push.`);
+  } catch (e) {
+    log(`Not pushed to Zeus: ${(e as Error).message}. The run is complete in ${outDir}/. Send it with looot-zeus push.`);
+  }
+}
+
+async function doPush(outDir: string, deps: PaidDeps, env: Record<string, string | undefined>): Promise<PushResult> {
+  const b = buildPushBundle(outDir);
+  if (deps.push) return deps.push(b);
+  const token = pushToken(env);
+  if (!token) throw new Error("no looot key (LOOOT_TOKEN, LOOOT_API_KEY or npx -y looot@latest login)");
+  return pushCity(b, { token, baseUrl: zeusUrl(env) });
+}
+
+/** `looot-zeus push`: send the last run in the output folder to zeus.looot.ai. Exit 1 when refused. */
+export async function cmdPush(outDir: string, deps: PaidDeps & { env?: Record<string, string | undefined> } = {}): Promise<PushResult> {
+  const log = deps.log ?? console.log;
+  let r: PushResult;
+  try {
+    r = await doPush(outDir, deps, deps.env ?? process.env);
+  } catch (e) {
+    fail(`Not pushed: ${(e as Error).message}`, 2);
+  }
+  for (const l of pushLines(r)) log(l);
+  if (!r.ok) fail("", 1);
+  return r;
 }
 
 // ---- demo, fixtures, open ----------------------------------------------------------------------------
@@ -648,7 +711,9 @@ async function demoRun(a: Args) {
 }
 
 export async function cmdDemo(a: Args, outDir: string): Promise<void> {
-  const { cfg, mods, res, receipt, pub } = await demoRun(a);
+  const run = await demoRun(a);
+  const { mods, res, receipt, pub } = run;
+  const cfg = withGoal(run.cfg, a, console.log);
   console.log(`Demo on placeholder data for ${cfg.domain}. No key, no network, no charge.\n`);
   for (const m of mods) {
     const r = res.results.get(m.id)!;
@@ -689,11 +754,43 @@ export function cmdOpen(outDir: string, what?: string): void {
 
 // ---- export, watch, skill -------------------------------------------------------------------------
 
-/** `looot-zeus export --public`. A copy of the last dossier you can show anyone, in <out>/public/. */
-export function cmdExport(a: Args, outDir: string, deps: { log?: Log } = {}): void {
-  if (a.crm === true) return crmLine(a, outDir, deps.log ?? console.log);
+/**
+ * `looot-zeus export --public`. A copy of the last dossier you can show anyone, in <out>/public/.
+ * With --publish it also publishes the company-level page; `export --unpublish <name>` takes it down.
+ */
+export async function cmdExport(a: Args, outDir: string, deps: { log?: Log; env?: Record<string, string | undefined>; fetch?: typeof fetch } = {}): Promise<void> {
+  const log = deps.log ?? console.log;
+  const env = deps.env ?? process.env;
+  const pagesOpts = () => {
+    const token = env.LOOOT_TOKEN;
+    if (!token) fail("LOOOT_TOKEN is not set. Publishing needs your looot key, so looot can check the run is yours.", 2);
+    const baseUrl = env.LOOOT_PAGES_URL || DEFAULT_PAGES_URL;
+    // Your looot key goes with the request, so only https looot hosts get it.
+    let host = "";
+    try { const u = new URL(baseUrl); host = u.protocol === "https:" ? u.hostname : ""; } catch { /* refused below */ }
+    if (!/(^|\.)looot\.page$|^looot-pages[a-z0-9-]*\.vercel\.app$/.test(host)) fail(`LOOOT_PAGES_URL ${baseUrl} is not a looot pages address. Your looot key is only sent to https://*.looot.page or looot-pages on vercel.app.`, 2);
+    return { token, baseUrl, fetch: deps.fetch };
+  };
+  if (typeof a.unpublish === "string") {
+    try {
+      await unpublishShare(a.unpublish, pagesOpts());
+    } catch (err) {
+      fail((err as Error).message, 5);
+    }
+    log(`Unpublished ${a.unpublish}.`);
+    return;
+  }
+  if (a.crm === true) return crmLine(a, outDir, log);
   if (a.public !== true) fail("export needs --public (a masked copy in <out>/public/) or --crm (CSV files for your CRM in <out>/crm/).", 2);
-  publicLine(outDir, deps.log ?? console.log, a["mask-accounts"] === true);
+  publicLine(outDir, log, a["mask-accounts"] === true);
+  if (a.publish === true) {
+    try {
+      const r = await publishShare(buildShareBundle(outDir), pagesOpts());
+      log(`Published ${r.url} (company-level only, no contacts). Take it down with: looot-zeus export --unpublish ${r.slug}`);
+    } catch (err) {
+      fail((err as Error).message, 5);
+    }
+  }
 }
 
 /** `looot-zeus export --crm`. Company CSV always, contacts only from a non-safe run with people. */
@@ -1076,9 +1173,35 @@ export function cmdPending(deps: { log?: Log; projectDir?: string } = {}): void 
   const list = pendingRequests(deps.projectDir ?? process.cwd());
   if (!list.length) return log("No pending requests.");
   log(`${list.length} pending ${list.length === 1 ? "request" : "requests"}:`);
-  for (const r of list) log(`  ${r.id}  ${r.section}, ${r.action} x${r.count}, ${costText(r.estCostUsd)}`);
+  for (const r of list) {
+    const w = r.action === "run-workflow" ? findWorkflow(r.workflow) : undefined;
+    log(w ? `  ${r.id}  workflow ${w.id} (${CATALOG.categories[w.cat].name}), ${costText(r.estCostUsd)}. ${w.task}` : `  ${r.id}  ${r.section}, ${r.action} x${r.count}, ${costText(r.estCostUsd)}`);
+  }
   const total = list.reduce((t, r) => t + (r.estCostUsd ?? 0), 0);
   log(`Approve with looot-zeus approve <id|all>, about USD ${total.toFixed(2)} for all. Reject with looot-zeus reject <id>.`);
+}
+
+/**
+ * `looot-zeus workflow <id>`. Prints the brief for one workflow of the catalog (task, check, what to hand back)
+ * for the domain in the config, ready for the user's agent. Spends nothing. Approving a workflow request from
+ * the page prints this command.
+ */
+export function cmdWorkflow(id: string | undefined, configPath: string, deps: { log?: Log } = {}): string {
+  const log = deps.log ?? console.log;
+  const w = findWorkflow(id);
+  if (!w) fail(`Usage: looot-zeus workflow <id>, with an id from 1 to ${CATALOG.workflows.length}. The Zeus page lists them under Run any workflow.`, 2);
+  let ctx: WorkflowContext = {};
+  if (existsSync(configPath)) {
+    try {
+      const c = loadConfig(configPath);
+      ctx = { domain: c.domain, company: c.brand };
+    } catch {
+      ctx = {};
+    }
+  }
+  const p = workflowPrompt(w, ctx);
+  log(p);
+  return p;
 }
 
 export function cmdSetStatus(kind: "approve" | "reject" | "done", id: string | undefined, deps: { log?: Log; projectDir?: string } = {}): void {

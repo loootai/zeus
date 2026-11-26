@@ -32,7 +32,9 @@ test("the demo run writes next-steps.json next to plays.md", async () => {
   const cfg = normalizeConfig({ domain: "acme.example" });
   const r = await synthesis.run({ cfg, mode: "demo", outputs: {}, outDir: "", partial: () => {}, log: () => {}, call: (async () => { throw new Error("no calls"); }) as never });
   const out = r.out as SynthesisOut;
-  assert.equal(out.nextSteps?.length, 10);
+  // The demo has no findings, so no Atlas play: the 9 hooks (next-best-move is "Your next plays" itself).
+  assert.equal(out.nextSteps?.length, 9);
+  assert.ok(!out.nextSteps!.some((s) => s.id === "next-best-move"));
   const files = synthesis.files!(out);
   assert.ok(files["next-steps.json"] && files["plays.md"]);
 });
@@ -51,4 +53,36 @@ test("each priced step shows the quote its command prints: watch and monthly are
   assert.ok(steps["hiring-signals"].jobs.includes(q("signals").rows.flatMap((r) => r.lines)[0].job), "signals quote includes what it needs");
   assert.ok(steps["hiring-signals"].priceUsd > buildQuote(MODULES.filter((m) => m.id === "signals"), cfg, book).expectedCapped - 1e-9);
   for (const s of Object.values(steps)) assert.ok(s.maxUsd >= s.priceUsd, s.id);
+});
+
+test("next-steps.json offers what the city page shows: the top Atlas plays first, then the hooks no top play covers", async () => {
+  const { agentSteps } = await import("../src/modules/nextSteps.js");
+  const { matchPlays } = await import("../src/plays/index.js");
+  const { keptHooks } = await import("../src/plays/hooks.js");
+  const cfg = normalizeConfig({ domain: "acme.example" });
+  const hiring = { topic: "hiring" as const, text: "Northwind posts 3 open roles", safe: "1 account posts open roles" };
+  const rivals = { topic: "rivals" as const, text: "3 rivals", safe: "3 rivals" };
+  const plays = matchPlays({ company: "Acme", domain: "acme.example", findings: [hiring, rivals] });
+  assert.ok(plays.length > 0);
+  const steps = agentSteps(buildNextSteps(cfg, {}), plays);
+  assert.deepEqual(steps.slice(0, plays.length).map((s) => s.id), plays.map((p) => `play-${p.id}`));
+  assert.ok(steps.slice(0, plays.length).every((s) => s.kind === "play" && s.prompt && s.price));
+  const hooks = steps.slice(plays.length);
+  assert.deepEqual(hooks.map((s) => s.id), keptHooks(plays.map((p) => p.goal)));
+  assert.ok(hooks.every((s) => s.kind === "hook"));
+  if (plays.some((p) => p.goal === "Buying signals")) assert.ok(!hooks.some((s) => s.id === "hiring-signals"), "a top Buying signals play covers the hiring hook");
+  if (plays.some((p) => p.goal === "Competitor displacement")) assert.ok(!hooks.some((s) => s.id === "competitor-pricing-watch"));
+  assert.ok(!hooks.some((s) => s.id === "next-best-move"));
+});
+
+test("the summary table holds only hooks: a play's unmasked reason never reaches a public dossier", async () => {
+  const { agentSteps } = await import("../src/modules/nextSteps.js");
+  const { matchPlays } = await import("../src/plays/index.js");
+  const cfg = normalizeConfig({ domain: "acme.example" });
+  const hiring = { topic: "hiring" as const, text: "Northwind Traders: hiring a Head of RevOps on 20 Nov", safe: "1 account posts open roles" };
+  const plays = matchPlays({ company: "Acme", domain: "acme.example", findings: [hiring] });
+  assert.ok(plays.length > 0);
+  const out: SynthesisOut = { lines: [], plays: [], brief: { offer: "", icp: "", competitors: "" }, nextSteps: agentSteps(buildNextSteps(cfg, {}), plays) };
+  const sec = JSON.stringify(synthesis.render(out, "done", { public: true }));
+  assert.ok(!sec.includes("Head of RevOps") && !sec.includes("Northwind"));
 });
